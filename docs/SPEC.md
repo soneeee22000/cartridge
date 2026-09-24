@@ -61,11 +61,18 @@ cartridge/
       index.ts                  loader: parse front matter, index lines, resolve rule anchors
     engine/
       cartridge.ts              createCartridge(deps) → { mastra, workflow } (built per run, §4.6)
-      workflow.ts               the graph (§4.1)
+      workflow.ts               the graph (§4.1), built per run by buildCartridgeWorkflow(deps)
+      schemas.ts                Zod step I/O (§4.2); workflow.ts re-exports it
+      stop-rules.ts             shouldStopBuilding / isFinalizable (§4.1)
+      events.ts                 ProgressEvent, TerminalEvent, chunk → event mapper (§6.1)
+      workflow-port.ts          startWorkflowStream port and request-context builder (§5.4)
+      clock.ts                  Clock, manual clock for tests
       steps/plan.ts  steps/build-cycle.ts  steps/finalize.ts  steps/reject.ts
       phases/generate.ts  phases/verify.ts   plain functions called by build-cycle (§4.1)
+      phases/model-call.ts      consumes an agent stream: tool.call events, usage, finish reason
       tools/list-cards.ts  tools/get-card.ts  tools/load-draft.ts  tools/save-draft.ts  tools/verify.ts
-      prompts/planner.md  prompts/builder.md
+      tools/context.ts  tools/index.ts   request-context reader and the per-run tool factory
+      prompts/planner.md  prompts/builder.md  prompts/index.ts (loader and message builders)
       budgets.ts                every engine limit as a named constant (§4.4)
       usage.ts                  provider usage → Usage mapping (§4.4)
       artifacts/{types,memory,fs}.ts     versioned artifact store (§4.3)
@@ -81,6 +88,7 @@ cartridge/
       cassette-format.ts        Zod schema for cassette files
       request-key.ts            canonical JSON + sha256 key
       mock.ts                   test helpers around MockLanguageModelV4
+      mock-game.ts              MOCK_SPEC and MOCK_GAME_HTML for the dev server's mock mode
     eval/
       e1/                       contract scorer: rules/*.ts, scan.ts (payload parser), score.ts (§2.3)
       e2/                       runtime probe: probe.ts, host.html, instrument.ts, metrics.ts, detectors.ts, thresholds.ts, bot.ts (§8)
@@ -95,6 +103,7 @@ cartridge/
     server/
       dev.ts                    node:http dev server that mounts the same handlers as api/
       handlers.ts               Web Request → Response handlers shared by dev server and api/
+      queue.ts                  in-process driver queue (DRIVER_CONCURRENCY)
       node-adapter.ts           Web handler → Node (req, res) adapter used by the deploy bundle (§13.3)
   tests/                        vitest suites mirroring src/, api/ and scripts/
   fixtures/
@@ -169,13 +178,13 @@ This table lives in exactly one place (`src/contract/game-types.ts`) as `GAME_TY
 
 ### 2.3 E1 rule list (the contract scorer)
 
-E1 is a set of pure, deterministic functions `(html: string, ctx: { spec?: GameSpec }) → RuleResult`. There is no I/O. *(S1 note: the page is parsed once by `parseGame(html, ctx)` in `src/eval/e1/document.ts`, and each rule is a pure `check(parsed) → { status, message? }` over that parse; `scoreGame(html, ctx)` and `evaluateRule(id, html, ctx)` keep the `(html, ctx)` entry point. Parsing once avoids re-lexing the scripts 24 times.)*
+E1 is a set of pure, deterministic functions `(html: string, ctx: { spec?: GameSpec }) → RuleResult`. There is no I/O. _(S1 note: the page is parsed once by `parseGame(html, ctx)` in `src/eval/e1/document.ts`, and each rule is a pure `check(parsed) → { status, message? }` over that parse; `scoreGame(html, ctx)` and `evaluateRule(id, html, ctx)` keep the `(html, ctx)` entry point. Parsing once avoids re-lexing the scripts 24 times.)_
 
 - **Severity:** `hard` rules are gating, `soft` rules are scored but not gating, and `metric` rules are reported and never scored.
 - **Score:** `passed / applicable` over hard and soft rules. A rule that does not apply to the declared type is `n/a` and leaves the denominator.
 - **Verdict:** `ok = (hard failures === 0)`. The `verify` tool and the build-cycle's verify phase use this same verdict (§4).
 - **Fix hints:** each rule carries a prescriptive `fix` string (for example "Emit `CARTRIDGE.send("start")` when play begins"). This string is exactly what the repair prompt receives.
-- **Citations:** each rule declares `{ card, anchor }`. The anchor is an HTML comment `<!-- rule:E1-nn -->` at the end of the card line that states the rule. The loader resolves it to `cards/<card>.md:<line>`, and reports print that form. A test fails if any rule has zero anchors or more than one, or if an anchor names an unknown rule. Line numbers are therefore always computed and never typed by hand. *(S1 note: rules cited by "type card" (E1-15, E1-16, E1-17) have exactly one anchor in **each** of the four type cards, and E1-22 has exactly one in each of the three input cards; the citation resolves in the card for the declared type or input. `resolveAnchor(ruleId, card?)` takes the card for these rules. Every other rule has exactly one anchor in the whole card set.)*
+- **Citations:** each rule declares `{ card, anchor }`. The anchor is an HTML comment `<!-- rule:E1-nn -->` at the end of the card line that states the rule. The loader resolves it to `cards/<card>.md:<line>`, and reports print that form. A test fails if any rule has zero anchors or more than one, or if an anchor names an unknown rule. Line numbers are therefore always computed and never typed by hand. _(S1 note: rules cited by "type card" (E1-15, E1-16, E1-17) have exactly one anchor in **each** of the four type cards, and E1-22 has exactly one in each of the three input cards; the citation resolves in the card for the declared type or input. `resolveAnchor(ruleId, card?)` takes the card for these rules. Every other rule has exactly one anchor in the whole card set.)_
 - **Payload scan:** call sites are found with `CARTRIDGE.send("<type>"` and the payload object literal is extracted by a balanced-brace scanner that knows about strings, template literals and comments (`src/eval/e1/scan.ts`). Canvas text such as `ctx.fillText("Level 2", x, y)` is never mistaken for a `level` call site or payload.
 - **Syntax check:** each classic inline `<script>` is compiled with `new vm.Script(source, { filename })` and never executed. `type="module"` scripts are forbidden by the contract (E1-09), so no subprocess and no timeout are needed.
 
@@ -238,6 +247,8 @@ There are 12 original markdown cards in `src/cards/`. Each has front matter (`id
 ### 4.1 Shape and Mastra constructs
 
 Verified constructs (`@mastra/core` 1.70.0, research `mastra-api.md` §1): `createWorkflow`, `createStep`, `.then`, `.dountil(step, cond)`, `.branch([[cond, step], …])`, `.commit()`, `writer.custom({ type: "data-…" })`, and `run.stream()` → `fullStream` + `result`.
+
+_(S2 note: steps, agents and tools close over one run's dependencies, so the graph is built per run by `buildCartridgeWorkflow(deps)` inside `createCartridge` rather than held as a module-level `cartridgeWorkflow` constant; `CartridgeWorkflow = ReturnType<typeof buildCartridgeWorkflow>`. The shape below is unchanged.)_
 
 **Decision: the loop body is one step, not a nested workflow.** A nested `createWorkflow` used as the `.dountil` body fails to type-check under this repo's `exactOptionalPropertyTypes` (TS2379: `Workflow.description: string | undefined` is not assignable to `Step.description?: string`; adding a description does not help). Dropping the flag or adding a cast would weaken the rules, so the loop body is a single `build-cycle` step whose `execute` calls two plain functions in order. The probe and its result are recorded in `mastra-api.md` §1.7.
 
@@ -305,12 +316,13 @@ StepFailure = { step: "plan" | "generate" | "verify-static", code: FailureCode, 
 AttemptRec = { buildAttempt: number, mode: "initial" | "repair", artifact: ArtifactRef | null,
                verdict: Verdict | null, usage: Usage, finishReason: string | null,
                repairOf: string[] /* rule ids that caused it */ }
-BuildState = { runKey, prompt, spec: GameSpec, langSource: "detector" | "planner",
+BuildState = { runKey, prompt, spec: GameSpec | null /* null only when plan failed */,
+               langSource: "detector" | "planner", planUsage: Usage,
                buildAttempt: number, repairs: number,
                artifact: ArtifactRef | null, verdict: Verdict | null, failure: StepFailure | null,
                runTokens: number, repairTokens: number, history: AttemptRec[] }
-FinalizeOut = { outcome: "passed", artifact: ArtifactRef, verdict: Verdict, history: AttemptRec[] }
-RejectOut   = { outcome: "rejected", attribution: Attribution, history: AttemptRec[] }
+FinalizeOut = { outcome: "passed", spec: GameSpec, artifact: ArtifactRef, html: string, verdict: Verdict, history: AttemptRec[] }
+RejectOut   = { outcome: "rejected", spec: GameSpec | null, attribution: Attribution, history: AttemptRec[] }
 CartridgeContext = { runKey: string, claimAttempt: number, buildAttempt: number }   // requestContextSchema
 ```
 
@@ -319,7 +331,7 @@ CartridgeContext = { runKey: string, claimAttempt: number, buildAttempt: number 
 | `plan` (step)         | `RunInput → BuildState`    | The UI language is fixed in code at plan time: the step runs the E4 detector (§10.2) on the prompt. Then it calls agent `planner` (tools `list_cards`, `get_card`) through `agent.stream()` with `structuredOutput: { schema: GameSpec }` and awaits `object` and `totalUsage`. If the detector returned `en` or `fr`, that value overwrites `spec.lang` (`langSource: "detector"`). If it returned `unknown`, the planner's schema-valid `en`/`fr` value is kept (`langSource: "planner"`). A test covers both paths. It emits `data-cartridge {kind:"plan.spec"}`.                                                                                                                                                                |
 | `build-cycle` (step)  | `BuildState → BuildState`  | Sets `buildAttempt` in `requestContext`, then calls `runGenerate` and `runVerify` in order. It emits `data-cartridge {kind:"phase.start"}` before each phase, because Mastra's own `step.start`/`step.result` events only ever name `build-cycle` (§6.1).                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `runGenerate` (phase) | `BuildState → BuildState`  | Loads the 5 cards named by the spec (`game-page`, `bridge`, the type, the input, the style) in id order. It calls agent `builder` (tools `get_card`, `load_draft`, `save_draft`) through `agent.stream()` with `maxSteps: GENERATE_MAX_STEPS` and `maxOutputTokens: BUILDER_MAX_OUTPUT_TOKENS`, consumes the stream, and awaits `totalUsage` and `finishReason`. In repair mode the prompt holds the previous attempt's `errors[]` as `ruleId + message + fix` lines, plus the instruction to call `load_draft` first. **The artifact is taken from the artifact store for `(runKey, buildAttempt)`, never from model text.** If nothing was saved, the attempt records `artifact: null` and `failure.code = generate-no-artifact`. |
-| `runVerify` (phase)   | `BuildState → BuildState`  | Runs the E1 scorer (the same function the `verify` tool wraps) on the artifact, stores the `Verdict`, increments `buildAttempt`, and increments `repairs` when the next pass will be a repair. It emits `data-cartridge {kind:"verify.verdict"}`. It is skipped when `failure` is already set.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `runVerify` (phase)   | `BuildState → BuildState`  | Runs the E1 scorer (the same function the `verify` tool wraps) on the artifact, stores the `Verdict`, and increments `buildAttempt`. _(S2: `repairs` is incremented by `runGenerate` when it starts a repair pass, which gives the same count: the initial pass plus at most `MAX_REPAIRS` repairs.)_ It emits `data-cartridge {kind:"verify.verdict"}`. It is skipped when `failure` is already set.                                                                                                                                                                                                                                                                                                                               |
 | `finalize` (step)     | `BuildState → FinalizeOut` | A pure packaging step. Committing the result to the run row is the driver's job, under the lease (§5.4).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `reject` (step)       | `BuildState → RejectOut`   | Builds the `Attribution` from `state.failure`, or from the last verdict and budgets when `failure` is null (§4.5).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
@@ -360,7 +372,9 @@ All values are **starting values**. After the `sample` tier has run (§11.2), ea
 | `RUN_TOKEN_BUDGET`          | 520_000     | arbitrary cap | total tokens (all kinds) for the whole run      |
 | `MAX_GAME_BYTES`            | 120_000     | arbitrary cap | upper bound on one HTML artifact                |
 
-**Thinking and effort.** Without an explicit setting, Sonnet 5 uses adaptive thinking, which makes output length, cost and recordings vary. Each role sets its thinking/effort mode explicitly through `providerOptions.anthropic`, from named constants in `budgets.ts` (`BUILDER_THINKING`, `PLANNER_THINKING`). S2 reads the exact option shape from `@ai-sdk/anthropic@4.0.62`'s type definitions before writing it, and records it in `mastra-api.md`.
+_(S2: the schemas live in `src/engine/schemas.ts` and `workflow.ts` re-exports them, so phases and the driver import them without importing the graph. `spec` is nullable and `planUsage` is recorded; `FinalizeOut` carries `spec` and `html` because the driver commits both to the row and has no artifact store; `RejectOut` carries `spec` for reports. With structured output, Mastra reports a planner call that ended on `length` or `content-filter` as finish reason `error` plus a `STRUCTURED_OUTPUT_TRUNCATED` error whose `details.finishReason` holds the model's reason; `plan` reads it from there. Research `mastra-api.md` §6.)_
+
+**Thinking and effort.** Without an explicit setting, Sonnet 5 uses adaptive thinking, which makes output length, cost and recordings vary. Each role sets its thinking/effort mode explicitly through `providerOptions.anthropic`, from named constants in `budgets.ts` (`BUILDER_THINKING`, `PLANNER_THINKING`). S2 reads the exact option shape from `@ai-sdk/anthropic@4.0.62`'s type definitions before writing it, and records it in `mastra-api.md`. _(S2: both are `{ thinking: { type: "disabled" } }`, a starting choice so output length does not vary with adaptive thinking; the request body carries `"thinking":{"type":"disabled"}`.)_
 
 **Usage mapping (`toUsage`).** The AI SDK's normalised `inputTokens` already **includes** cache reads (observed: `inputTokens: 14` = uncached 10 + `cachedInputTokens` 4). Adding `inputTokens` and `cachedInputTokens` would count cache reads twice. So:
 
@@ -409,8 +423,9 @@ createCartridge(deps: {
 ```
 
 - Agents are constructed inside `createCartridge` with `deps.models`. Tools are constructed inside it and close over `deps.artifacts`.
+- _(S2: `deps.clock` was dropped because nothing inside the workflow reads the time; the driver and run store take the clock. `deps.verify` is an optional scorer override, used by the `verifier-crashed` test. Agents set `maxRetries: 0` so every retry is the driver's.)_
 - `InMemoryStore` is Mastra's storage for every instance. Building one per run is cheap, and it keeps runs isolated from each other in the same process.
-- No module in `src/engine/**` holds per-run state at module level. An eslint rule (`no-restricted-syntax` on top-level `let`) and a test that runs two cartridges with different stores in parallel enforce this.
+- No module in `src/engine/**` holds per-run state at module level. An eslint rule (`no-restricted-syntax` on top-level `let`) and a test that runs two cartridges with different stores in parallel enforce this. _(S2: a local config-protection hook refuses edits to `eslint.config.js`, so the rule is enforced by `tests/engine/module-state.test.ts` instead, which parses every file in `src/engine/**` and `src/models/**` with the TypeScript API and fails on a top-level `let` or `var`. Moving it into the eslint config is an open item for Seon.)_
 
 ---
 
@@ -597,6 +612,7 @@ createModel(role: ModelRole, mode: ModelMode, opts: { cassetteDir?: string; mock
 - **`anthropic.ts`:** `createAnthropic({ apiKey, fetch? })` from `@ai-sdk/anthropic` returns a `LanguageModelV4`, which Mastra accepts as `model` (research `mastra-api.md` §4, option B).
 - **Replay needs a placeholder key.** The provider calls `loadApiKey` inside `getHeaders()` on every request, before our `fetch` runs, and throws `AI_LoadAPIKeyError` when no key is set (observed). In `replay` and `mock` modes, `createAnthropic` receives `apiKey: REPLAY_PLACEHOLDER_KEY` (`"replay-no-key"`), and the environment key is never read. The cassette layer never stores or sends headers, so the placeholder goes nowhere. Test: replay runs to `complete` with `ANTHROPIC_API_KEY` deleted from `process.env`.
 - **Sampling:** the judge runs at `temperature: 0`. The builder and planner leave sampling at the defaults: for models flagged `rejectsSamplingParameters` (Sonnet 5), the provider silently drops `temperature`/`topP`/`topK` with a warning, so setting them would be misleading. Determinism for the demo comes from cassettes, not from sampling.
+- _(S2: `MockScript` is a `LanguageModelV4` built by `mock.ts`, so `port.ts` never imports `ai/test` and the deploy bundle never pulls in a devDependency. `mock.ts` also exports `demoMockModels()`, the stateless planner/builder pair the dev server uses in `mock` mode.)_
 - **`mock.ts`:** thin helpers around `MockLanguageModelV4` from `ai/test` (a devDependency), plus `scriptedTurns([...])`, which scripts tool-call and text turns (streamed) for unit tests, including a turn that ends with `finishReason: "length"` or `"content-filter"`. `MockLanguageModelV3` from `ai@7` must not be used (it fails to type-check).
 
 ### 7.2 Cassette (`src/models/cassette.ts`)
@@ -610,6 +626,7 @@ createModel(role: ModelRole, mode: ModelMode, opts: { cassetteDir?: string; mock
   - `replay` never touches the network. A missing key throws `CassetteMissError`, which maps to `cassette-miss`.
   - `live` passes through without recording.
 - **Duplicate requests:** within one run, identical requests get an occurrence index (`key#1`, `key#2`) so that repeated identical calls replay in order.
+- _(S2 details: record mode reads the whole 2xx body before handing it to the provider, then writes the file; `gapsMs` has one entry per SSE event, so `pace=recorded` replays event by event. The occurrence counter advances only when a cassette is written, so a failed call that is retried does not shift the index. `index.json` entries are `key` for occurrence 0 and `key#n` after that. A request whose body is not a JSON string throws `CassetteFormatError`.)_
 - **Fallback (not expected to be needed):** a hand-rolled `CassetteModel implements LanguageModelV3` (`@ai-sdk/provider@3.0.14`, research §2.2), which records and replays stream parts instead of HTTP bodies, with the same `key` and `request` fields and `response.parts` in place of `response.body`.
 
 ### 7.3 Cassette file format (`cassette-format.ts`, Zod)
@@ -768,6 +785,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
 
 ### 10.2 E4: language match (`src/eval/e4/`)
 
+- _(S2: a first `detect.ts` with authored word lists landed in S2 because `plan` needs it; `lang` is `unknown` when the hit margin is below `DETECT_MIN_MARGIN = 1`. S4 extends it with the extraction, abstention floor and labelled set.)_
 - **Detection:** `detectLanguage(text) → { lang: "en" | "fr" | "unknown", margin }` uses authored function-word lists (`words-en.ts`, `words-fr.ts`), matched on word boundaries. The `plan` step (§4.2) uses the same function, so the language fixed in code at plan time and the later check come from one implementation.
 - **UI string extraction:** text nodes outside `script`/`style`, plus the string literal arguments of `fillText(`, `strokeText(`, and of assignments to `textContent`, `innerText` and `innerHTML` (tags stripped).
 - **Excluded from the evidence:** the slug, identifiers, CSS, numbers, and strings of ≤ 2 characters.
@@ -912,6 +930,7 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 - **Dependencies:** `@mastra/core@1.70.0`, `@libsql/client@0.18.0` (confirm it satisfies `@mastra/core`'s peer range, if any), `zod@4.6.5`, `@ai-sdk/anthropic@4.0.62`.
 - **devDependencies:** `typescript@5.9.3`, `vitest@5.0.0` + `@vitest/coverage-v8@5.0.0`, `ai@7.0.113` (for `ai/test`), `playwright@1.63.0`, `pngjs@7.0.0`, `@types/pngjs@6.0.5`, `@types/node` (24.x), `esbuild` (current exact), `eslint` + `typescript-eslint` (current exact). `@ai-sdk/provider@3.0.14` is added only if the §7.2 fallback is ever needed.
 - **Pinned at S1 (confirmed with `npm view` on 2026-09-24):** `zod@4.6.5`; dev `typescript@5.9.3` (typescript-eslint 8.70.1 requires `<6.1.0`, so TS 7 is not an option yet), `vitest@5.0.0`, `@vitest/coverage-v8@5.0.0`, `@types/node@24.13.6`, `esbuild@0.28.2`, `eslint@10.11.0`, `@eslint/js@10.0.1`, `typescript-eslint@8.70.1`. The model, storage and probe packages (`@mastra/core`, `@libsql/client`, `@ai-sdk/anthropic`, `ai`, `playwright`, `pngjs`) are added in the slice that first imports them (S2/S3), at the pins above, so S1 installs nothing it does not use.
+- **Added at S2 (2026-09-24):** `@mastra/core@1.70.0`, `@libsql/client@0.18.0`, `@ai-sdk/anthropic@4.0.62`, `@ai-sdk/provider@4.0.18` (dependency) and `ai@7.0.113` (devDependency). `@ai-sdk/provider@4.0.18` is the version `@ai-sdk/anthropic@4.0.62` already depends on; it is declared so `attribution.ts` can import `APICallError` for `isInstance` and the mock can use the V4 types. The 3.0.14 pin above stays reserved for the §7.2 fallback, which was not needed.
 - `@mastra/libsql` is not needed. Mastra storage is `InMemoryStore`, and our run table uses `@libsql/client` directly (§5.3).
 
 ### 13.2 CI (`.github/workflows/ci.yml`)
@@ -920,7 +939,7 @@ Actions are pinned by SHA (copy the pins from faultline-noc's `ci.yml`). Node is
 
 | job           | steps                                                                                                                                                                                                              |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `checks`      | `npm ci` → `typecheck` → `lint` → `test:coverage` (thresholds enforced) → `check:clean-room` → `build:vercel` + bundle check (§13.3)                                                                         |
+| `checks`      | `npm ci` → `typecheck` → `lint` → `test:coverage` (thresholds enforced) → `check:clean-room` → `build:vercel` + bundle check (§13.3)                                                                               |
 | `eval-replay` | `npm ci` → `npx playwright install --with-deps chromium` → `eval:matrix` + diff the matrix verdicts → `eval:rescore --json $RUNNER_TEMP/full.json` + `diff -u reports/committed/full.json` (the same for `sample`) |
 | `secrets`     | gitleaks                                                                                                                                                                                                           |
 | `site`        | added in the /polish pass                                                                                                                                                                                          |
@@ -931,7 +950,7 @@ CI never deploys and never uses a key.
 
 Relative `.ts` import specifiers and runtime file reads (`fs` on cards, prompts, cassettes and the dataset) are both risky under Vercel's zero-config TS compile and file tracing. The primary path is therefore our own bundle via the Build Output API, decided now rather than discovered in S5:
 
-- `scripts/build-vercel.ts` uses esbuild (which resolves `.ts` specifiers) to bundle each `api/*.ts` into `.vercel/output/functions/api/<name>.func/index.mjs`, with a `.vc-config.json` (`runtime: "nodejs24.x"` or the current Node 24 id checked against Vercel docs at S1, `handler: "index.mjs"`, `launcherType: "Nodejs"`, `maxDuration: 300` for `replay`). *(S1: runtime `nodejs24.x`. Each `api/*.ts` exports a Web-standard `GET(request) → Response` and a default Node `(req, res)` handler built by `toNodeHandler` in `src/server/node-adapter.ts`, because the Build Output API primitives page does not document a Web-standard export for the raw `Nodejs` launcher. Recorded in `docs/research/deploy-and-models.md` §4.)*
+- `scripts/build-vercel.ts` uses esbuild (which resolves `.ts` specifiers) to bundle each `api/*.ts` into `.vercel/output/functions/api/<name>.func/index.mjs`, with a `.vc-config.json` (`runtime: "nodejs24.x"` or the current Node 24 id checked against Vercel docs at S1, `handler: "index.mjs"`, `launcherType: "Nodejs"`, `maxDuration: 300` for `replay`). _(S1: runtime `nodejs24.x`. Each `api/*.ts` exports a Web-standard `GET(request) → Response` and a default Node `(req, res)` handler built by `toNodeHandler` in `src/server/node-adapter.ts`, because the Build Output API primitives page does not document a Web-standard export for the raw `Nodejs` launcher. Recorded in `docs/research/deploy-and-models.md` §4.)_
 - It copies `src/cards/**`, `src/engine/prompts/**`, `cassettes/**` and `dataset/**` into each function directory, and the bundle sets `CARTRIDGE_ASSET_ROOT` to that directory. Nothing at runtime relies on file tracing.
 - **Bundle check (CI and S1):** a test imports the built `replay.func/index.mjs` in plain Node, calls its handler with a `Request` for a committed demo prompt, and asserts that the stream resolves a card, finds a cassette and ends with `terminal` — with `ANTHROPIC_API_KEY` unset. In S1 (before cassettes exist) the check runs against a one-line handler that reads one card, so the bundling path is proven before any engine code depends on it.
 - Deploying uses `vercel deploy --prebuilt`, and only with Seon's approval.

@@ -47,14 +47,14 @@ const E2_PASS: E2Result = {
 const titleLine =
   MOCK_GAME_HTML.split("\n").findIndex((line) => line.includes("<title>")) + 1;
 const JUDGE_RESPONSE = JSON.stringify({
-  findings: [
-    {
-      dimension: "goal-legibility",
-      label: "implied",
-      evidence: [{ line: titleLine, quote: "<title>Lantern Dash</title>" }],
-      rationale: "Only the title hints at the goal.",
-    },
-  ],
+  "prompt-coverage": null,
+  "goal-legibility": {
+    label: "implied",
+    evidence: [{ line: titleLine, quote: "<title>Lantern Dash</title>" }],
+    rationale: "Only the title hints at the goal.",
+  },
+  "feedback-on-input": null,
+  "fail-state-clarity": null,
 });
 
 interface Harness {

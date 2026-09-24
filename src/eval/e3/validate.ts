@@ -12,19 +12,44 @@ export const E3_NUMERIC_CLAIM =
 
 const Evidence = z.object({ line: z.int(), quote: z.string() });
 
-/** The judge's structured output (§10.1). Labels are checked per dimension in `discardReason`. */
+const Slot = z
+  .object({
+    label: z.string(),
+    evidence: z.array(Evidence),
+    rationale: z.string(),
+  })
+  .nullable();
+
+/**
+ * The judge's structured output (§10.1): exactly one nullable slot per dimension, so constrained
+ * decoding cannot emit a dimension twice. Labels are checked per dimension in `discardReason`.
+ */
 export const JudgeOutput = z.object({
-  findings: z.array(
-    z.object({
-      dimension: z.enum(DIMENSIONS),
-      label: z.string(),
-      evidence: z.array(Evidence),
-      rationale: z.string(),
-    }),
-  ),
+  "prompt-coverage": Slot,
+  "goal-legibility": Slot,
+  "feedback-on-input": Slot,
+  "fail-state-clarity": Slot,
 });
 export type JudgeOutput = z.infer<typeof JudgeOutput>;
-export type JudgeFinding = JudgeOutput["findings"][number];
+
+/** One validated-shape finding: a filled slot together with its dimension. */
+export interface JudgeFinding {
+  readonly dimension: Dimension;
+  readonly label: string;
+  readonly evidence: readonly z.infer<typeof Evidence>[];
+  readonly rationale: string;
+}
+
+/**
+ * The filled slots, in rubric order.
+ * @param output a parsed judge response
+ */
+export function findingsOf(output: JudgeOutput): JudgeFinding[] {
+  return DIMENSIONS.flatMap((dimension) => {
+    const slot = output[dimension];
+    return slot ? [{ dimension, ...slot }] : [];
+  });
+}
 
 export const DISCARD_REASONS = [
   "unknown-label",
@@ -104,8 +129,7 @@ function emptyDimensions(gameType: GameType): Record<Dimension, string | null> {
 
 /**
  * Folds a raw judge response into an `E3Result`. A dimension with no surviving finding is `null`,
- * never the worst label; `fail-state-clarity` is `n/a` for `toy-box`; the first surviving finding
- * per dimension wins; an unparseable response makes every dimension `null` and records `judgeError`.
+ * never the worst label; `fail-state-clarity` is `n/a` for `toy-box`; an unparseable response makes every dimension `null` and records `judgeError`.
  * @param raw the judge's structured output, unvalidated
  * @param html the judged game
  * @param gameType the planned game type
@@ -125,7 +149,7 @@ export function summariseJudgement(
     };
   const lines = html.split("\n");
   const discarded: E3Result["discarded"] = [];
-  for (const finding of parsed.data.findings) {
+  for (const finding of findingsOf(parsed.data)) {
     if (!appliesTo(finding.dimension, gameType)) continue;
     const reason = discardReason(finding, lines);
     if (reason) discarded.push({ dimension: finding.dimension, reason });

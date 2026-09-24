@@ -11,6 +11,7 @@ import {
 import {
   E3_MIN_QUOTE_CHARS,
   E3_NUMERIC_CLAIM,
+  JudgeOutput,
   discardReason,
   summariseJudgement,
   type JudgeFinding,
@@ -47,6 +48,15 @@ function finding(overrides: Partial<JudgeFinding> = {}): JudgeFinding {
   };
 }
 
+/** The judge's wire format: one nullable slot per dimension. */
+function wire(...findings: JudgeFinding[]): Record<string, unknown> {
+  const slots: Record<string, unknown> = Object.fromEntries(
+    DIMENSIONS.map((dimension) => [dimension, null]),
+  );
+  for (const { dimension, ...rest } of findings) slots[dimension] = rest;
+  return slots;
+}
+
 const TOY_SPEC: GameSpec = { ...MOCK_SPEC, gameType: "toy-box" };
 
 describe("E3 rubric (§10.1)", () => {
@@ -62,10 +72,13 @@ describe("E3 rubric (§10.1)", () => {
     expect(JUDGE_INSTRUCTIONS).not.toMatch(/\d/);
   });
 
-  it("bounds the answer so a judge cannot repeat findings until the output cap truncates it", () => {
-    expect(JUDGE_INSTRUCTIONS).toContain("at most one finding per dimension");
-    expect(JUDGE_INSTRUCTIONS).toContain("at most three evidence items");
-    expect(JUDGE_INSTRUCTIONS).toContain("stop");
+  it("gives each dimension exactly one nullable slot, so a judge cannot repeat a dimension until the output cap truncates it", () => {
+    expect(Object.keys(JudgeOutput.shape)).toEqual([...DIMENSIONS]);
+    const repeated = {
+      findings: [finding(), finding({ label: "implied" })],
+    };
+    expect(JudgeOutput.safeParse(repeated).success).toBe(false);
+    expect(JUDGE_INSTRUCTIONS).toContain("null");
   });
 
   it("prefixes 1-based line numbers", () => {
@@ -155,16 +168,14 @@ describe("E3 validation: discard reasons (§10.1)", () => {
 describe("E3 summary: null, not zero (§10.1)", () => {
   it("scores a dimension with no surviving finding as null, never the worst label", () => {
     const result = summariseJudgement(
-      {
-        findings: [
-          finding(),
-          finding({
-            dimension: "prompt-coverage",
-            label: "missed",
-            evidence: [],
-          }),
-        ],
-      },
+      wire(
+        finding(),
+        finding({
+          dimension: "prompt-coverage",
+          label: "missed",
+          evidence: [],
+        }),
+      ),
       HTML,
       MOCK_SPEC.gameType,
     );
@@ -179,15 +190,13 @@ describe("E3 summary: null, not zero (§10.1)", () => {
 
   it("reports fail-state-clarity as n/a for toy-box, separately from null", () => {
     const result = summariseJudgement(
-      {
-        findings: [
-          finding({
-            dimension: "fail-state-clarity",
-            label: "explained",
-            evidence: [{ line: 7, quote: "A pear hit the ground" }],
-          }),
-        ],
-      },
+      wire(
+        finding({
+          dimension: "fail-state-clarity",
+          label: "explained",
+          evidence: [{ line: 7, quote: "A pear hit the ground" }],
+        }),
+      ),
       HTML,
       TOY_SPEC.gameType,
     );
@@ -204,15 +213,13 @@ describe("E3 summary: null, not zero (§10.1)", () => {
 
   it("ignores judge findings on fail-state-clarity for toy-box instead of discarding them", () => {
     const result = summariseJudgement(
-      {
-        findings: [
-          finding({
-            dimension: "fail-state-clarity",
-            label: "missing",
-            evidence: [],
-          }),
-        ],
-      },
+      wire(
+        finding({
+          dimension: "fail-state-clarity",
+          label: "missing",
+          evidence: [],
+        }),
+      ),
       HTML,
       "toy-box",
     );
@@ -222,15 +229,13 @@ describe("E3 summary: null, not zero (§10.1)", () => {
 
   it("keeps a dimension null when its only finding is discarded, even with a worst label", () => {
     const result = summariseJudgement(
-      {
-        findings: [
-          finding({
-            dimension: "feedback-on-input",
-            label: "none",
-            evidence: [{ line: 6, quote: "not on this line at all" }],
-          }),
-        ],
-      },
+      wire(
+        finding({
+          dimension: "feedback-on-input",
+          label: "none",
+          evidence: [{ line: 6, quote: "not on this line at all" }],
+        }),
+      ),
       HTML,
       "arcade-run",
     );
@@ -239,21 +244,6 @@ describe("E3 summary: null, not zero (§10.1)", () => {
       { dimension: "feedback-on-input", reason: "quote-not-found" },
     ]);
   });
-
-  it("keeps the first surviving finding when a dimension has several", () => {
-    const result = summariseJudgement(
-      {
-        findings: [
-          finding({ label: "implied", rationale: "7 out of 9" }),
-          finding({ label: "stated" }),
-          finding({ label: "absent" }),
-        ],
-      },
-      HTML,
-      "arcade-run",
-    );
-    expect(result.dimensions["goal-legibility"]).toBe("stated");
-  });
 });
 
 describe("E3 judge with a mock model (§10.1)", () => {
@@ -261,16 +251,12 @@ describe("E3 judge with a mock model (§10.1)", () => {
   const titleLine = lines.findIndex((line) => line.includes("<title>")) + 1;
 
   it("returns validated labels and the call's usage", async () => {
-    const response = {
-      findings: [
-        {
-          dimension: "goal-legibility",
-          label: "implied",
-          evidence: [{ line: titleLine, quote: "<title>Lantern Dash</title>" }],
-          rationale: "Only the title hints at the goal.",
-        },
-      ],
-    };
+    const response = wire({
+      dimension: "goal-legibility",
+      label: "implied",
+      evidence: [{ line: titleLine, quote: "<title>Lantern Dash</title>" }],
+      rationale: "Only the title hints at the goal.",
+    });
     const judged = await runJudge(
       scriptedTurns([
         {

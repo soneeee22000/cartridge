@@ -781,7 +781,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
 | `feedback-on-input`  | does a player input produce a visible change within the same handler or the next drawn frame? | `immediate`, `indirect`, `none`  |
 | `fail-state-clarity` | when play ends, does the game show why it ended and how to play again? (`n/a` for `toy-box`)  | `explained`, `abrupt`, `missing` |
 
-- **Output schema:** `{ findings: { dimension, label, evidence: { line: number, quote: string }[], rationale: string }[] }`.
+- **Output schema:** one nullable slot per dimension, `{ [dimension]: { label, evidence: { line: number, quote: string }[], rationale: string } | null }`, so constrained decoding cannot emit a dimension twice. _(S4 change: the first schema was a `findings` array. In the paid smoke runs Haiku 4.5 twice repeated the four dimensions until the judge output cap truncated the answer; a prompt instruction alone did not stop it. `null` means the judge could not cite a line.)_
 - **Validation (`validate.ts`, pure):** a finding is discarded when
   - `evidence` is empty;
   - `line` falls outside `[1, lineCount]`;
@@ -789,7 +789,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
   - the rationale contains a numeric claim (`E3_NUMERIC_CLAIM` regex: a number followed by `%`, `/n`, "out of", "points", "fps" or "ms").
 - **Null, not zero:** a dimension with no surviving finding is `null` (not measured), never the worst label. `n/a` (does not apply to this type) is reported separately from `null`. An unparseable response makes every dimension `null` and records `judgeError`.
 - **Reports** show the label distribution and the null count per length band. They never convert labels to numbers and never average them.
-- _(S4 notes: a finding is also discarded when its label is not one of its dimension's labels (`unknown-label`), and when **any** of its evidence items fails a check. When several findings for one dimension survive, the first one wins. A judge call that fails becomes `judgeError`; a cassette miss is recorded as the fixed text `judge cassette missing`, with no path or key, so a rescore on another machine produces the same bytes. The judge has no tools, runs with `maxSteps: 1`, and sends no thinking option (Haiku 4.5 runs without thinking when none is set). Its instructions are built in `rubric.ts` from the dimension table and contain no digits.)_
+- _(S4 notes: a finding is also discarded when its label is not one of its dimension's labels (`unknown-label`), and when **any** of its evidence items fails a check. A judge call that fails becomes `judgeError`; a cassette miss is recorded as the fixed text `judge cassette missing`, with no path or key, so a rescore on another machine produces the same bytes. The judge has no tools, runs with `maxSteps: 1`, and sends no thinking option (Haiku 4.5 runs without thinking when none is set). Its instructions are built in `rubric.ts` from the dimension table and contain no digits.)_
 
 ### 10.2 E4: language match (`src/eval/e4/`)
 
@@ -899,7 +899,7 @@ _(S4 notes on the mapping, `outcomeOf` in `report/types.ts`: `plan-invalid-spec`
 
 ### 11.4 Price table (`src/eval/pricing.ts`)
 
-_(S4 note: input and output rates were compared on 2026-09-24 with the claude-api skill's model table (cached 2026-06-24) and agree; cache rates are from the research note. That table is not the official pricing page, so `PRICES_CHECKED_ON_OFFICIAL_PAGE` in `pricing.ts` stays `null`, and `run` refuses `record` and `live` modes until it holds the date of the official-page check.)_
+_(S4 note: on 2026-09-24 all four rates per model were checked against the official pricing page (platform.claude.com/docs/en/about-claude/pricing) and match the table below; that page states Sonnet 5's $2/$10 is now the standard price. `PRICES_CHECKED_ON_OFFICIAL_PAGE = "2026-09-24"`, which unlocks `record` and `live`.)_
 
 `PRICE_TABLE_VERSION = "2026-09-24"`. Prices are USD per million tokens: Sonnet 5 input 2.0, output 10.0, cache read 0.2, 5-minute cache write 2.5; Haiku 4.5 input 1.0, output 5.0, cache read 0.1, 5-minute cache write 1.25 (research `deploy-and-models.md` §2.2). Each `Usage` kind is priced at its own rate. **Before the first paid run (S4), the table is re-checked against the official Anthropic pricing page** and the check date is written next to the version string. Any price change means a new version string, and old reports keep the version they were priced with.
 

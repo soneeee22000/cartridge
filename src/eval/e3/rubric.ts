@@ -45,13 +45,12 @@ export const JUDGE_INSTRUCTIONS = [
   "Rubric:",
   ...rubricLines(),
   "",
-  "For every finding, give the dimension, one label from that dimension's list, and evidence:",
+  "For every dimension, give one label from that dimension's list and evidence:",
   "each evidence item is a line number from the numbered source and a short quote copied exactly",
   "from that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,",
   "a count out of a total, points, frames per second or milliseconds.",
-  "If you cannot point to a line for a dimension, leave that dimension out rather than guessing.",
-  "Give at most one finding per dimension, with at most three evidence items each. Never repeat a",
-  "dimension: once each dimension has its finding or has been left out, stop.",
+  "Answer with one entry per dimension. If you cannot point to a line for a dimension, set that",
+  "dimension to null rather than guessing. Give at most three evidence items per dimension.",
 ].join("\n");
 
 /**

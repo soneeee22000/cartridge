@@ -1,0 +1,166 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import {
+  createPromptsHandler,
+  createReplayHandler,
+  loadReplayCatalog,
+} from "../../src/server/replay.ts";
+
+const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
+const REPLAY_TIMEOUT_MS = 120_000;
+const FAST_RELAY = { pollMs: 5 };
+
+interface SseMessage {
+  readonly id?: string;
+  readonly event?: string;
+  readonly data?: string;
+}
+
+function parseSse(text: string): SseMessage[] {
+  return text
+    .split("\n\n")
+    .filter((block) => block.length > 0 && !block.startsWith(":"))
+    .map((block) => {
+      const message: Record<string, string> = {};
+      for (const line of block.split("\n")) {
+        const colon = line.indexOf(": ");
+        if (colon > 0) message[line.slice(0, colon)] = line.slice(colon + 2);
+      }
+      return message;
+    });
+}
+
+function committedSha(itemId: string): string {
+  const run = JSON.parse(
+    readFileSync(join(REPO_ROOT, "games", itemId, "run.json"), "utf8"),
+  ) as { artifact: { sha256: string } };
+  return run.artifact.sha256;
+}
+
+async function replay(
+  itemId: string,
+  headers: Record<string, string> = {},
+): Promise<SseMessage[]> {
+  const handler = createReplayHandler({
+    root: REPO_ROOT,
+    pace: "instant",
+    relay: FAST_RELAY,
+  });
+  const response = await handler(
+    new Request(`https://cartridge.test/api/replay?promptId=${itemId}`, {
+      headers,
+    }),
+  );
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toBe("text/event-stream");
+  return parseSse(await response.text());
+}
+
+describe("replay catalog", () => {
+  it("lists every dataset item that has committed cassettes, repaired items first", () => {
+    const catalog = loadReplayCatalog(REPO_ROOT);
+    expect(catalog).toHaveLength(20);
+    const firstPlain = catalog.findIndex((entry) => entry.buildAttempts === 1);
+    const lastRepaired = catalog.findLastIndex(
+      (entry) => entry.buildAttempts > 1,
+    );
+    expect(lastRepaired).toBeLessThan(firstPlain);
+    expect(catalog[0]).toMatchObject({
+      id: expect.any(String) as string,
+      lang: expect.stringMatching(/^(en|fr)$/) as string,
+      prompt: expect.any(String) as string,
+    });
+  });
+
+  it("serves the catalog as JSON from GET /api/prompts", async () => {
+    const response = await createPromptsHandler({ root: REPO_ROOT })(
+      new Request("https://cartridge.test/api/prompts"),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { items: unknown[] };
+    expect(body.items).toHaveLength(20);
+  });
+});
+
+describe("GET /api/replay", () => {
+  const handler = createReplayHandler({ root: REPO_ROOT, pace: "instant" });
+
+  it("returns 404 for a prompt id outside the catalog", async () => {
+    const response = await handler(
+      new Request("https://cartridge.test/api/replay?promptId=not-an-item"),
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 400 when the prompt id is missing or malformed", async () => {
+    for (const query of ["", "?promptId=", "?promptId=..%2Fetc"]) {
+      const response = await handler(
+        new Request(`https://cartridge.test/api/replay${query}`),
+      );
+      expect(response.status).toBe(400);
+    }
+  });
+
+  it("rejects methods other than GET", async () => {
+    const response = await handler(
+      new Request("https://cartridge.test/api/replay?promptId=bubble-pop", {
+        method: "POST",
+      }),
+    );
+    expect(response.status).toBe(405);
+  });
+
+  it(
+    "streams a repaired run keyless and ends with the committed artifact",
+    async () => {
+      const messages = await replay("bubble-pop");
+      const progress = messages.filter((m) => m.event === "progress");
+      const kinds = progress.map(
+        (m) => (JSON.parse(m.data ?? "{}") as { kind: string }).kind,
+      );
+      expect(kinds).toContain("repair.start");
+      expect(kinds.filter((kind) => kind === "verify.verdict")).toHaveLength(2);
+      const terminal = messages.at(-1);
+      expect(terminal?.event).toBe("terminal");
+      const data = JSON.parse(terminal?.data ?? "{}") as {
+        status: string;
+        artifact: { sha256: string; html: string };
+        e1Score: number;
+      };
+      expect(data.status).toBe("complete");
+      expect(data.artifact.sha256).toBe(committedSha("bubble-pop"));
+      expect(data.e1Score).toBe(1);
+    },
+    REPLAY_TIMEOUT_MS,
+  );
+
+  it(
+    "resumes after Last-Event-ID and sends only the missing tail",
+    async () => {
+      const full = await replay("bubble-pop");
+      const resumed = await replay("bubble-pop", { "last-event-id": "3" });
+      const ids = resumed
+        .filter((m) => m.event === "progress")
+        .map((m) => Number(m.id));
+      expect(Math.min(...ids)).toBe(4);
+      expect(resumed.length).toBe(full.length - 3);
+    },
+    REPLAY_TIMEOUT_MS,
+  );
+
+  it(
+    "reproduces the committed artifact byte for byte for every catalog item",
+    async () => {
+      for (const entry of loadReplayCatalog(REPO_ROOT)) {
+        const terminal = (await replay(entry.id)).at(-1);
+        const data = JSON.parse(terminal?.data ?? "{}") as {
+          artifact?: { sha256: string };
+        };
+        expect(data.artifact?.sha256, entry.id).toBe(committedSha(entry.id));
+      }
+    },
+    REPLAY_TIMEOUT_MS * 4,
+  );
+});

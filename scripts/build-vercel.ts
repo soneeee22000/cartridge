@@ -21,6 +21,7 @@ export const ASSET_DIRS = [
   "src/engine/prompts",
   "cassettes",
   "dataset",
+  "reports/committed",
 ] as const;
 
 const REPO_ROOT = fileURLToPath(new URL("../", import.meta.url));

@@ -7,23 +7,23 @@ import {
   type CassettePace,
   type FetchLike,
 } from "./cassette.ts";
+import {
+  MODEL_IDS,
+  REPLAY_PLACEHOLDER_KEY,
+  type ModelRole,
+} from "./ids.ts";
 
-export const MODEL_ROLES = ["planner", "builder", "judge"] as const;
-export type ModelRole = (typeof MODEL_ROLES)[number];
+export {
+  MODEL_IDS,
+  MODEL_ROLES,
+  REPLAY_PLACEHOLDER_KEY,
+  type ModelRole,
+} from "./ids.ts";
 
 export const MODEL_MODES = ["live", "record", "replay", "mock"] as const;
 export const ModelMode = z.enum(MODEL_MODES);
 export type ModelMode = z.infer<typeof ModelMode>;
 
-/** Model id per role (§7.1). */
-export const MODEL_IDS: Readonly<Record<ModelRole, string>> = {
-  planner: "claude-sonnet-5",
-  builder: "claude-sonnet-5",
-  judge: "claude-haiku-4-5",
-};
-
-/** Sent in replay and mock modes, where the provider still insists on a key. Goes nowhere. */
-export const REPLAY_PLACEHOLDER_KEY = "replay-no-key";
 const DEFAULT_MODE: ModelMode = "replay";
 
 /** A scripted model for tests and the dev server's mock mode (built by `mock.ts`). */

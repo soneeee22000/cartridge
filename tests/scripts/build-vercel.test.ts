@@ -14,22 +14,41 @@ const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const BUILD_TIMEOUT_MS = 60_000;
 
 const PROBE = `
-const mod = await import(process.argv[1]);
-const response = await mod.GET(new Request("https://cartridge.test/api/replay"));
-process.stdout.write(JSON.stringify({ status: response.status, body: await response.json(), node: typeof mod.default }));
+const prompts = await import(process.argv[1]);
+const replay = await import(process.argv[2]);
+const list = await prompts.GET(new Request("https://cartridge.test/api/prompts"));
+const unknown = await replay.GET(new Request("https://cartridge.test/api/replay?promptId=not-an-item"));
+const abort = new AbortController();
+const stream = await replay.GET(new Request("https://cartridge.test/api/replay?promptId=bubble-pop", { signal: abort.signal }));
+const reader = stream.body.getReader();
+const first = new TextDecoder().decode((await reader.read()).value);
+abort.abort();
+await reader.cancel();
+process.stdout.write(JSON.stringify({
+  prompts: list.status,
+  items: (await list.json()).items.length,
+  unknown: unknown.status,
+  stream: stream.headers.get("content-type"),
+  firstEvent: first.includes("event: progress"),
+  node: typeof replay.default,
+}));
+process.exit(0);
 `;
 
 describe("build:vercel (§13.3)", () => {
   it(
-    "bundles a function that reads a card in plain Node, away from the repo",
+    "bundles the replay and prompts functions so they run keyless in plain Node, away from the repo",
     async () => {
       const outDir = join(
         mkdtempSync(join(tmpdir(), "cartridge-vercel-")),
         "output",
       );
-      const [functionDir] = await buildVercel(REPO_ROOT, outDir);
-      expect(functionDir).toMatch(/replay\.func$/);
-      const dir = functionDir ?? "";
+      const built = await buildVercel(REPO_ROOT, outDir);
+      const dir = built.find((path) => path.endsWith("replay.func")) ?? "";
+      const promptsDir =
+        built.find((path) => path.endsWith("prompts.func")) ?? "";
+      expect(dir).not.toBe("");
+      expect(promptsDir).not.toBe("");
       const config = JSON.parse(
         readFileSync(join(dir, ".vc-config.json"), "utf8"),
       ) as Record<string, unknown>;
@@ -40,6 +59,9 @@ describe("build:vercel (§13.3)", () => {
         maxDuration: MAX_DURATION_SECONDS,
       });
       expect(existsSync(join(dir, "src", "cards", "bridge.md"))).toBe(true);
+      expect(
+        existsSync(join(dir, "reports", "committed", "full.json")),
+      ).toBe(true);
       expect(existsSync(join(outDir, "config.json"))).toBe(true);
 
       const env = { ...process.env };
@@ -51,19 +73,18 @@ describe("build:vercel (§13.3)", () => {
           "--input-type=module",
           "-e",
           PROBE,
+          pathToFileURL(join(promptsDir, "index.mjs")).href,
           pathToFileURL(join(dir, "index.mjs")).href,
         ],
         { cwd: tmpdir(), env, encoding: "utf8" },
       );
       expect(result.stderr).toBe("");
       expect(JSON.parse(result.stdout)).toEqual({
-        status: 200,
-        body: {
-          placeholder: true,
-          card: "bridge",
-          title: "Bridge",
-          lines: expect.any(Number) as number,
-        },
+        prompts: 200,
+        items: 20,
+        unknown: 404,
+        stream: "text/event-stream",
+        firstEvent: true,
         node: "function",
       });
     },

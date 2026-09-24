@@ -1,0 +1,280 @@
+{
+  "bands": [
+    {
+      "band": "terse",
+      "contractFailed": 0,
+      "e1": null,
+      "e2": {
+        "detectorFails": {},
+        "passed": 0,
+        "probed": 0
+      },
+      "e3": {
+        "fail-state-clarity": {},
+        "feedback-on-input": {},
+        "goal-legibility": {},
+        "prompt-coverage": {}
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 0,
+        "mismatch": 0
+      },
+      "games": 0,
+      "harnessFailures": 0,
+      "medianBuildAttempts": null,
+      "n": 0,
+      "refusals": 0
+    },
+    {
+      "band": "short-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "idle-death": 1
+        },
+        "passed": 0,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "partly": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "full-brief",
+      "contractFailed": 0,
+      "e1": null,
+      "e2": {
+        "detectorFails": {},
+        "passed": 0,
+        "probed": 0
+      },
+      "e3": {
+        "fail-state-clarity": {},
+        "feedback-on-input": {},
+        "goal-legibility": {},
+        "prompt-coverage": {}
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 0,
+        "mismatch": 0
+      },
+      "games": 0,
+      "harnessFailures": 0,
+      "medianBuildAttempts": null,
+      "n": 0,
+      "refusals": 0
+    },
+    {
+      "band": "edge",
+      "contractFailed": 0,
+      "e1": null,
+      "e2": {
+        "detectorFails": {},
+        "passed": 0,
+        "probed": 0
+      },
+      "e3": {
+        "fail-state-clarity": {},
+        "feedback-on-input": {},
+        "goal-legibility": {},
+        "prompt-coverage": {}
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 0,
+        "mismatch": 0
+      },
+      "games": 0,
+      "harnessFailures": 0,
+      "medianBuildAttempts": null,
+      "n": 0,
+      "refusals": 0
+    }
+  ],
+  "cost": {
+    "estUsd": 0.13,
+    "repairCacheRead": 0,
+    "repairTokens": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 0,
+      "output": 0
+    },
+    "tokens": {
+      "generator": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 20347,
+        "output": 7565
+      },
+      "judge": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 7814,
+        "output": 1198
+      }
+    },
+    "usdLabel": "estimate from list prices; not an invoice",
+    "wallMsMedian": 64208,
+    "wallMsTotal": 64208
+  },
+  "e4Labelled": {
+    "abstentionRate": 0,
+    "accuracy": 1,
+    "bundles": 40,
+    "expectedAbstentionsHit": 1,
+    "note": "measured on 40 authored bundles; the thresholds were set on the same bundles",
+    "wrongLanguage": 0
+  },
+  "failures": {},
+  "format": "cartridge-report/1",
+  "header": {
+    "datasetVersion": "v1",
+    "label": "smoke1",
+    "models": {
+      "builder": "claude-sonnet-5",
+      "judge": "claude-haiku-4-5",
+      "planner": "claude-sonnet-5"
+    },
+    "priceTableVersion": "2026-09-24",
+    "tier": "one"
+  },
+  "items": [
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 3.996,
+        "metrics": {
+          "bootMs": 32.3,
+          "distinctColours": 758,
+          "firstEndSeconds": 3.389,
+          "idleMotionRatio": 0.024,
+          "lumaStddev": 12.493,
+          "tapMotionRatio": 0.145
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "partly"
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Kite Over Rooftops",
+          "Tap to begin",
+          "Kite crashed!",
+          "Tap to fly again"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "kite-over-roofs",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 20347,
+          "output": 7565
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7814,
+          "output": 1198
+        }
+      },
+      "wallMs": 64208
+    }
+  ],
+  "noiseFloor": "One generation per item. With 1 item per band, one item moves a band rate by 100 points. Differences smaller than that are not interpretable.",
+  "notMeasured": [
+    "fun or difficulty",
+    "audio",
+    "accessibility",
+    "real-device performance",
+    "multi-turn edits",
+    "languages other than en/fr",
+    "variance across repeated generations",
+    "E3 agreement with human raters",
+    "E4 accuracy beyond its 40 authored bundles",
+    "E2 detection rates on generated games (the thresholds encode this repo's own fixture-based definitions)",
+    "any band other than the single item's band",
+    "any game type other than the single item's type"
+  ],
+  "repair": {
+    "histogram": {
+      "1": 1
+    },
+    "triggers": {}
+  },
+  "totals": {
+    "contractFailed": 0,
+    "estUsd": 0.13,
+    "games": 1,
+    "harnessFailures": 0,
+    "n": 1,
+    "refusals": 0
+  }
+}

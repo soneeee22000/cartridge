@@ -1,0 +1,527 @@
+{
+  "bands": [
+    {
+      "band": "terse",
+      "contractFailed": 1,
+      "e1": null,
+      "e2": {
+        "detectorFails": {},
+        "passed": 0,
+        "probed": 0
+      },
+      "e3": {
+        "fail-state-clarity": {},
+        "feedback-on-input": {},
+        "goal-legibility": {},
+        "prompt-coverage": {}
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 0,
+        "mismatch": 0
+      },
+      "games": 0,
+      "harnessFailures": 0,
+      "medianBuildAttempts": null,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "short-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "idle-death": 1
+        },
+        "passed": 0,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "null": 1
+        },
+        "feedback-on-input": {
+          "null": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "full-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "boot-handshake": 1,
+          "console-error": 1
+        },
+        "passed": 0,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "edge",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {},
+        "passed": 1,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    }
+  ],
+  "cost": {
+    "estUsd": 0.798,
+    "repairCacheRead": 0,
+    "repairTokens": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 82132,
+      "output": 13647
+    },
+    "tokens": {
+      "generator": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 174764,
+        "output": 41025
+      },
+      "judge": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 23989,
+        "output": 2894
+      }
+    },
+    "usdLabel": "estimate from list prices; not an invoice",
+    "wallMsMedian": 64747,
+    "wallMsTotal": 330184
+  },
+  "e4Labelled": {
+    "abstentionRate": 0,
+    "accuracy": 1,
+    "bundles": 40,
+    "expectedAbstentionsHit": 1,
+    "note": "measured on 40 authored bundles; the thresholds were set on the same bundles",
+    "wrongLanguage": 0
+  },
+  "failures": {
+    "generate": {
+      "contract-unmet": 1
+    }
+  },
+  "format": "cartridge-report/1",
+  "header": {
+    "datasetVersion": "v1",
+    "label": "smoke",
+    "models": {
+      "builder": "claude-sonnet-5",
+      "judge": "claude-haiku-4-5",
+      "planner": "claude-sonnet-5"
+    },
+    "priceTableVersion": "2026-09-24",
+    "tier": "sample"
+  },
+  "items": [
+    {
+      "buildAttempts": 4,
+      "e1Score": null,
+      "e2": null,
+      "e3": null,
+      "e4": null,
+      "failure": {
+        "code": "contract-unmet",
+        "ruleIds": [
+          "E1-24"
+        ],
+        "step": "generate"
+      },
+      "gameType": null,
+      "id": "bubble-pop",
+      "intendedType": "toy-box",
+      "lang": "en",
+      "lengthBand": "terse",
+      "outcome": "contract-failed",
+      "repairRules": [
+        "E1-24",
+        "E1-24",
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 82132,
+        "output": 13647
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 101857,
+          "output": 17996
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 0,
+          "output": 0
+        }
+      },
+      "wallMs": 143177
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 3.942,
+        "metrics": {
+          "bootMs": 32.2,
+          "distinctColours": 881,
+          "firstEndSeconds": 3.358,
+          "idleMotionRatio": 0.019,
+          "lumaStddev": 11.362,
+          "tapMotionRatio": 0.183
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Kite on the Wind",
+          "Tap to begin",
+          "Flight Over",
+          "— tap to fly again"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "kite-over-roofs",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 23615,
+          "output": 7378
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7561,
+          "output": 883
+        }
+      },
+      "wallMs": 57513
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [
+          "error: Uncaught TypeError: Cannot read properties of undefined (reading '0')"
+        ],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "fail",
+          "console-error": "fail",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": null,
+          "distinctColours": 5021,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 41.125,
+          "tapMotionRatio": 0.903
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Le Hérisson des Haies",
+          "Score:",
+          "Pas:",
+          "Glissez pour vous déplacer et ramasser les pommes",
+          "Bravo, vous êtes sorti(e) !",
+          "Glissez pour rejouer",
+          "Plus de pas...",
+          "Glissez pour réessayer",
+          "En attente..."
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "maze-de-haies",
+      "intendedType": "puzzle-board",
+      "lang": "fr",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 24732,
+          "output": 8446
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8627,
+          "output": 1110
+        }
+      },
+      "wallMs": 69969
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 21.7,
+          "distinctColours": 2242,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.028,
+          "lumaStddev": 41.372,
+          "tapMotionRatio": 0.071
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Le Gardien du Phare",
+          "Nuit",
+          "Score:",
+          "Sauvés:",
+          "Glissez le doigt pour tourner le faisceau",
+          "Guidez chaque bateau au port avant les rochers",
+          "Touchez pour commencer",
+          "Score final:",
+          "Touchez pour recommencer",
+          "Bateau échoué !",
+          "Toutes les nuits éclairées !",
+          "Préparez-vous..."
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "phare-long",
+      "intendedType": "stage-clear",
+      "lang": "fr",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 24560,
+          "output": 7205
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7801,
+          "output": 901
+        }
+      },
+      "wallMs": 59525
+    }
+  ],
+  "noiseFloor": "One generation per item. With 1 item per band, one item moves a band rate by 100 points. Differences smaller than that are not interpretable.",
+  "notMeasured": [
+    "fun or difficulty",
+    "audio",
+    "accessibility",
+    "real-device performance",
+    "multi-turn edits",
+    "languages other than en/fr",
+    "variance across repeated generations",
+    "E3 agreement with human raters",
+    "E4 accuracy beyond its 40 authored bundles",
+    "E2 detection rates on generated games (the thresholds encode this repo's own fixture-based definitions)",
+    "differences between bands (one item per band)",
+    "differences between game types (one item per type)"
+  ],
+  "repair": {
+    "histogram": {
+      "1": 3,
+      "4": 1
+    },
+    "triggers": {
+      "E1-24": 3
+    }
+  },
+  "totals": {
+    "contractFailed": 1,
+    "estUsd": 0.798,
+    "games": 3,
+    "harnessFailures": 0,
+    "n": 4,
+    "refusals": 0
+  }
+}

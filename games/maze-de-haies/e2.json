@@ -1,0 +1,22 @@
+{
+  "consoleErrors": [
+    "error: Uncaught TypeError: Cannot read properties of undefined (reading '0')"
+  ],
+  "detectors": {
+    "blank-frame": "pass",
+    "boot-handshake": "fail",
+    "console-error": "fail",
+    "idle-death": "pass",
+    "idle-static": "n/a",
+    "tap-unresponsive": "pass"
+  },
+  "longestPlaySeconds": 25,
+  "metrics": {
+    "bootMs": null,
+    "distinctColours": 5021,
+    "firstEndSeconds": null,
+    "idleMotionRatio": 0,
+    "lumaStddev": 41.12517076430982,
+    "tapMotionRatio": 0.9032595486111111
+  }
+}

@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Hérisson des Haies</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden;
+    background: #f4ecd8;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    touch-action: none;
+  }
+  #wrap {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="game"></canvas>
+</div>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---- Game setup ----
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+let CW = 0, CH = 0; // CSS pixel size
+
+let paused = false;
+let started = false;
+
+// Palette
+const COL_BG = "#f4ecd8";
+const COL_LAYER = "#e07a5f";
+const COL_ACCENT = "#3d405b";
+const COL_HILITE = "#81b29a";
+
+// --- Seeded jitter for paper-cut look ---
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+const jitterRng = makeRng(20240501);
+function jitterVal(scale) {
+  return (jitterRng() - 0.5) * 2 * scale;
+}
+
+// --- Maze definition ---
+// Grid based maze. 0 = hedge wall, 1 = path, 2 = apple, 3 = start, 4 = exit
+const GRID_W = 9;
+const GRID_H = 11;
+
+// Simple hand-authored maze (hedge=1 wall represented by border char, we'll build with algorithm below instead)
+let grid = [];
+let stepsLeft = 0;
+let maxSteps = 0;
+let applesTotal = 0;
+let applesCollected = 0;
+let hedgehog = { x: 0, y: 0 };
+let exitPos = { x: 0, y: 0 };
+let score = 0;
+let stage = 1;
+let gameOver = false; // true after end sent
+let endReason = null;
+
+function buildMaze(seed) {
+  const rng = makeRng(seed);
+  // start all walls
+  const w = GRID_W, h = GRID_H;
+  const cells = [];
+  for (let y = 0; y < h; y++) {
+    cells.push(new Array(w).fill(0));
+  }
+  // carve using randomized DFS on odd coordinates
+  function idx(x, y) { return y * w + x; }
+  const visited = new Array(w * h).fill(false);
+  function inBounds(x, y) { return x >= 0 && x < w && y >= 0 && y < h; }
+  const stack = [];
+  let startX = 1, startY = 1;
+  cells[startY][startX] = 1;
+  visited[idx(startX, startY)] = true;
+  stack.push([startX, startY]);
+  const dirs = [[2,0],[-2,0],[0,2],[0,-2]];
+  while (stack.length) {
+    const [cx, cy] = stack[stack.length - 1];
+    // shuffle dirs
+    const dd = dirs.slice();
+    for (let i = dd.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [dd[i], dd[j]] = [dd[j], dd[i]];
+    }
+    let carved = false;
+    for (const [dx, dy] of dd) {
+      const nx = cx + dx, ny = cy + dy;
+      if (inBounds(nx, ny) && !visited[idx(nx, ny)]) {
+        cells[cy + dy / 2][cx + dx / 2] = 1;
+        cells[ny][nx] = 1;
+        visited[idx(nx, ny)] = true;
+        stack.push([nx, ny]);
+        carved = true;
+        break;
+      }
+    }
+    if (!carved) stack.pop();
+  }
+  return cells;
+}
+
+function collectPathCells(cells) {
+  const list = [];
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (cells[y][x] === 1) list.push({ x, y });
+    }
+  }
+  return list;
+}
+
+function manhattan(a, b) {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+function setupLevel(levelIndex) {
+  grid = buildMaze(1000 + levelIndex * 77);
+  const pathCells = collectPathCells(grid);
+  // start at 1,1
+  hedgehog = { x: 1, y: 1 };
+  // pick exit as farthest reachable path cell
+  let best = pathCells[0];
+  let bestDist = -1;
+  for (const c of pathCells) {
+    const d = manhattan(c, hedgehog);
+    if (d > bestDist) { bestDist = d; best = c; }
+  }
+  exitPos = { x: best.x, y: best.y };
+  grid[hedgehog.y][hedgehog.x] = 3;
+  grid[exitPos.y][exitPos.x] = 4;
+
+  // place apples on some path cells (not start/exit)
+  const candidates = pathCells.filter(c =>
+    !(c.x === hedgehog.x && c.y === hedgehog.y) &&
+    !(c.x === exitPos.x && c.y === exitPos.y)
+  );
+  const rng = makeRng(555 + levelIndex * 31);
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+  }
+  const appleCount = Math.min(6, Math.floor(candidates.length * 0.18) + 3);
+  applesTotal = 0;
+  for (let i = 0; i < appleCount && i < candidates.length; i++) {
+    const c = candidates[i];
+    grid[c.y][c.x] = 2;
+    applesTotal++;
+  }
+  applesCollected = 0;
+
+  // steps budget: shortest path length * factor + apples reach margin
+  maxSteps = Math.floor(bestDist * 2.2) + applesTotal * 3 + 6;
+  stepsLeft = maxSteps;
+  gameOver = false;
+  endReason = null;
+}
+
+// --- Layout ---
+let cellSize = 20;
+let boardOffsetX = 0, boardOffsetY = 0;
+let topBarHeight = 70;
+
+function resize() {
+  CW = window.innerWidth;
+  CH = window.innerHeight;
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(CW * DPR);
+  canvas.height = Math.floor(CH * DPR);
+  canvas.style.width = CW + "px";
+  canvas.style.height = CH + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  const availH = CH - topBarHeight - 20;
+  const availW = CW - 20;
+  cellSize = Math.floor(Math.min(availW / GRID_W, availH / GRID_H));
+  cellSize = Math.max(cellSize, 16);
+  boardOffsetX = (CW - GRID_W * cellSize) / 2;
+  boardOffsetY = topBarHeight + (availH - GRID_H * cellSize) / 2;
+  draw();
+}
+window.addEventListener("resize", resize);
+
+// --- Drawing helpers: paper-cut style ---
+function roundRectPath(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function jitteredRoundRect(x, y, w, h, r, seedOffset) {
+  // Draw a slightly irregular quad using jitter on corners for paper-cut edges
+  const j = 1.5;
+  ctx.beginPath();
+  const pts = [
+    [x, y], [x + w, y], [x + w, y + h], [x, y + h]
+  ];
+  const jp = pts.map((p, i) => [
+    p[0] + jitterVal(j),
+    p[1] + jitterVal(j)
+  ]);
+  ctx.moveTo(jp[0][0] + r, jp[0][1]);
+  ctx.lineTo(jp[1][0] - r, jp[1][1]);
+  ctx.quadraticCurveTo(jp[1][0], jp[1][1], jp[1][0], jp[1][1] + r);
+  ctx.lineTo(jp[2][0], jp[2][1] - r);
+  ctx.quadraticCurveTo(jp[2][0], jp[2][1], jp[2][0] - r, jp[2][1]);
+  ctx.lineTo(jp[3][0] + r, jp[3][1]);
+  ctx.quadraticCurveTo(jp[3][0], jp[3][1], jp[3][0], jp[3][1] - r);
+  ctx.lineTo(jp[0][0], jp[0][1] + r);
+  ctx.quadraticCurveTo(jp[0][0], jp[0][1], jp[0][0] + r, jp[0][1]);
+  ctx.closePath();
+}
+
+function drawShadowLayer(drawFn) {
+  ctx.save();
+  ctx.shadowColor = "rgba(61,64,91,0.35)";
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 3;
+  drawFn();
+  ctx.restore();
+}
+
+function drawBackground() {
+  ctx.fillStyle = COL_BG;
+  ctx.fillRect(0, 0, CW, CH);
+}
+
+function drawTopBar() {
+  const plateW = CW - 20;
+  const plateH = 56;
+  const px = 10, py = 8;
+  drawShadowLayer(() => {
+    ctx.fillStyle = COL_LAYER;
+    jitteredRoundRect(px, py, plateW, plateH, 10);
+    ctx.fill();
+  });
+  ctx.fillStyle = "#fff8ec";
+  ctx.font = "bold 16px sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillText("Score: " + score, px + 16, py + plateH / 2);
+
+  ctx.textAlign = "center";
+  ctx.fillText("🦔 " + applesCollected + "/" + applesTotal, px + plateW / 2, py + plateH / 2);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = stepsLeft <= 3 ? "#ffd7d0" : "#fff8ec";
+  ctx.fillText("Pas: " + stepsLeft, px + plateW - 16, py + plateH / 2);
+}
+
+function cellRect(gx, gy) {
+  return {
+    x: boardOffsetX + gx * cellSize,
+    y: boardOffsetY + gy * cellSize,
+    w: cellSize,
+    h: cellSize
+  };
+}
+
+function drawBoardBase() {
+  // board backing plate
+  const bx = boardOffsetX - 8;
+  const by = boardOffsetY - 8;
+  const bw = GRID_W * cellSize + 16;
+  const bh = GRID_H * cellSize + 16;
+  drawShadowLayer(() => {
+    ctx.fillStyle = "#fffaf0";
+    jitteredRoundRect(bx, by, bw, bh, 14);
+    ctx.fill();
+  });
+}
+
+function drawHedges() {
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (grid[y][x] === 0) {
+        const r = cellRect(x, y);
+        drawShadowLayer(() => {
+          ctx.fillStyle = COL_HILITE;
+          jitteredRoundRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, 4);
+          ctx.fill();
+        });
+        // little leaf texture lines
+        ctx.strokeStyle = "rgba(61,64,91,0.25)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(r.x + 3, r.y + r.h * 0.4);
+        ctx.lineTo(r.x + r.w - 3, r.y + r.h * 0.6);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function drawApples() {
+  for (let y = 0; y < GRID_H; y++) {
+    for (let x = 0; x < GRID_W; x++) {
+      if (grid[y][x] === 2) {
+        const r = cellRect(x, y);
+        const cx = r.x + r.w / 2;
+        const cy = r.y + r.h / 2;
+        const rad = cellSize * 0.24;
+        drawShadowLayer(() => {
+          ctx.fillStyle = COL_LAYER;
+          ctx.beginPath();
+          ctx.arc(cx + jitterVal(1), cy + jitterVal(1), rad, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.fillStyle = COL_ACCENT;
+        ctx.fillRect(cx - 1, cy - rad - 4, 2, 4);
+      }
+    }
+  }
+}
+
+function drawExit() {
+  const r = cellRect(exitPos.x, exitPos.y);
+  drawShadowLayer(() => {
+    ctx.fillStyle = COL_ACCENT;
+    jitteredRoundRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6, 6);
+    ctx.fill();
+  });
+  ctx.fillStyle = COL_HILITE;
+  ctx.font = (cellSize * 0.5) + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🚪", r.x + r.w / 2, r.y + r.h / 2 + 1);
+}
+
+function drawHedgehog() {
+  const r = cellRect(hedgehog.x, hedgehog.y);
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+  drawShadowLayer(() => {
+    ctx.fillStyle = COL_ACCENT;
+    ctx.beginPath();
+    ctx.arc(cx, cy, cellSize * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.font = (cellSize * 0.55) + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🦔", cx, cy + 1);
+}
+
+function drawOverlayMessage(lines, sub) {
+  ctx.save();
+  ctx.fillStyle = "rgba(61,64,91,0.55)";
+  ctx.fillRect(0, 0, CW, CH);
+  const plateW = Math.min(CW - 40, 420);
+  const plateH = 200;
+  const px = (CW - plateW) / 2;
+  const py = (CH - plateH) / 2;
+  drawShadowLayer(() => {
+    ctx.fillStyle = "#fff8ec";
+    jitteredRoundRect(px, py, plateW, plateH, 16);
+    ctx.fill();
+  });
+  ctx.fillStyle = COL_ACCENT;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillText(lines, CW / 2, py + plateH * 0.4);
+  ctx.font = "16px sans-serif";
+  ctx.fillText(sub, CW / 2, py + plateH * 0.65);
+  ctx.restore();
+}
+
+function draw() {
+  drawBackground();
+  drawTopBar();
+  drawBoardBase();
+  drawHedges();
+  drawApples();
+  drawExit();
+  drawHedgehog();
+
+  if (!started) {
+    drawOverlayMessage("Le Hérisson des Haies", "Glissez pour vous déplacer et ramasser les pommes");
+  } else if (gameOver) {
+    if (endReason === "win") {
+      drawOverlayMessage("Bravo, vous êtes sorti(e) !", "Glissez pour rejouer");
+    } else if (endReason === "stuck") {
+      drawOverlayMessage("Plus de pas...", "Glissez pour réessayer");
+    }
+  } else if (paused) {
+    drawOverlayMessage("Pause", "En attente...");
+  }
+}
+
+// --- Game logic ---
+function isWalkable(x, y) {
+  if (x < 0 || x >= GRID_W || y < 0 || y >= GRID_H) return false;
+  return grid[y][x] !== 0;
+}
+
+function anyLegalMove() {
+  if (stepsLeft <= 0) return false;
+  const { x, y } = hedgehog;
+  return isWalkable(x + 1, y) || isWalkable(x - 1, y) || isWalkable(x, y + 1) || isWalkable(x, y - 1);
+}
+
+function tryMove(dx, dy) {
+  if (!started || gameOver || paused) return;
+  const nx = hedgehog.x + dx;
+  const ny = hedgehog.y + dy;
+  if (!isWalkable(nx, ny)) return;
+  if (stepsLeft <= 0) return;
+
+  hedgehog.x = nx;
+  hedgehog.y = ny;
+  stepsLeft -= 1;
+
+  let scored = false;
+  if (grid[ny][nx] === 2) {
+    grid[ny][nx] = 1;
+    applesCollected += 1;
+    score += 10;
+    scored = true;
+  }
+
+  if (nx === exitPos.x && ny === exitPos.y) {
+    score += 50 + stepsLeft * 2;
+    scored = true;
+  }
+
+  if (scored) {
+    CARTRIDGE.send("score", { value: score });
+  }
+
+  if (nx === exitPos.x && ny === exitPos.y) {
+    gameOver = true;
+    endReason = "win";
+    CARTRIDGE.send("end", { reason: "win", value: score });
+  } else if (!anyLegalMove()) {
+    gameOver = true;
+    endReason = "stuck";
+    CARTRIDGE.send("end", { reason: "stuck" });
+  }
+
+  draw();
+}
+
+// --- Input: swipe lanes style, adapted to 4-direction grid ---
+const SWIPE_FRACTION = 0.08;
+let pressX = 0, pressY = 0;
+let pressActive = false;
+
+function beginPlay() {
+  if (started && !gameOver) return;
+  started = true;
+  gameOver = false;
+  endReason = null;
+  score = 0;
+  stage = 1;
+  setupLevel(stage);
+  CARTRIDGE.send("start");
+  CARTRIDGE.send("level", { index: stage });
+  CARTRIDGE.send("score", { value: score });
+  draw();
+}
+
+function nextStage() {
+  stage += 1;
+  setupLevel(stage);
+  CARTRIDGE.send("level", { index: stage });
+  draw();
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+  pressX = event.clientX;
+  pressY = event.clientY;
+  pressActive = true;
+});
+
+canvas.addEventListener("pointerup", (event) => {
+  if (!pressActive) return;
+  pressActive = false;
+
+  if (!started || gameOver) {
+    if (gameOver && endReason === "win") {
+      nextStage();
+      // still "started", not gameOver until nextStage resolves
+      started = true;
+      gameOver = false;
+      draw();
+      return;
+    }
+    beginPlay();
+    return;
+  }
+
+  const dx = event.clientX - pressX;
+  const dy = event.clientY - pressY;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+
+  const minSwipe = w * SWIPE_FRACTION;
+  const minSwipeV = h * SWIPE_FRACTION;
+
+  if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipeV) return;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (Math.abs(dx) >= minSwipe) {
+      tryMove(Math.sign(dx), 0);
+    }
+  } else {
+    if (Math.abs(dy) >= minSwipeV) {
+      tryMove(0, Math.sign(dy));
+    }
+  }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (!started || gameOver) {
+    if (event.key === "Enter" || event.key === " ") {
+      beginPlay();
+    }
+    return;
+  }
+  if (event.key === "ArrowLeft") tryMove(-1, 0);
+  else if (event.key === "ArrowRight") tryMove(1, 0);
+  else if (event.key === "ArrowUp") tryMove(0, -1);
+  else if (event.key === "ArrowDown") tryMove(0, 1);
+});
+
+function backToTitle() {
+  started = false;
+  gameOver = false;
+  endReason = null;
+  paused = false;
+  draw();
+}
+
+// --- Pause/resume loop guard (redraw driven by input, but keep a light rAF for overlay consistency) ---
+let rafId = null;
+function loop() {
+  if (!paused) {
+    draw();
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+// --- Boot ---
+function init() {
+  resize();
+  // draw first frame before boot event
+  draw();
+  CARTRIDGE.send("boot", { title: "Le Hérisson des Haies", gameType: "puzzle-board", lang: "fr" });
+  requestAnimationFrame(loop);
+}
+
+init();
+</script>
+</body>
+</html>

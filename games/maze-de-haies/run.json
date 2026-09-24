@@ -1,0 +1,48 @@
+{
+  "artifact": {
+    "bytes": 15548,
+    "sha256": "5cb053574519dcdbb660664f026d838e330ccbc55b8ff90db4e9fd44e56d8b2e",
+    "version": "a0"
+  },
+  "buildAttempts": 1,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "maze-de-haies",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [],
+  "spec": {
+    "gameType": "puzzle-board",
+    "input": "swipe-lanes",
+    "lang": "fr",
+    "loop": "Glissez le doigt pour guider le hérisson case par case dans le labyrinthe et ramasser des pommes. Chaque pas compte : atteignez la sortie avant d'épuiser vos pas, sinon la partie est bloquée.",
+    "slug": "le-herisson-des-haies",
+    "style": "paper-cut",
+    "title": "Le Hérisson des Haies"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 16937,
+      "output": 8082
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 7795,
+      "output": 364
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 0,
+      "output": 0
+    }
+  },
+  "wallMs": 69969
+}

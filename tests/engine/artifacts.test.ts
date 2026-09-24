@@ -74,6 +74,24 @@ describe("FsArtifactStore", () => {
     ]);
   });
 
+  it("keeps every version when saves to one run key overlap", async () => {
+    const { store, root } = fsStore();
+    await Promise.all(
+      [0, 1, 2, 3].map((attempt) =>
+        store.put("kite-rush", attempt, `<p>${attempt}</p>`),
+      ),
+    );
+    const written = JSON.parse(
+      readFileSync(join(root, "kite-rush", "versions.json"), "utf8"),
+    ) as { versions: { version: string }[] };
+    expect(written.versions.map((entry) => entry.version)).toEqual([
+      "a0",
+      "a1",
+      "a2",
+      "a3",
+    ]);
+  });
+
   it("rejects a run key that could escape the root", async () => {
     const { store } = fsStore();
     await expect(store.put("../escape", 0, "x")).rejects.toThrow();

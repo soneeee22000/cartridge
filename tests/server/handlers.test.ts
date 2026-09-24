@@ -45,6 +45,14 @@ describe("dev handlers (§6.3)", () => {
     expect((await store.get("run-1"))?.runKey).toBe("snail-race");
   });
 
+  it("answers 409 while a run for the same run key is still open", async () => {
+    const { handler, queued } = setup();
+    await handler(post({ prompt: "A snail race on a leaf" }));
+    const again = await handler(post({ prompt: "A snail race on a leaf" }));
+    expect(again.status).toBe(409);
+    expect(queued).toEqual(["run-1"]);
+  });
+
   it("derives a stable ad-hoc run key, never a random one", () => {
     expect(adhocRunKey("same")).toBe(adhocRunKey("same"));
     expect(adhocRunKey("same")).toMatch(/^adhoc-[0-9a-f]{12}$/);

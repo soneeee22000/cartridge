@@ -11,6 +11,7 @@ import { ProgressEvent, type StoredEvent } from "../events.ts";
 import { SEAL_LEASE_MS, STALE_ACTIVE_MS } from "../lifecycle.ts";
 import type { Attribution } from "../schemas.ts";
 import {
+  RunKeyBusyError,
   RunRow,
   type CompleteResult,
   type CreateRunInput,
@@ -47,7 +48,9 @@ CREATE TABLE IF NOT EXISTS run_events (
   data_json TEXT NOT NULL,
   at INTEGER NOT NULL,
   PRIMARY KEY (run_id, seq)
-);`;
+);
+CREATE UNIQUE INDEX IF NOT EXISTS runs_one_open_per_key ON runs (run_key)
+  WHERE status IN ('waiting', 'active', 'sealing');`;
 
 const CLAIM_SQL = `UPDATE runs SET status = 'active', claims = claims + 1, owner = ?, heartbeat_at = ?, updated_at = ?
   WHERE id = ? AND claims < max_claims AND (status = 'waiting'
@@ -155,14 +158,28 @@ export class LibSqlRunStore implements RunStore {
   /** @inheritdoc */
   async create(input: CreateRunInput): Promise<RunRow> {
     const now = this.#clock.now();
-    await this.#client.execute({
-      sql: `INSERT INTO runs (id, run_key, prompt, status, claims, max_claims, created_at, updated_at)
-            VALUES (?, ?, ?, 'waiting', 0, ?, ?, ?)`,
-      args: [input.id, input.runKey, input.prompt, input.maxClaims, now, now],
-    });
+    try {
+      await this.#client.execute({
+        sql: `INSERT INTO runs (id, run_key, prompt, status, claims, max_claims, created_at, updated_at)
+              VALUES (?, ?, ?, 'waiting', 0, ?, ?, ?)`,
+        args: [input.id, input.runKey, input.prompt, input.maxClaims, now, now],
+      });
+    } catch (error) {
+      if (await this.#keyBusy(input.runKey))
+        throw new RunKeyBusyError(input.runKey);
+      throw error;
+    }
     const row = await this.get(input.id);
     if (!row) throw new Error(`run ${input.id} was not created`);
     return row;
+  }
+
+  async #keyBusy(runKey: string): Promise<boolean> {
+    const result = await this.#client.execute({
+      sql: "SELECT 1 FROM runs WHERE run_key = ? AND status IN ('waiting', 'active', 'sealing')",
+      args: [runKey],
+    });
+    return result.rows.length > 0;
   }
 
   /** @inheritdoc */

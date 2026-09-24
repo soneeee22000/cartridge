@@ -36,6 +36,23 @@ export const RunRow = z.object({
 });
 export type RunRow = z.infer<typeof RunRow>;
 
+/**
+ * `create` refuses a second open run for one run key: both would write the same artifact
+ * directory and cassette set (§5.3).
+ */
+export class RunKeyBusyError extends Error {
+  readonly runKey: string;
+
+  /**
+   * @param runKey the run key that already has an open run
+   */
+  constructor(runKey: string) {
+    super(`run key ${runKey} already has an open run`);
+    this.name = "RunKeyBusyError";
+    this.runKey = runKey;
+  }
+}
+
 export interface CreateRunInput {
   readonly id: string;
   readonly runKey: string;
@@ -55,6 +72,7 @@ export interface CompleteResult {
  * `sealing` seal owner, so a failed commit can still settle its row.
  */
 export interface RunStore {
+  /** @throws RunKeyBusyError when the run key already has a non-terminal row */
   create(input: CreateRunInput): Promise<RunRow>;
   get(id: string): Promise<RunRow | null>;
   claim(id: string, owner: string, now: number): Promise<boolean>;

@@ -7,11 +7,12 @@ import {
   isTerminal,
 } from "../lifecycle.ts";
 import type { Attribution } from "../schemas.ts";
-import type {
-  CompleteResult,
-  CreateRunInput,
-  RunRow,
-  RunStore,
+import {
+  RunKeyBusyError,
+  type CompleteResult,
+  type CreateRunInput,
+  type RunRow,
+  type RunStore,
 } from "./types.ts";
 
 /**
@@ -45,6 +46,10 @@ export class MemoryRunStore implements RunStore {
 
   /** @inheritdoc */
   create(input: CreateRunInput): Promise<RunRow> {
+    const busy = [...this.#rows.values()].some(
+      (row) => row.runKey === input.runKey && !isTerminal(row.status),
+    );
+    if (busy) return Promise.reject(new RunKeyBusyError(input.runKey));
     const now = this.#clock.now();
     const row: RunRow = {
       ...input,

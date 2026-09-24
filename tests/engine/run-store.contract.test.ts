@@ -8,9 +8,10 @@ import {
 } from "../../src/engine/lifecycle.ts";
 import { LibSqlRunStore } from "../../src/engine/run-store/libsql.ts";
 import { MemoryRunStore } from "../../src/engine/run-store/memory.ts";
-import type {
-  CompleteResult,
-  RunStore,
+import {
+  RunKeyBusyError,
+  type CompleteResult,
+  type RunStore,
 } from "../../src/engine/run-store/types.ts";
 import { MOCK_SPEC } from "../../src/models/mock.ts";
 
@@ -91,6 +92,32 @@ describe.each(implementations)(
         createdAt: START,
       });
       expect(await store.get("nope")).toBeNull();
+    });
+
+    it("allows one open run per run key, and a new one once it is terminal", async () => {
+      const { store, clock } = await harness(make);
+      await expect(
+        store.create({
+          id: "run-2",
+          runKey: "kite-rush",
+          prompt: "kites",
+          maxClaims: MAX_CLAIMS,
+        }),
+      ).rejects.toBeInstanceOf(RunKeyBusyError);
+      await store.claim("run-1", "driver-a", clock.now());
+      await store.abandon(
+        "run-1",
+        "driver-a",
+        driverAttribution("engine-crashed", "bug"),
+      );
+      expect(
+        await store.create({
+          id: "run-2",
+          runKey: "kite-rush",
+          prompt: "kites",
+          maxClaims: MAX_CLAIMS,
+        }),
+      ).toMatchObject({ id: "run-2", status: "waiting" });
     });
 
     it("lets exactly one of two concurrent claims win", async () => {

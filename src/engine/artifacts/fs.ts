@@ -34,10 +34,14 @@ async function readOrNull(path: string): Promise<string | null> {
 
 /**
  * Writes `games/<runKey>/a<n>.html` plus `versions.json` before `put` resolves (§4.3), so a crash
- * never loses a generated page.
+ * never loses a page generated in the current claim. Saves to one run key are serialised inside
+ * the process, so overlapping saves cannot drop a `versions.json` entry. A later claim of the same
+ * run restarts at `a0` and replaces the earlier claim's drafts; only one open run per run key is
+ * allowed (§5.3), so two runs never share a directory at once.
  */
 export class FsArtifactStore implements ArtifactStore {
   readonly root: string;
+  readonly #writes = new Map<string, Promise<unknown>>();
 
   constructor(root: string) {
     this.root = root;
@@ -53,7 +57,25 @@ export class FsArtifactStore implements ArtifactStore {
   }
 
   /** @inheritdoc */
-  async put(
+  put(
+    runKey: string,
+    buildAttempt: number,
+    html: string,
+  ): Promise<ArtifactRef> {
+    const previous = this.#writes.get(runKey) ?? Promise.resolve();
+    const next = previous
+      .catch(() => undefined)
+      .then(() => this.#write(runKey, buildAttempt, html));
+    this.#writes.set(runKey, next);
+    void next
+      .finally(() => {
+        if (this.#writes.get(runKey) === next) this.#writes.delete(runKey);
+      })
+      .catch(() => undefined);
+    return next;
+  }
+
+  async #write(
     runKey: string,
     buildAttempt: number,
     html: string,

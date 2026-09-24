@@ -2,13 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { MAX_CLAIMS } from "../engine/lifecycle.ts";
 import { lastEventIdOf, relayRun, type RelayOptions } from "../engine/relay.ts";
-import type { RunStore } from "../engine/run-store/types.ts";
+import { RunKeyBusyError, type RunStore } from "../engine/run-store/types.ts";
 import { RunKey } from "../engine/schemas.ts";
 import type { WebHandler } from "./node-adapter.ts";
 
 const HTTP_ACCEPTED = 202;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_NOT_FOUND = 404;
+const HTTP_CONFLICT = 409;
 const PROMPT_MAX_CHARS = 4_000;
 const ADHOC_HASH_CHARS = 12;
 const EVENTS_ROUTE = /^\/runs\/([^/]+)\/events$/;
@@ -56,12 +57,20 @@ async function createRun(
     );
   const { prompt, promptId } = parsed.data;
   const runId = (deps.newId ?? randomUUID)();
-  await deps.store.create({
-    id: runId,
-    runKey: promptId ?? adhocRunKey(prompt),
-    prompt,
-    maxClaims: deps.maxClaims ?? MAX_CLAIMS,
-  });
+  try {
+    await deps.store.create({
+      id: runId,
+      runKey: promptId ?? adhocRunKey(prompt),
+      prompt,
+      maxClaims: deps.maxClaims ?? MAX_CLAIMS,
+    });
+  } catch (error) {
+    if (!(error instanceof RunKeyBusyError)) throw error;
+    return Response.json(
+      { error: "a run for this prompt is still open" },
+      { status: HTTP_CONFLICT },
+    );
+  }
   deps.enqueue(runId);
   return Response.json({ runId }, { status: HTTP_ACCEPTED });
 }

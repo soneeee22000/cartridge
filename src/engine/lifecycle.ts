@@ -47,11 +47,25 @@ export function isTerminal(status: RunStatus): boolean {
  */
 export function canClaim(row: LeaseFields, now: number): boolean {
   if (row.claims >= row.maxClaims) return false;
-  if (row.status === "waiting") return true;
+  return row.status === "waiting" || leaseExpired(row, now);
+}
+
+function leaseExpired(row: LeaseFields, now: number): boolean {
   if (row.status === "active")
     return (row.heartbeatAt ?? 0) < now - STALE_ACTIVE_MS;
   if (row.status === "sealing") return (row.sealUntil ?? 0) < now;
   return false;
+}
+
+/**
+ * The reaper guard (§5.1): a stale `active` row or an expired `sealing` row whose claims are used
+ * up can never be claimed again, so it is abandoned instead of staying open for good. The same
+ * predicate as the SQL `WHERE` clause.
+ * @param row current lease fields
+ * @param now current time in milliseconds
+ */
+export function canReap(row: LeaseFields, now: number): boolean {
+  return row.claims >= row.maxClaims && leaseExpired(row, now);
 }
 
 /**

@@ -110,4 +110,37 @@ describe("driver queue", () => {
     await queue.idle();
     expect(done).toEqual(["good"]);
   });
+
+  it("drives a run again when the driver asks for a requeue", async () => {
+    const outcomes = ["released", "complete"];
+    const driven: string[] = [];
+    const queue = createDriverQueue(
+      1,
+      (runId) => {
+        driven.push(runId);
+        return Promise.resolve(outcomes.shift());
+      },
+      (outcome) => outcome === "released",
+    );
+    queue.enqueue("a");
+    await queue.idle();
+    expect(driven).toEqual(["a", "a"]);
+  });
+
+  it("ignores a run that is already queued or running", async () => {
+    const driven: string[] = [];
+    const { promise: blocked, resolve } = Promise.withResolvers<undefined>();
+    const queue = createDriverQueue(1, async (runId) => {
+      driven.push(runId);
+      await blocked;
+    });
+    queue.enqueue("a");
+    queue.enqueue("a");
+    queue.enqueue("b");
+    queue.enqueue("b");
+    resolve(undefined);
+    await queue.idle();
+    expect(driven).toEqual(["a", "b"]);
+  });
 });
+

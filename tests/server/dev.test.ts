@@ -54,4 +54,18 @@ describe("dev server in mock mode (§14 S2)", () => {
     const unknown = await fetch(`${server.url}/runs/none/events`);
     expect(unknown.status).toBe(404);
   });
+
+  it("drives a run left waiting by an earlier process when it starts", async () => {
+    const store = new MemoryRunStore(systemClock);
+    await store.create({
+      id: "left-over",
+      runKey: "left-over",
+      prompt: "A paper boat drifting between lily pads",
+      maxClaims: 2,
+    });
+    server = await startDevServer({ port: 0, mode: "mock", store, env: {} });
+    await server.queue.idle();
+    expect((await store.get("left-over"))?.status).toBe("complete");
+  });
 });
+

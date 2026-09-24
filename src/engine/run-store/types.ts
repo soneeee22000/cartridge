@@ -80,6 +80,13 @@ export interface RunStore {
    * `sealing` seal owner), so a driver that lost its claim cannot write into the next claim's log.
    * @returns the new seq, or null when the caller does not hold the lease
    */
+  /**
+   * Abandons a row whose lease expired with no claims left (`canReap`).
+   * @returns true when this call abandoned the row
+   */
+  reap(id: string, now: number, attribution: Attribution): Promise<boolean>;
+  /** Rows that are not terminal yet (`waiting`, `active`, `sealing`), oldest first. */
+  listOpen(): Promise<RunRow[]>;
   appendEvent(
     id: string,
     owner: string,

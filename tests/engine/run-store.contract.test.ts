@@ -216,6 +216,57 @@ describe.each(implementations)(
       expect(await store.claim("run-1", "driver-d", clock.now())).toBe(false);
     });
 
+    it("reaps a stale row with no claims left, and only that row", async () => {
+      const { store, clock } = await harness(make);
+      await store.create({
+        id: "run-2",
+        runKey: "last-claim",
+        prompt: "x",
+        maxClaims: 1,
+      });
+      const reaped = driverAttribution("lease-lost", "no claims left");
+      await store.claim("run-1", "driver-a", clock.now());
+      await store.claim("run-2", "driver-a", clock.now());
+      expect(await store.reap("run-2", clock.now(), reaped)).toBe(false);
+      clock.advance(STALE_ACTIVE_MS + 1);
+      expect(await store.reap("run-1", clock.now(), reaped)).toBe(false);
+      expect(await store.reap("run-2", clock.now(), reaped)).toBe(true);
+      expect(await store.get("run-2")).toMatchObject({
+        status: "abandoned",
+        attribution: reaped,
+      });
+      expect(await store.reap("run-2", clock.now(), reaped)).toBe(false);
+    });
+
+    it("lists the open rows, oldest first", async () => {
+      const { store, clock } = await harness(make);
+      clock.advance(1);
+      await store.create({
+        id: "run-2",
+        runKey: "second",
+        prompt: "x",
+        maxClaims: 1,
+      });
+      clock.advance(1);
+      await store.create({
+        id: "run-3",
+        runKey: "third",
+        prompt: "x",
+        maxClaims: 1,
+      });
+      await store.claim("run-3", "driver-a", clock.now());
+      await store.abandon(
+        "run-3",
+        "driver-a",
+        driverAttribution("engine-crashed", "bug"),
+      );
+      await store.claim("run-2", "driver-a", clock.now());
+      expect((await store.listOpen()).map((open) => open.id)).toEqual([
+        "run-1",
+        "run-2",
+      ]);
+    });
+
     it("appends events with a per-run sequence and lists them after a seq", async () => {
       const { store, clock } = await harness(make);
       await store.create({

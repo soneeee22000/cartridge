@@ -1,6 +1,11 @@
 import type { Clock } from "../clock.ts";
 import { ProgressEvent, type StoredEvent } from "../events.ts";
-import { SEAL_LEASE_MS, canClaim } from "../lifecycle.ts";
+import {
+  SEAL_LEASE_MS,
+  canClaim,
+  canReap,
+  isTerminal,
+} from "../lifecycle.ts";
 import type { Attribution } from "../schemas.ts";
 import type {
   CompleteResult,
@@ -157,6 +162,24 @@ export class MemoryRunStore implements RunStore {
       }),
     );
     return Promise.resolve(won);
+  }
+
+  /** @inheritdoc */
+  reap(id: string, now: number, attribution: Attribution): Promise<boolean> {
+    const won = this.#update(
+      id,
+      (row) => canReap(row, now),
+      () => ({ status: "abandoned", attribution }),
+    );
+    return Promise.resolve(won);
+  }
+
+  /** @inheritdoc */
+  listOpen(): Promise<RunRow[]> {
+    const open = [...this.#rows.values()]
+      .filter((row) => !isTerminal(row.status))
+      .sort((left, right) => left.createdAt - right.createdAt);
+    return Promise.resolve(open);
   }
 
   /** @inheritdoc */

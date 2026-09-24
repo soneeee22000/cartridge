@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createServer } from "node:http";
+import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +12,10 @@ import { driveRun } from "../engine/driver.ts";
 import { LibSqlRunStore, resolveDbUrl } from "../engine/run-store/libsql.ts";
 import type { RunStore } from "../engine/run-store/types.ts";
 import type { RunInput } from "../engine/schemas.ts";
-import { cartridgePort } from "../engine/workflow-port.ts";
+import {
+  cartridgePort,
+  type StartWorkflowStream,
+} from "../engine/workflow-port.ts";
 import { demoMockModels } from "../models/mock.ts";
 import {
   createModel,
@@ -26,6 +29,7 @@ import {
   createDriverQueue,
   type DriverQueue,
 } from "./queue.ts";
+import { SWEEP_INTERVAL_MS, sweepRuns, type SweepDeps } from "./sweep.ts";
 
 /** Default dev port (§12.1). */
 export const DEV_PORT = 4270;
@@ -78,9 +82,59 @@ function cartridgeFactory(
   };
 }
 
+function startSweeper(deps: SweepDeps): NodeJS.Timeout {
+  const timer = setInterval(() => {
+    sweepRuns(deps).catch((error: unknown) => {
+      process.stderr.write(`sweep failed: ${String(error)}
+`);
+    });
+  }, SWEEP_INTERVAL_MS);
+  timer.unref();
+  return timer;
+}
+
+function listen(server: Server, port: number): Promise<string> {
+  return new Promise<string>((resolve) => {
+    server.listen(port, LOCALHOST, () => {
+      const { port: bound } = server.address() as AddressInfo;
+      resolve(`http://${LOCALHOST}:${bound}`);
+    });
+  });
+}
+
+function closer(server: Server, sweeper: NodeJS.Timeout): () => Promise<void> {
+  return () =>
+    new Promise<void>((resolve) => {
+      clearInterval(sweeper);
+      server.closeAllConnections();
+      server.close(() => {
+        resolve();
+      });
+    });
+}
+
+function driverQueue(
+  store: RunStore,
+  startWorkflowStream: StartWorkflowStream,
+): DriverQueue {
+  const owner = `dev-${randomUUID()}`;
+  return createDriverQueue(
+    DRIVER_CONCURRENCY,
+    (runId) =>
+      driveRun(runId, {
+        store,
+        clock: systemClock,
+        owner,
+        startWorkflowStream,
+      }),
+    (outcome) => outcome === "released",
+  );
+}
+
 /**
  * Starts the local dev server: `POST /runs` and `GET /runs/:id/events`, with drivers running
- * in-process through a small queue (§5.4, §6.3).
+ * in-process through a small queue (§5.4, §6.3). A released run is driven again, and a sweep at
+ * start and every `SWEEP_INTERVAL_MS` picks up rows left open by an earlier process.
  * @param options port, model mode, run store, environment and repo root
  */
 export async function startDevServer(
@@ -92,19 +146,14 @@ export async function startDevServer(
   const store =
     options.store ??
     (await LibSqlRunStore.open(resolveDbUrl(env, root), systemClock));
-  const startWorkflowStream = cartridgePort(cartridgeFactory(mode, env, root));
-  const owner = `dev-${randomUUID()}`;
-  const queue = createDriverQueue(DRIVER_CONCURRENCY, (runId) =>
-    driveRun(runId, { store, clock: systemClock, owner, startWorkflowStream }),
+  const queue = driverQueue(
+    store,
+    cartridgePort(cartridgeFactory(mode, env, root)),
   );
-  const node = toNodeHandler(
-    createDevHandler({
-      store,
-      enqueue: (runId) => {
-        queue.enqueue(runId);
-      },
-    }),
-  );
+  const enqueue = (runId: string): void => {
+    queue.enqueue(runId);
+  };
+  const node = toNodeHandler(createDevHandler({ store, enqueue }));
   const server = createServer((incoming, outgoing) => {
     node(incoming, outgoing).catch((error: unknown) => {
       process.stderr.write(`request failed: ${String(error)}
@@ -112,21 +161,10 @@ export async function startDevServer(
       outgoing.destroy();
     });
   });
-  await new Promise<void>((resolve) =>
-    server.listen(options.port ?? DEV_PORT, LOCALHOST, resolve),
-  );
-  const { port } = server.address() as AddressInfo;
-  return {
-    url: `http://${LOCALHOST}:${port}`,
-    queue,
-    close: () =>
-      new Promise<void>((resolve) => {
-        server.closeAllConnections();
-        server.close(() => {
-          resolve();
-        });
-      }),
-  };
+  const sweep = { store, clock: systemClock, enqueue };
+  await sweepRuns(sweep);
+  const url = await listen(server, options.port ?? DEV_PORT);
+  return { url, queue, close: closer(server, startSweeper(sweep)) };
 }
 
 if (import.meta.main) {

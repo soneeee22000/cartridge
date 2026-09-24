@@ -60,6 +60,12 @@ const BEGIN_SEAL_SQL = `UPDATE runs SET status = 'sealing', seal_owner = ?, seal
 const COMPLETE_SQL = `UPDATE runs SET status = 'complete', spec_json = ?, artifact_json = ?, artifact_sha = ?,
   e1_score = ?, updated_at = ?
   WHERE id = ? AND ((status = 'sealing' AND seal_owner = ?) OR (status = 'complete' AND artifact_sha = ?))`;
+const LEASE_EXPIRED = `((status = 'active' AND COALESCE(heartbeat_at, 0) < ?)
+    OR (status = 'sealing' AND COALESCE(seal_until, 0) < ?))`;
+const REAP_SQL = `UPDATE runs SET status = 'abandoned', attribution_json = ?, updated_at = ?
+  WHERE id = ? AND claims >= max_claims AND ${LEASE_EXPIRED}`;
+const LIST_OPEN_SQL = `SELECT * FROM runs WHERE status IN ('waiting', 'active', 'sealing')
+  ORDER BY created_at, id`;
 const HOLDS_LEASE = `((status = 'active' AND owner = ?) OR (status = 'sealing' AND seal_owner = ?))`;
 const ABANDON_SQL = `UPDATE runs SET status = 'abandoned', attribution_json = ?, updated_at = ?
   WHERE id = ? AND ${HOLDS_LEASE}`;
@@ -244,6 +250,23 @@ export class LibSqlRunStore implements RunStore {
       owner,
       owner,
     ]);
+  }
+
+  /** @inheritdoc */
+  reap(id: string, now: number, attribution: Attribution): Promise<boolean> {
+    return this.#write(REAP_SQL, [
+      json(attribution),
+      this.#clock.now(),
+      id,
+      now - STALE_ACTIVE_MS,
+      now,
+    ]);
+  }
+
+  /** @inheritdoc */
+  async listOpen(): Promise<RunRow[]> {
+    const result = await this.#client.execute(LIST_OPEN_SQL);
+    return result.rows.map(toRunRow);
   }
 
   /** @inheritdoc */

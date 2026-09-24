@@ -12,6 +12,7 @@ import {
   CassetteFormatError,
   CassetteMissError,
   REPLAY_MAX_GAP_MS,
+  FAST_FORWARD_FACTOR,
   cassetteFetch,
   splitSseEvents,
   usageFromSse,
@@ -260,6 +261,38 @@ describe("cassette record and replay (§7.2)", () => {
     expect(text).toBe(textSse("paced"));
     expect(waits).toHaveLength(splitSseEvents(textSse("paced")).length);
     expect(Math.max(...waits)).toBeLessThanOrEqual(REPLAY_MAX_GAP_MS);
+  });
+
+  it("at fast pace, waits each recorded gap divided by the fast-forward factor", async () => {
+    const dir = tempDir();
+    const upstream = fakeUpstream([textSse("paced")]);
+    const record = cassetteFetch({
+      mode: "record",
+      dir,
+      role: "builder",
+      model: "m",
+      upstream: upstream.fetch,
+    });
+    await (await record(URL_MESSAGES, post(STREAM_BODY))).text();
+    const waitsAt = async (pace: "recorded" | "fast"): Promise<number[]> => {
+      const waits: number[] = [];
+      const replay = cassetteFetch({
+        mode: "replay",
+        dir,
+        role: "builder",
+        model: "m",
+        pace,
+        sleep: (ms) => {
+          waits.push(ms);
+          return Promise.resolve();
+        },
+      });
+      await (await replay(URL_MESSAGES, post(STREAM_BODY))).text();
+      return waits;
+    };
+    const recorded = await waitsAt("recorded");
+    const fast = await waitsAt("fast");
+    expect(fast).toEqual(recorded.map((ms) => ms / FAST_FORWARD_FACTOR));
   });
 });
 

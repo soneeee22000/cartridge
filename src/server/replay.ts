@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { MemoryArtifactStore } from "../engine/artifacts/memory.ts";
 import { createCartridge } from "../engine/cartridge.ts";
-import { systemClock } from "../engine/clock.ts";
+import { systemClock, type Sleep } from "../engine/clock.ts";
 import { driveRun } from "../engine/driver.ts";
 import { MAX_CLAIMS_EVAL } from "../engine/lifecycle.ts";
 import { lastEventIdOf, relayRun, type RelayOptions } from "../engine/relay.ts";
@@ -21,6 +21,7 @@ const HTTP_METHOD_NOT_ALLOWED = 405;
 const DATASET_FILE = join("dataset", "prompts.v1.json");
 const REPORT_FILE = join("reports", "committed", "full.json");
 const PromptId = z.string().regex(/^[a-z0-9-]{3,40}$/);
+const VisitorPace = z.enum(["fast", "recorded"]).default("fast");
 
 export const ReplayEntry = z.object({
   id: z.string(),
@@ -72,7 +73,9 @@ export function loadReplayCatalog(root: string): ReplayEntry[] {
 
 export interface ReplayHandlerOptions {
   readonly root: string;
+  /** Overrides the visitor's `?pace=`; tests pass `instant`. */
   readonly pace?: CassettePace;
+  readonly sleep?: Sleep;
   readonly relay?: Pick<RelayOptions, "clock" | "sleep" | "pollMs">;
 }
 
@@ -91,14 +94,20 @@ export function createPromptsHandler(
     );
 }
 
+interface ReplayRun {
+  readonly store: MemoryRunStore;
+  readonly runId: string;
+  readonly cassetteDir: string;
+  readonly pace: CassettePace;
+}
+
 function startReplay(
-  store: MemoryRunStore,
-  runId: string,
-  cassetteDir: string,
+  run: ReplayRun,
   options: ReplayHandlerOptions,
   signal: AbortSignal,
 ): void {
-  const replayOptions = { cassetteDir, pace: options.pace ?? "recorded" };
+  const { store, runId, cassetteDir, pace } = run;
+  const replayOptions = { cassetteDir, pace, sleep: options.sleep };
   const models = {
     planner: replayModel("planner", replayOptions),
     builder: replayModel("builder", replayOptions),
@@ -124,7 +133,8 @@ function errorResponse(status: number, error: string): Response {
 /**
  * `GET /api/replay?promptId=`: runs the real workflow, driver and verifiers for one catalog item
  * with every model call served from its committed cassette, and relays the run as SSE in the
- * same invocation (ADR-0003). The model mode is fixed to replay: no key, no network.
+ * same invocation (ADR-0003). The model mode is fixed to replay: no key, no network. `?pace=fast`
+ * (the default) divides the recorded gaps by `FAST_FORWARD_FACTOR`; `?pace=recorded` keeps them.
  * A reconnect re-runs the replay and the relay skips what the client already has.
  * @param options asset root, cassette pace and relay timing
  */
@@ -135,11 +145,14 @@ export function createReplayHandler(options: ReplayHandlerOptions): WebHandler {
   return async (request) => {
     if (request.method !== "GET")
       return errorResponse(HTTP_METHOD_NOT_ALLOWED, "method not allowed");
-    const parsed = PromptId.safeParse(
-      new URL(request.url).searchParams.get("promptId"),
-    );
-    if (!parsed.success)
-      return errorResponse(HTTP_BAD_REQUEST, "expected ?promptId=<item id>");
+    const params = new URL(request.url).searchParams;
+    const parsed = PromptId.safeParse(params.get("promptId"));
+    const pace = VisitorPace.safeParse(params.get("pace") ?? undefined);
+    if (!parsed.success || !pace.success)
+      return errorResponse(
+        HTTP_BAD_REQUEST,
+        "expected ?promptId=<item id>&pace=fast|recorded",
+      );
     const entry = allowed.get(parsed.data);
     if (!entry) return errorResponse(HTTP_NOT_FOUND, "unknown prompt id");
     const store = new MemoryRunStore(systemClock);
@@ -151,7 +164,12 @@ export function createReplayHandler(options: ReplayHandlerOptions): WebHandler {
       maxClaims: MAX_CLAIMS_EVAL,
     });
     const cassetteDir = join(options.root, "cassettes", entry.id);
-    startReplay(store, runId, cassetteDir, options, request.signal);
+    const runPace = options.pace ?? pace.data;
+    startReplay(
+      { store, runId, cassetteDir, pace: runPace },
+      options,
+      request.signal,
+    );
     return relayRun({
       ...options.relay,
       store,

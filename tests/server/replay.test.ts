@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { FAST_FORWARD_FACTOR } from "../../src/models/cassette.ts";
 import {
   createPromptsHandler,
   createReplayHandler,
@@ -102,6 +103,44 @@ describe("GET /api/replay", () => {
       expect(response.status).toBe(400);
     }
   });
+
+  it("returns 400 for a pace other than fast or recorded", async () => {
+    const response = await handler(
+      new Request(
+        "https://cartridge.test/api/replay?promptId=bubble-pop&pace=slow",
+      ),
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it(
+    "fast-forwards by default and honours ?pace=recorded",
+    async () => {
+      const totalWait = async (query: string): Promise<number> => {
+        let total = 0;
+        const paced = createReplayHandler({
+          root: REPO_ROOT,
+          relay: FAST_RELAY,
+          sleep: (ms) => {
+            total += ms;
+            return Promise.resolve();
+          },
+        });
+        const response = await paced(
+          new Request(
+            `https://cartridge.test/api/replay?promptId=tile-sort${query}`,
+          ),
+        );
+        await response.text();
+        return total;
+      };
+      const fast = await totalWait("");
+      const recorded = await totalWait("&pace=recorded");
+      expect(recorded).toBeGreaterThan(0);
+      expect(fast).toBeCloseTo(recorded / FAST_FORWARD_FACTOR, 3);
+    },
+    REPLAY_TIMEOUT_MS,
+  );
 
   it("rejects methods other than GET", async () => {
     const response = await handler(

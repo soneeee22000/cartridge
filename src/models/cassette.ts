@@ -17,6 +17,8 @@ import { assertNoVolatile, requestKey } from "./request-key.ts";
 
 /** Longest pause between replayed events at `pace=recorded` (arbitrary). */
 export const REPLAY_MAX_GAP_MS = 1_500;
+/** At `pace=fast`, every capped gap is divided by this (arbitrary). */
+export const FAST_FORWARD_FACTOR = 8;
 const EVENT_SEPARATOR = "\n\n";
 const INDEX_FILE = "index.json";
 const SSE_CONTENT_TYPE = "text/event-stream";
@@ -27,7 +29,7 @@ export type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 export type CassetteMode = "live" | "record" | "replay";
-export type CassettePace = "instant" | "recorded";
+export type CassettePace = "instant" | "recorded" | "fast";
 export type CassetteRole = Cassette["role"];
 
 export interface CassetteOptions {
@@ -167,6 +169,7 @@ function sseResponse(body: string | ReadableStream<Uint8Array>): Response {
 function pacedBody(
   cassette: Cassette,
   sleep: Sleep,
+  divisor: number,
 ): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   const events = splitSseEvents(cassette.response.body);
@@ -174,7 +177,7 @@ function pacedBody(
     async start(controller) {
       for (const [index, event] of events.entries()) {
         const gap = cassette.response.gapsMs[index] ?? 0;
-        await sleep(Math.min(gap, REPLAY_MAX_GAP_MS));
+        await sleep(Math.min(gap, REPLAY_MAX_GAP_MS) / divisor);
         controller.enqueue(encoder.encode(event));
       }
       controller.close();
@@ -245,8 +248,12 @@ function replay(state: Recorder, request: ParsedRequest): Response {
       `no cassette for ${indexEntry(request.key, occurrence)} in ${options.dir}`,
     );
   const cassette = Cassette.parse(JSON.parse(readFileSync(path, "utf8")));
-  if (options.pace !== "recorded") return sseResponse(cassette.response.body);
-  return sseResponse(pacedBody(cassette, options.sleep ?? realSleep));
+  if (options.pace !== "recorded" && options.pace !== "fast")
+    return sseResponse(cassette.response.body);
+  const divisor = options.pace === "fast" ? FAST_FORWARD_FACTOR : 1;
+  return sseResponse(
+    pacedBody(cassette, options.sleep ?? realSleep, divisor),
+  );
 }
 
 /**

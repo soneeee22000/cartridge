@@ -1,0 +1,33 @@
+{
+  "name": "cartridge-site",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Project page for cartridge, an agentic HTML5 mini-game generator with a two-tier evaluator",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "api": "node ../scripts/site-api.ts",
+    "dev": "node scripts/dev-stack.ts dev",
+    "build": "vite build",
+    "preview": "node scripts/dev-stack.ts preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "vitest run",
+    "capture": "node scripts/capture.ts",
+    "verify:browser": "node scripts/verify-browser.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/martian-mono": "5.3.0",
+    "lucide": "1.46.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "playwright": "1.63.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.0",
+    "vitest": "5.0.0"
+  }
+}

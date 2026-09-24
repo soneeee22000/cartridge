@@ -1,0 +1,178 @@
+/* Design tokens: the only place raw colour values appear. Same family as the Faultline NOC page, with its own signal hue. */
+:root {
+  color-scheme: dark;
+
+  /* Base palette: the only five colours */
+  --c-ground: #131b1f;
+  --c-ink: #e8e3d6;
+  --c-signal: #f29bc3;
+  --c-pass: #52c7c2;
+  --c-trip: #f2994a;
+
+  /* Derived surfaces */
+  --c-raised: color-mix(in srgb, var(--c-ink) 5%, var(--c-ground));
+  --c-sunken: color-mix(in srgb, var(--c-ground) 75%, black);
+  --c-plane: color-mix(in srgb, var(--c-ink) 7%, var(--c-ground));
+  --c-plane-edge: color-mix(in srgb, var(--c-ink) 12%, var(--c-ground));
+
+  /* Derived ink */
+  --c-ink-muted: color-mix(in srgb, var(--c-ink) 70%, var(--c-ground));
+  --c-line: color-mix(in srgb, var(--c-ink) 16%, var(--c-ground));
+  --c-line-strong: color-mix(in srgb, var(--c-ink) 40%, var(--c-ground));
+
+  /* Derived semantic washes */
+  --c-signal-wash: color-mix(in srgb, var(--c-signal) 12%, var(--c-ground));
+  --c-signal-hover: color-mix(in srgb, var(--c-signal) 86%, var(--c-ink));
+  --c-pass-wash: color-mix(in srgb, var(--c-pass) 14%, var(--c-ground));
+  --c-trip-wash: color-mix(in srgb, var(--c-trip) 14%, var(--c-ground));
+
+  /* Heatmap ramp: trip into raised, five ordinal classes */
+  --c-heat-0: var(--c-raised);
+  --c-heat-1: color-mix(in srgb, var(--c-trip) 40%, var(--c-raised));
+  --c-heat-2: color-mix(in srgb, var(--c-trip) 72%, var(--c-raised));
+  --c-heat-3: color-mix(in srgb, var(--c-trip) 86%, var(--c-raised));
+  --c-heat-4: var(--c-trip);
+
+  --c-focus: var(--c-signal);
+
+  /* Typography: two families */
+  --font-sans:
+    "Archivo Variable", "Archivo", "Helvetica Neue", Arial, system-ui,
+    sans-serif;
+  --font-mono:
+    "Martian Mono Variable", "Martian Mono", ui-monospace, "Cascadia Mono",
+    Consolas, Menlo, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-code: 0.8125rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.3125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3rem;
+  --text-4xl: 3.75rem;
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-body: 1.6;
+  --leading-code: 1.5;
+
+  --width-plate: 125%;
+  --width-label: 112%;
+  --width-body: 100%;
+  --width-code-condensed: 75%;
+
+  --weight-body: 400;
+  --weight-label: 560;
+  --weight-heading: 680;
+
+  --measure: 66ch;
+
+  /* Spacing, 4px base */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+
+  --touch-min: 2.75rem;
+  --content-max: 75rem;
+  --topbar-h: 3.5rem;
+  --page-margin: var(--space-4);
+  --section-pad: var(--space-8);
+
+  /* Radii follow the hierarchy */
+  --radius-cell: 2px;
+  --radius-mark: 4px;
+  --radius-panel: 8px;
+  --radius-plane: 14px;
+  --radius-pill: 999px;
+
+  /* Elevation: hairlines and solid offsets, never gradients */
+  --shadow-color: color-mix(in srgb, var(--c-ground) 30%, black);
+  --shadow-panel: 0 0 0 1px var(--c-line);
+  --shadow-plane:
+    0 1px 0 0 var(--c-plane-edge) inset, 6px 6px 0 0 var(--c-plane-edge),
+    0 28px 40px -20px var(--shadow-color);
+  --shadow-plane-active:
+    0 0 0 2px var(--c-signal), 6px 6px 0 0 var(--c-plane-edge),
+    0 36px 48px -20px var(--shadow-color);
+  --z-base: 0;
+  --z-stack: 10;
+  --z-sticky: 20;
+  --z-tooltip: 40;
+  --z-skip: 100;
+
+  /* Motion */
+  --dur-instant: 150ms;
+  --dur-quick: 200ms;
+  --dur-move: 300ms;
+  --dur-exit: 200ms;
+  --stagger-plane: 30ms;
+  --ease-enter: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --plane-dim: 0.45;
+
+  /* Layer stack geometry, mobile first */
+  --plane-w: 16.5rem;
+  --plane-h: 10.75rem;
+  --gap-collapsed: 8px;
+  --gap-exploded: 48px;
+  --lift-active: 20px;
+  --stack-h: 26rem;
+  --stack-perspective: 1800px;
+  --shift-factor: 0.65;
+  --plane-dim-above: 0.2;
+  --plane-tab-strip: 1.75rem;
+  --layers-track-h: 260vh;
+
+  /* Terminal */
+  --term-font: var(--text-xs);
+  --term-lines: 20;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --page-margin: var(--space-6);
+    --section-pad: var(--space-9);
+    --plane-w: 27.5rem;
+    --plane-h: 18rem;
+    --gap-collapsed: 12px;
+    --gap-exploded: 70px;
+    --lift-active: 28px;
+    --stack-h: 36rem;
+    --plane-tab-strip: 2.25rem;
+    --term-font: var(--text-code);
+    --term-lines: 28;
+  }
+}
+
+@media (min-width: 90rem) {
+  :root {
+    --page-margin: var(--space-7);
+    --section-pad: var(--space-10);
+    --plane-w: 26.25rem;
+    --plane-h: 17.25rem;
+    --gap-collapsed: 14px;
+    --gap-exploded: 100px;
+    --lift-active: 36px;
+    --stack-h: 47rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 0ms;
+    --dur-quick: 0ms;
+    --dur-move: 0ms;
+    --dur-exit: 0ms;
+    --stagger-plane: 0ms;
+  }
+}

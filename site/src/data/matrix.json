@@ -1,0 +1,129 @@
+{
+  "holdout": {
+    "ho-01-untitled-boot": {
+      "e1Score": 1,
+      "expected": "boot-handshake",
+      "fired": [
+        "boot-handshake"
+      ],
+      "verdict": "caught"
+    },
+    "ho-02-stuck-veil": {
+      "e1Score": 1,
+      "expected": "blank-frame",
+      "fired": [
+        "blank-frame",
+        "tap-unresponsive"
+      ],
+      "verdict": "caught"
+    },
+    "ho-03-frozen-clock": {
+      "e1Score": 1,
+      "expected": "idle-static",
+      "fired": [
+        "idle-static"
+      ],
+      "verdict": "caught"
+    },
+    "ho-04-touch-only": {
+      "e1Score": 1,
+      "expected": "tap-unresponsive",
+      "fired": [
+        "tap-unresponsive"
+      ],
+      "verdict": "caught"
+    },
+    "ho-05-short-fuse": {
+      "e1Score": 1,
+      "expected": "idle-death",
+      "fired": [
+        "idle-death"
+      ],
+      "verdict": "caught"
+    },
+    "ho-06-lost-promise": {
+      "e1Score": 1,
+      "expected": "console-error",
+      "fired": [
+        "console-error"
+      ],
+      "verdict": "caught"
+    }
+  },
+  "tuning": {
+    "good-arcade-run": {
+      "e1Score": 1,
+      "expected": null,
+      "fired": [],
+      "verdict": "clean"
+    },
+    "good-puzzle-board": {
+      "e1Score": 1,
+      "expected": null,
+      "fired": [],
+      "verdict": "clean"
+    },
+    "good-stage-clear": {
+      "e1Score": 1,
+      "expected": null,
+      "fired": [],
+      "verdict": "clean"
+    },
+    "good-toy-box": {
+      "e1Score": 1,
+      "expected": null,
+      "fired": [],
+      "verdict": "clean"
+    },
+    "kb-01-dead-boot": {
+      "e1Score": 1,
+      "expected": "boot-handshake",
+      "fired": [
+        "boot-handshake"
+      ],
+      "verdict": "caught"
+    },
+    "kb-02-ink-on-ink": {
+      "e1Score": 1,
+      "expected": "blank-frame",
+      "fired": [
+        "blank-frame",
+        "idle-static",
+        "tap-unresponsive"
+      ],
+      "verdict": "caught"
+    },
+    "kb-03-single-frame": {
+      "e1Score": 1,
+      "expected": "idle-static",
+      "fired": [
+        "idle-static"
+      ],
+      "verdict": "caught"
+    },
+    "kb-04-wrong-target": {
+      "e1Score": 1,
+      "expected": "tap-unresponsive",
+      "fired": [
+        "tap-unresponsive"
+      ],
+      "verdict": "caught"
+    },
+    "kb-05-spawn-kill": {
+      "e1Score": 1,
+      "expected": "idle-death",
+      "fired": [
+        "idle-death"
+      ],
+      "verdict": "caught"
+    },
+    "kb-06-late-throw": {
+      "e1Score": 1,
+      "expected": "console-error",
+      "fired": [
+        "console-error"
+      ],
+      "verdict": "caught"
+    }
+  }
+}

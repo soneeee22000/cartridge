@@ -1,0 +1,167 @@
+.svg-text {
+  fill: var(--c-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+}
+
+.svg-strong {
+  font-weight: var(--weight-label);
+  font-stretch: var(--width-label);
+}
+
+.svg-mono {
+  fill: var(--c-ink);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.svg-mono--small {
+  font-size: 12px;
+}
+
+/* A stroke in the surface colour behind topology labels keeps them legible where edges cross. */
+.svg-halo {
+  paint-order: stroke;
+  stroke: var(--halo-color, var(--c-raised));
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.svg-large {
+  font-size: 28px;
+}
+
+.svg-huge {
+  font-size: 40px;
+  font-weight: var(--weight-heading);
+}
+
+.svg-muted {
+  fill: var(--c-ink-muted);
+}
+
+.svg-trip {
+  fill: var(--c-trip);
+}
+
+.svg-pass {
+  fill: var(--c-pass);
+}
+
+.svg-chip {
+  fill: var(--c-raised);
+}
+
+.svg-chip--trip {
+  fill: var(--c-trip-wash);
+}
+
+.svg-chip--pass {
+  fill: var(--c-pass-wash);
+}
+
+.svg-track {
+  fill: var(--c-raised);
+}
+
+.svg-bar {
+  fill: var(--c-signal);
+}
+
+.svg-cable {
+  stroke: var(--c-line-strong);
+  stroke-width: 1;
+}
+
+.svg-dep {
+  fill: none;
+  stroke: var(--c-ink);
+  stroke-width: 1.5;
+}
+
+.svg-arrow {
+  fill: var(--c-ink);
+}
+
+.svg-rule {
+  fill: none;
+  stroke: var(--c-line-strong);
+  stroke-width: 2;
+}
+
+.svg-node {
+  fill: var(--c-plane);
+  stroke: var(--c-ink);
+  stroke-width: 2;
+}
+
+.svg-node--root {
+  fill: var(--c-trip);
+  stroke: var(--c-trip);
+}
+
+.svg-node--symptom {
+  fill: var(--c-raised);
+  stroke: var(--c-ink);
+}
+
+.svg-node--other {
+  fill: var(--c-raised);
+  stroke: var(--c-line-strong);
+}
+
+.svg-dot {
+  fill: none;
+  stroke: var(--c-line-strong);
+  stroke-width: 1.5;
+}
+
+.svg-heat-1 {
+  fill: var(--c-heat-1);
+}
+
+.svg-heat-2 {
+  fill: var(--c-heat-2);
+}
+
+.svg-heat-3 {
+  fill: var(--c-heat-3);
+}
+
+.svg-heat-4 {
+  fill: var(--c-heat-4);
+}
+
+.svg-icon {
+  color: var(--c-ink);
+}
+
+.svg-icon--trip {
+  color: var(--c-trip);
+}
+
+.svg-icon--pass {
+  color: var(--c-pass);
+}
+
+.svg-icon--ground {
+  color: var(--c-ground);
+}
+
+.svg-icon--filled {
+  fill: currentColor;
+}
+
+@media (forced-colors: active) {
+  .svg-arrow {
+    fill: currentColor;
+  }
+
+  .svg-dep,
+  .svg-cable,
+  .svg-node,
+  .svg-dot,
+  .svg-rule {
+    stroke: currentColor;
+  }
+}

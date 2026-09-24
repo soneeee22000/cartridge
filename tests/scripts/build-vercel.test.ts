@@ -1,5 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,6 +14,7 @@ import {
   MAX_DURATION_SECONDS,
   VERCEL_RUNTIME,
   buildVercel,
+  copySite,
 } from "../../scripts/build-vercel.ts";
 
 const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -59,9 +66,9 @@ describe("build:vercel (§13.3)", () => {
         maxDuration: MAX_DURATION_SECONDS,
       });
       expect(existsSync(join(dir, "src", "cards", "bridge.md"))).toBe(true);
-      expect(
-        existsSync(join(dir, "reports", "committed", "full.json")),
-      ).toBe(true);
+      expect(existsSync(join(dir, "reports", "committed", "full.json"))).toBe(
+        true,
+      );
       expect(existsSync(join(outDir, "config.json"))).toBe(true);
 
       const env = { ...process.env };
@@ -90,4 +97,31 @@ describe("build:vercel (§13.3)", () => {
     },
     BUILD_TIMEOUT_MS,
   );
+});
+
+describe("build:vercel static site copy", () => {
+  it("copies a built site into static/ so index.html is served at the root", () => {
+    const root = mkdtempSync(join(tmpdir(), "cartridge-site-"));
+    const dist = join(root, "dist");
+    mkdirSync(join(dist, "assets"), { recursive: true });
+    writeFileSync(
+      join(dist, "index.html"),
+      "<!doctype html><title>cartridge</title>",
+    );
+    writeFileSync(join(dist, "assets", "app.js"), "export {};");
+    const outDir = join(root, "output");
+    const staticDir = copySite(dist, outDir);
+    expect(staticDir).toBe(join(outDir, "static"));
+    expect(
+      readFileSync(join(outDir, "static", "index.html"), "utf8"),
+    ).toContain("cartridge");
+    expect(existsSync(join(outDir, "static", "assets", "app.js"))).toBe(true);
+  });
+
+  it("fails with the command to run when the site has not been built", () => {
+    const root = mkdtempSync(join(tmpdir(), "cartridge-site-"));
+    expect(() => copySite(join(root, "dist"), join(root, "output"))).toThrow(
+      'not found; run "npm ci && npm run build" in site/ first',
+    );
+  });
 });

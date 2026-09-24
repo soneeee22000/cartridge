@@ -6,6 +6,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
@@ -24,6 +25,10 @@ export const ASSET_DIRS = [
   "reports/committed",
 ] as const;
 
+/** The project page's build output, relative to the repo root; it is served as static files. */
+export const SITE_DIST = join("site", "dist");
+const SITE_DIR = "site";
+const VITE_BIN = join("node_modules", "vite", "bin", "vite.js");
 const REPO_ROOT = fileURLToPath(new URL("../", import.meta.url));
 const JSON_INDENT = 2;
 const HANDLER_FILE = "index.mjs";
@@ -78,6 +83,35 @@ async function buildFunction(
 }
 
 /**
+ * Copies the built project page into `<outDir>/static`, where the Build Output API serves it.
+ * @param siteDist the site's `dist` directory
+ * @param outDir output directory, normally `.vercel/output`
+ * @throws when `siteDist/index.html` is missing, naming the command that builds it
+ */
+export function copySite(siteDist: string, outDir: string): string {
+  if (!existsSync(join(siteDist, "index.html")))
+    throw new Error(
+      `site build missing: ${join(siteDist, "index.html")} not found; run "npm ci && npm run build" in site/ first`,
+    );
+  const staticDir = join(outDir, "static");
+  cpSync(siteDist, staticDir, { recursive: true });
+  return staticDir;
+}
+
+/** Build the site with its pinned Vite when its dependencies are installed; returns whether it ran. */
+function buildSite(root: string): boolean {
+  const siteDir = join(root, SITE_DIR);
+  if (!existsSync(join(siteDir, VITE_BIN))) return false;
+  const result = spawnSync(process.execPath, [VITE_BIN, "build"], {
+    cwd: siteDir,
+    stdio: "inherit",
+  });
+  if (result.status !== 0)
+    throw new Error(`site build exited with status ${String(result.status)}`);
+  return true;
+}
+
+/**
  * Bundles every `api/*.ts` into a Build Output API function directory (§13.3).
  * @param root repo root
  * @param outDir output directory, normally `.vercel/output`
@@ -104,8 +138,18 @@ export async function buildVercel(
 
 const invokedPath = process.argv[1];
 if (invokedPath && import.meta.url === pathToFileURL(invokedPath).href) {
-  const { values } = parseArgs({ options: { out: { type: "string" } } });
+  const { values } = parseArgs({
+    options: { out: { type: "string" }, "require-site": { type: "boolean" } },
+  });
   const outDir = resolve(values.out ?? join(REPO_ROOT, ".vercel", "output"));
   const built = await buildVercel(REPO_ROOT, outDir);
   for (const dir of built) process.stdout.write(`built ${dir}\n`);
+  try {
+    buildSite(REPO_ROOT);
+    const staticDir = copySite(join(REPO_ROOT, SITE_DIST), outDir);
+    process.stdout.write(`copied the site to ${staticDir}\n`);
+  } catch (error: unknown) {
+    if (values["require-site"] === true) throw error;
+    process.stderr.write(`skipped static/: ${String(error)}\n`);
+  }
 }

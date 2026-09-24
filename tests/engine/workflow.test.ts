@@ -214,6 +214,31 @@ describe("every failure code is attributed (§4.5)", () => {
     expect(reject.history[0]?.artifact).toBeNull();
   });
 
+  it("generate-no-artifact even when an earlier run of the same run key left a draft", async () => {
+    const artifacts = new MemoryArtifactStore();
+    await artifacts.put("lantern-dash", 0, MOCK_GAME_HTML);
+    const reject = await rejected({ artifacts, builderTurns: [doneTurn] });
+    expect(reject.attribution).toMatchObject({
+      step: "generate",
+      code: "generate-no-artifact",
+    });
+  });
+
+  it("load_draft does not show the builder a draft from an earlier run", async () => {
+    const artifacts = new MemoryArtifactStore();
+    await artifacts.put("lantern-dash", 0, "<p>earlier-run-draft</p>");
+    const builder = scriptedTurns([
+      { kind: "tool", tool: "load_draft", input: {} },
+      saveTurn(MOCK_GAME_HTML),
+      doneTurn,
+    ]);
+    const run = await runWorkflow({ artifacts, builder });
+    expect(run.output?.finalize).toBeDefined();
+    const seen = JSON.stringify(builder.doStreamCalls[1]?.prompt);
+    expect(seen).toContain("load_draft");
+    expect(seen).not.toContain("earlier-run-draft");
+  });
+
   it("generate-truncated when the builder's final turn stops on length mid tool call", async () => {
     const reject = await rejected({
       builderTurns: [

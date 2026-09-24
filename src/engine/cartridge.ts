@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core";
 import { Agent } from "@mastra/core/agent";
 import type { MastraModelConfig } from "@mastra/core/llm";
 import { InMemoryStore } from "@mastra/core/storage";
+import { RunScopedArtifacts } from "./artifacts/scoped.ts";
 import type { ArtifactStore } from "./artifacts/types.ts";
 import { e1Verify, type VerifyFn } from "./phases/verify.ts";
 import { loadPrompt } from "./prompts/index.ts";
@@ -34,11 +35,12 @@ export interface Cartridge {
 
 /**
  * Builds a fresh Mastra instance for one run (§4.6): agents on this run's models, tools closed over
- * this run's artifact store, and in-memory Mastra storage. No per-run state lives at module level.
+ * a view of the artifact store that sees only this run's saves, and in-memory Mastra storage. No per-run state lives at module level.
  * @param deps models, artifact store and optional scorer
  */
 export function createCartridge(deps: CartridgeDeps): Cartridge {
-  const tools = createCartridgeTools(deps.artifacts);
+  const artifacts = new RunScopedArtifacts(deps.artifacts);
+  const tools = createCartridgeTools(artifacts);
   const planner = new Agent({
     id: "planner",
     name: "planner",
@@ -62,7 +64,7 @@ export function createCartridge(deps: CartridgeDeps): Cartridge {
   const workflow = buildCartridgeWorkflow({
     planner,
     builder,
-    artifacts: deps.artifacts,
+    artifacts,
     verify: deps.verify ?? e1Verify,
   });
   const mastra = new Mastra({

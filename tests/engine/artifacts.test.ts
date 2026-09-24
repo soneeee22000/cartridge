@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FsArtifactStore } from "../../src/engine/artifacts/fs.ts";
 import { MemoryArtifactStore } from "../../src/engine/artifacts/memory.ts";
+import { RunScopedArtifacts } from "../../src/engine/artifacts/scoped.ts";
 import type { ArtifactStore } from "../../src/engine/artifacts/types.ts";
 
 const dirs: string[] = [];
@@ -76,5 +77,29 @@ describe("FsArtifactStore", () => {
   it("rejects a run key that could escape the root", async () => {
     const { store } = fsStore();
     await expect(store.put("../escape", 0, "x")).rejects.toThrow();
+  });
+});
+
+describe("run-scoped artifact view (§4.3, §4.6)", () => {
+  it("hides drafts an earlier run left in the shared store", async () => {
+    const shared = new MemoryArtifactStore();
+    const earlier = await shared.put("kite-rush", 0, "<p>earlier</p>");
+    const scoped = new RunScopedArtifacts(shared);
+    expect(await scoped.latest("kite-rush")).toBeNull();
+    expect(await scoped.get(earlier)).toBeNull();
+    const own = await scoped.put("kite-rush", 0, "<p>own</p>");
+    expect(await scoped.latest("kite-rush")).toEqual({
+      ref: own,
+      html: "<p>own</p>",
+    });
+    expect(await shared.get(own)).toBe("<p>own</p>");
+    expect(await scoped.get(earlier)).toBeNull();
+  });
+
+  it("returns the newest attempt this run saved", async () => {
+    const scoped = new RunScopedArtifacts(new MemoryArtifactStore());
+    await scoped.put("kite-rush", 0, "<p>zero</p>");
+    await scoped.put("kite-rush", 1, "<p>one</p>");
+    expect((await scoped.latest("kite-rush"))?.ref.version).toBe("a1");
   });
 });

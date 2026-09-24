@@ -242,6 +242,49 @@ describe("driveRun (§5.4)", () => {
     expect((await store.get(RUN_ID))?.status).toBe("active");
   });
 
+  it("writes nothing to the row when the heartbeat timer finds the lease lost", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    try {
+      const { store, clock } = await setup();
+      vi.spyOn(store, "heartbeat").mockResolvedValue(false);
+      const release = vi.spyOn(store, "release");
+      const abandon = vi.spyOn(store, "abandon");
+      const { promise: blocked, resolve: unblock } =
+        Promise.withResolvers<undefined>();
+      let cancelled = false;
+      async function* stream() {
+        await Promise.resolve();
+        yield stepStart("plan");
+        await blocked;
+      }
+      const handle: WorkflowHandle = {
+        fullStream: stream(),
+        result: Promise.resolve({ status: "success", result: {} }),
+        cancel: () => {
+          cancelled = true;
+          unblock(undefined);
+          return Promise.resolve();
+        },
+      };
+      const running = driveRun(
+        RUN_ID,
+        deps(store, clock, () => Promise.resolve(handle)),
+      );
+      await vi.waitFor(async () => {
+        expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+      });
+      clock.advance(HEARTBEAT_INTERVAL_MS);
+      await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+      expect(await running).toBe("lease-lost");
+      expect(cancelled).toBe(true);
+      expect(release).not.toHaveBeenCalled();
+      expect(abandon).not.toHaveBeenCalled();
+      expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("cancels the run and releases it with stream-cut when the signal aborts", async () => {
     const { store, clock } = await setup();
     const controller = new AbortController();

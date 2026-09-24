@@ -422,7 +422,7 @@ createCartridge(deps: {
 }): { mastra: Mastra; workflow: typeof cartridgeWorkflow }
 ```
 
-- Agents are constructed inside `createCartridge` with `deps.models`. Tools are constructed inside it and close over `deps.artifacts`.
+- Agents are constructed inside `createCartridge` with `deps.models`. Tools are constructed inside it and close over `deps.artifacts`. _(S2 verify: they close over a `RunScopedArtifacts` view of `deps.artifacts`, which only sees drafts saved by this run. A persistent `FsArtifactStore` keeps `a<n>` files from earlier runs of the same run key, and without the view `runGenerate` could take a leftover file for this attempt's save and `load_draft` could show the builder another run's draft.)_
 - _(S2: `deps.clock` was dropped because nothing inside the workflow reads the time; the driver and run store take the clock. `deps.verify` is an optional scorer override, used by the `verifier-crashed` test. Agents set `maxRetries: 0` so every retry is the driver's.)_
 - `InMemoryStore` is Mastra's storage for every instance. Building one per run is cheap, and it keeps runs isolated from each other in the same process.
 - No module in `src/engine/**` holds per-run state at module level. An eslint rule (`no-restricted-syntax` on top-level `let`) and a test that runs two cartridges with different stores in parallel enforce this. _(S2: a local config-protection hook refuses edits to `eslint.config.js`, so the rule is enforced by `tests/engine/module-state.test.ts` instead, which parses every file in `src/engine/**` and `src/models/**` with the TypeScript API and fails on a top-level `let` or `var`. Moving it into the eslint config is an open item for Seon.)_

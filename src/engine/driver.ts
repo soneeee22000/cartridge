@@ -103,6 +103,7 @@ async function settle(
   session: Session,
   attribution: Attribution,
 ): Promise<DriveOutcome> {
+  if (session.leaseLost) return "lease-lost";
   const { store, owner } = session.deps;
   await record(session, { kind: "run.released", data: { attribution } });
   const action = settlement(attribution, session.row);
@@ -118,6 +119,7 @@ async function seal(
   session: Session,
   output: FinalizeOut,
 ): Promise<DriveOutcome> {
+  if (session.leaseLost) return "lease-lost";
   const { store, owner, clock } = session.deps;
   if (!(await store.beginSeal(session.runId, owner, clock.now())))
     return "lease-lost";

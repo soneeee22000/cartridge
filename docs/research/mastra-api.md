@@ -173,14 +173,23 @@ run.stream({ inputData, requestContext });
 - Agent as a step: `createStep(agent)` gives input `{ prompt: string }` and output `{ text: string }`. `createStep(agent, { structuredOutput: { schema } })` gives a typed output. This comes from the `.d.ts` and was not run.
 - There's no `mastra.getModel()` helper. To call a model without an agent, use a one-off `Agent` with no tools, or call the V3/V4 object's `doGenerate` directly (rarely worth it).
 
+### 1.7 Review probes (2026-09-24): nested loop body, attribution, stream ids
+
+Probes `nested.ts`, `nested2.ts` and `fetchprobe.ts` (Mastra 1.70.0, TS 5.9.3, `@ai-sdk/anthropic@4.0.62`), run during the feasibility review of SPEC revision 1.
+
+- **Nested workflow as a `.dountil` body does not type-check under `exactOptionalPropertyTypes`.** TS2379: `Workflow.description: string | undefined` is not assignable to `Step.description?: string`. Giving the nested workflow a `description` does not fix it (`nested2.ts`, same error). Without the flag it type-checks and runs as expected (at least one pass, then the branch). **Decision (SPEC §4.1):** the loop body is a single `build-cycle` step whose `execute` calls `runGenerate()` then `runVerify()`. The flag stays on and no cast is added.
+- **`result.steps` cannot attribute inner failures.** With the nested body, a throw inside the inner verify step showed only `build-cycle: failed` in `result.steps` (probe with `THROW_AT=2`). A single-step body has the same limit. **Decision (SPEC §4.5):** each engine phase catches its own errors and records `{ step, code }` in `BuildState.failure`. Whether `result.error` keeps an error's custom fields is still unprobed; the design does not rely on it.
+- **Stream ids.** Inside a nested workflow, step events carry dotted ids (`build-cycle.generate`, `build-cycle.verify-static`), plus an outer `build-cycle` start/result per iteration. `data-*` custom chunks written by nested steps do reach the outer `fullStream`. With the single-step body, `workflow-step-start/result` only ever name `build-cycle`, so per-phase progress comes from `data-cartridge` chunks (SPEC §6.1).
+- **`autoRestartActiveRuns`** exists as a per-workflow `options` field (`workflows/types.d.ts:428`).
+
 ## 2. Agents, tools and custom model objects
 
 ### 2.1 Tools
 
 ```ts
 import { createTool } from "@mastra/core/tools";
-const writeVersion = createTool({
-  id: "write_version",
+const saveDraft = createTool({
+  id: "save_draft",
   description: "Store a new version of the game html",
   inputSchema: z.object({ html: z.string() }),
   outputSchema: z.object({ version: z.number() }),
@@ -191,11 +200,11 @@ const agent = new Agent({
   name: "Builder",
   instructions: "...",
   model,
-  tools: { writeVersion },
+  tools: { saveDraft },
 });
 ```
 
-**Observed gotcha:** the tool name the model sees (`callOptions.tools[].name`) is the **object key** (`writeVersion`), not the tool `id` (`write_version`). Cassettes and prompts must use the key. Keep key === id to avoid confusion (for example `tools: { write_version: writeVersion }`).
+**Observed gotcha:** the tool name the model sees (`callOptions.tools[].name`) is the **object key** (`saveDraft`), not the tool `id` (`save_draft`). Cassettes and prompts must use the key. Keep key === id to avoid confusion (for example `tools: { save_draft: saveDraft }`).
 
 Agent call options (`agent.types.d.ts`): `generate(messages, { requestContext?, maxSteps?, stopWhen?, structuredOutput?, modelSettings?, providerOptions?, ... })`.
 
@@ -264,7 +273,7 @@ The stream parts used, in order:
 - **Tool turn:** `stream-start {warnings: []}` → `response-metadata {id, modelId, timestamp}` → `tool-call {toolCallId, toolName, input: '<json string>'}` → `finish {finishReason: {unified: 'tool-calls', raw}, usage}`.
 - **Text turn:** `stream-start` → `response-metadata` → `text-start {id}` → `text-delta {id, delta}` → `text-end {id}` → `finish {finishReason: {unified: 'stop', raw}, usage}`.
 
-**Observed:** `agent.generate()` called **`doStream`** for both turns (2 calls: tool-call, then final text). Mastra executed `writeVersion` between them, and the result text was `saved v1`. Implement `doStream` as the primary path and keep `doGenerate` for completeness. `options.prompt` holds the full message list, so a cassette key can be `hash(options.prompt, options.tools)`.
+**Observed:** `agent.generate()` called **`doStream`** for both turns (2 calls: tool-call, then final text). Mastra executed `saveDraft` between them, and the result text was `saved v1`. Implement `doStream` as the primary path and keep `doGenerate` for completeness. `options.prompt` holds the full message list, so a cassette key can be `hash(options.prompt, options.tools)`.
 
 ### 2.3 `ai/test` mocks
 
@@ -291,7 +300,7 @@ The stream parts used, in order:
   // 'url: ":memory:"' is also accepted (JSDoc example in mastra/index.d.ts)
   ```
   **Observed:** the probe created `probe2.db`, and `workflow.listWorkflowRuns()` returned `total: 1, runs: ['fixed-run-id']`, which means snapshots persisted. Relative `file:` paths resolve against the process cwd, so use an absolute path if two processes share the DB.
-- Mastra storage persists **workflow snapshots** (for suspend/resume/restart), not our domain run rows. Our run lifecycle table (Queued/Running/Finalizing/Done/Failed, lease, attempts) should be our own table. It can live in the same libSQL file through `@libsql/client` directly, but it isn't Mastra's schema. Run `workflow.restartAllActiveWorkflowRuns()` on boot, or set `options.autoRestartActiveRuns: false` if we own recovery.
+- Mastra storage persists **workflow snapshots** (for suspend/resume/restart), not our domain run rows. Our run lifecycle table (waiting/active/sealing/complete/abandoned, seal lease, claims; SPEC §5) should be our own table. It can live in the same libSQL file through `@libsql/client` directly, but it isn't Mastra's schema. Run `workflow.restartAllActiveWorkflowRuns()` on boot, or set `autoRestartActiveRuns: false` if we own recovery. Note: `autoRestartActiveRuns` is a **per-workflow** `options` field (`createWorkflow({ …, options: { autoRestartActiveRuns } })`, `workflows/types.d.ts:428`), not a Mastra-level option.
 
 ## 4. Anthropic
 
@@ -318,11 +327,23 @@ new Agent({ id, name, instructions, model: anthropic("claude-sonnet-5") });
 - On the stream, the agent's `stream.totalUsage` / `stream.usage` are promises, and a `finish` chunk carries them.
 - **Workflow-level usage (`out.usage`, `workflow-finish.payload.output.usage`) was all zeros** in both probes: with `agent.generate()` inside a step, and even with `textStream.pipeTo(writer)`. The docs claim that piping aggregates usage, but I didn't observe it. **We must account tokens ourselves**: sum `totalUsage` per step, record it on the step/attempt row, and enforce the repair-loop token budget from that number.
 
+### Provider behaviour found in the review probes (2026-09-24)
+
+- **Placeholder key for replay.** `createAnthropic` calls `loadApiKey` inside `getHeaders()` on every request, before the custom `fetch` runs. With `ANTHROPIC_API_KEY` unset and no `apiKey`, a replay throws `AI_LoadAPIKeyError: Anthropic API key is missing` (observed). Replay and mock modes pass a constant placeholder (`"replay-no-key"`); the cassette layer never forwards headers.
+- **`agent.generate()` is non-streaming with this provider.** The request body had no `stream` flag and the provider expected a JSON body; given SSE it failed with "Invalid JSON response" (observed). The earlier note that generate goes through `doStream` came from the custom V3 model, not the V4 provider. **Decision:** every model call uses `agent.stream()` and awaits `totalUsage` / `object` / `finishReason`, so cassettes hold only `text/event-stream` bodies and long builder calls are not exposed to undici's 300 s `headersTimeout`.
+- **Defaults to pin.** With no `maxOutputTokens`, the provider sends `max_tokens: 128000` (observed), and with no thinking parameter Sonnet 5 uses adaptive thinking. SPEC §4.4 adds `*_MAX_OUTPUT_TOKENS` constants and an explicit thinking/effort setting via `providerOptions.anthropic`; the exact option shape is to be read from the provider's `.d.ts` in S2.
+- **Usage double-count trap.** Observed `totalUsage`: `inputTokens: 14` = `raw.inputTokens.noCache 10` + `cacheRead 4`, with `cachedInputTokens: 4` alongside. So normalised `inputTokens` already includes cache reads. SPEC §4.4 defines `Usage.input = inputTokens − cachedInputTokens − cacheCreationInputTokens`; whether `inputTokens` also includes cache writes is to be confirmed on a recorded response with a non-zero cache write.
+- **Finish reasons.** The provider maps `max_tokens` and `model_context_window_exceeded` to `finishReason: "length"`, and `refusal` to `"content-filter"` (provider source).
+- **Errors.** On a 529 the provider made one fetch call, did not retry, and `agent.generate` threw `AI_APICallError` "Overloaded" (observed). Classification uses `APICallError.isRetryable` and `statusCode`.
+- **Sampling.** For models flagged `rejectsSamplingParameters`, the provider drops `temperature`/`topP`/`topK` with a warning; it does not return a 400.
+- **Custom `fetch`.** The `createAnthropic` settings accept `fetch` (confirmed); the fetch-layer cassette is the design.
+- **No volatile values** (UUIDs, ISO timestamps) appeared in the request bodies Mastra built.
+
 ## 5. Implications for cartridge (short)
 
-1. The repair loop is `generate → verify` as a nested workflow inside `.dountil(cond with iterationCount cap)`, and a `.branch` routes to `finalize` or `fail`. It should not be a bare `.dountil(repair)`, because that body always runs once.
-2. Failure attribution comes from `result.steps[id].status` plus our own attempt log.
-3. SSE progress uses `writer.custom({ type: 'data-…' })` and `workflow-step-start/result`. Terminal state is read from our run row only.
-4. The model is injected per run via the factory: cassette for the demo, `MockLanguageModelV4` for unit tests, `@ai-sdk/anthropic` for live runs.
-5. Token accounting is ours: `totalUsage` from every agent call. Workflow usage is not trusted.
-6. Storage: `LibSQLStore` locally and `InMemoryStore` on Vercel, plus our own run table.
+1. The repair loop is `.dountil(build-cycle)`, where `build-cycle` is a single step running a generate phase then a verify phase (§1.7), and a `.branch` routes to `finalize` or `reject`. It should not be a bare `.dountil(repair)`, because that body always runs once. The iteration cap comes from our own `repairs` counter.
+2. Failure attribution comes from `BuildState.failure` (set by each phase) plus our own attempt log, never from `result.steps` (§1.7).
+3. SSE progress uses `writer.custom({ type: 'data-…' })` for per-phase events and `workflow-step-start/result` for top-level steps. Terminal state is read from our run row only.
+4. The model is injected per run: `createCartridge(deps)` builds a Mastra instance per run with the chosen models (cassette-backed provider for the demo, `MockLanguageModelV4` for unit tests, `@ai-sdk/anthropic` for live runs) and tools that close over the run's artifact store.
+5. Token accounting is ours: `totalUsage` from every agent call, mapped to disjoint kinds (§4). Workflow usage is not trusted.
+6. Storage: Mastra uses `InMemoryStore` everywhere; our own run table uses `@libsql/client` locally and an in-memory store on Vercel.

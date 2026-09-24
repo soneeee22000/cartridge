@@ -25,17 +25,17 @@ None of these shows up in the source. A score of 1.000 from a static scorer says
 
 The evaluator has two gating tiers and two reported-only signals (SPEC §2.3, §8, §10):
 
-- **E1, the contract scorer (gate, tier 1).** Pure functions, each rule with a severity and a `card:line` citation computed from an anchor in the card. It runs inside the engine as `verify-static` and again in the eval harness.
-- **E2, the runtime probe (gate, tier 2).** Playwright Chromium, with the game in the same sandboxed iframe the demo uses. It has six detectors: boot handshake, blank frame, idle stillness, tap unresponsiveness, idle death (an `end` less than 3 s after `start` for real-time types), and console errors. `bestSurvivalSeconds`, from a seeded random-tap bot, is **reported only**.
+- **E1, the contract scorer (gate, tier 1).** Pure functions, each rule with a severity and a `card:line` citation computed from an anchor in the card. It runs inside the engine as the build-cycle's verify phase and again in the eval harness.
+- **E2, the runtime probe (gate, tier 2).** Playwright Chromium, with the game in the same sandboxed iframe the demo uses. It has six detectors: boot handshake, blank frame, idle stillness, tap unresponsiveness, idle death (an `end` sooner than `IDLE_DEATH_MIN_SECONDS` after `start` for real-time types, with the value set from this repo's fixture calibration), and console errors. `longestPlaySeconds`, from a seeded random-tap bot, is **reported only**.
 - **E3, a cited categorical judge (reported only).** Every finding needs `file:line` evidence that is checked against the file. Numeric claims are discarded. A dimension with no valid finding is `null`, not the worst score.
 - **E4, language match (reported only).** The prompt language against the language of the game's UI strings. It abstains below an evidence floor.
 
-**"Static ≠ quality" is proven, not asserted.** Six hand-authored known-bad fixtures each score E1 = 1.000 and are built to trip exactly one E2 detector. Four good controls trip none. The detection matrix (`npm run eval:matrix`) exits 1 if any fixture misbehaves, **or if any detector is disabled or covered by no fixture**. A mutant-style test disables each detector in turn and asserts the matrix fails.
+**"Static ≠ quality" is demonstrated on fixtures, not asserted.** Six hand-authored known-bad fixtures each score E1 = 1.000 and are built to trip exactly one E2 detector. Four good controls trip none. The thresholds are tuned on these same fixtures, so this shows the gap exists by construction; it is not a detection rate. Six further holdout fixtures, written after the thresholds are frozen, are reported as they come out, misses included. The detection matrix (`npm run eval:matrix`) exits 1 if any fixture misbehaves, **or if any detector is disabled or covered by no fixture**. A mutant-style test disables each detector in turn and asserts the matrix fails.
 
 ## Reasons
 
 1. **Cheap first, expensive second.** E1 runs on every repair pass for free, so the engine never pays for a browser run on a game that is already broken in its source.
-2. **Two tiers catch different defect classes.** The fixtures make the gap between them measurable: the number of known-bad games E1 alone would pass is the size of the gap, and it is shown in the report.
+2. **Two tiers catch different defect classes.** The fixtures make the gap concrete: every known-bad fixture passes E1 in full and is still broken. The holdout set is the only check that the detectors generalise beyond the games they were tuned on, and it is small, so claims stay at "demonstrated on N hand-authored fixtures".
 3. **A detector nobody exercises is a detector nobody trusts.** Tying each detector to a fixture, and failing CI when the pairing breaks, stops silent regressions. For example, a threshold "tuned" until it never fires would be caught.
 4. **Model judgement is kept away from gating.** E3 is useful colour but can be steered and varies from run to run. It never decides pass or fail, and it cannot report a number it did not cite.
 5. **An honest `null`.** Abstentions (E4) and unsupported findings (E3) are "not measured", never a silent zero or a silent pass.
@@ -44,8 +44,8 @@ The evaluator has two gating tiers and two reported-only signals (SPEC §2.3, §
 
 - E2 cannot run on Vercel functions. The live demo shows committed E2 results and says so.
 - E2 metrics depend on timing, so CI diffs only the matrix **verdicts**. Fixtures are designed to sit far from thresholds, and the thresholds are frozen with the calibration measurements next to them (`docs/research/e2-calibration.md`).
-- E2 thresholds are tuned on this repo's own fixtures, so they encode our definition of "blank" and "moving". The report states this under "What this run did NOT measure".
-- `bestSurvivalSeconds` is a weak signal, because a random-tap bot is not a player. It is reported so trends are visible, and it never gates.
+- E2 thresholds are tuned on this repo's own fixtures, so they encode our definition of "blank" and "moving". The report states this under "Out of scope for this run", and no result from any other system is cited.
+- `longestPlaySeconds` is a weak signal, because a random-tap bot is not a player. It is reported so trends are visible, and it never gates.
 
 ## Alternatives considered
 

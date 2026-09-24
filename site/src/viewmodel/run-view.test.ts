@@ -28,6 +28,7 @@ describe("run view helpers", () => {
   it("quotes the item's recorded wall time from full.json", () => {
     expect(paceNote(reportItem("bubble-pop"))).toContain("80.9 s");
     expect(paceNote(reportItem("bubble-pop"))).toContain("1.5 s");
+    expect(paceNote(reportItem("bubble-pop"))).toContain("divides every gap by 8");
     expect(paceNote(null)).toContain("not recorded");
   });
 

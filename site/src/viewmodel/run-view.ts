@@ -34,6 +34,7 @@ export function paceNote(item: ReportItem | null): string {
       : formatSeconds(item.wallMs);
   return fill(PACE_NOTE, {
     gapSeconds: ENGINE_CONSTANTS.REPLAY_MAX_GAP_MS / MS_PER_SECOND,
+    factor: ENGINE_CONSTANTS.FAST_FORWARD_FACTOR,
     recordedSeconds: recorded,
   });
 }

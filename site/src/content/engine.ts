@@ -13,6 +13,7 @@ export const ENGINE_CONSTANTS = {
   RELAY_HEARTBEAT_MS: 12_000,
   RELAY_BUDGET_MS: 270_000,
   REPLAY_MAX_GAP_MS: 1_500,
+  FAST_FORWARD_FACTOR: 8,
   MAX_DURATION_SECONDS: 300,
 } as const;
 
@@ -30,6 +31,7 @@ export const ENGINE_CONSTANT_FILES: Readonly<
   RELAY_HEARTBEAT_MS: "src/engine/relay.ts",
   RELAY_BUDGET_MS: "src/engine/relay.ts",
   REPLAY_MAX_GAP_MS: "src/models/cassette.ts",
+  FAST_FORWARD_FACTOR: "src/models/cassette.ts",
   MAX_DURATION_SECONDS: "scripts/build-vercel.ts",
 };
 

@@ -164,6 +164,39 @@
   border-color: var(--c-ink-muted);
 }
 
+.run__pace-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.run__pace-choice legend {
+  inline-size: 100%;
+  margin-block-end: var(--space-2);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-label);
+}
+
+.run__pace-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--touch-min);
+  cursor: pointer;
+}
+
+.run__pace-option input {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin: 0;
+  accent-color: var(--c-signal);
+}
+
 .run__buttons {
   display: flex;
   flex-wrap: wrap;

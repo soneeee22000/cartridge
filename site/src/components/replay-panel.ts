@@ -1,4 +1,4 @@
-import { E2_OFFLINE_LABEL, FALLBACK_NOTE } from "../content/run";
+import { E2_OFFLINE_LABEL, FALLBACK_NOTE, PACE_OPTIONS } from "../content/run";
 import { reportItem } from "../data/report";
 import { code, esc, query } from "../lib/dom";
 import { type IconName, icon } from "../lib/icons";
@@ -80,6 +80,14 @@ export function e2PanelMarkup(promptId: string): string {
     <p class="muted e2-panel__sub">Longest play by the seeded random-tap bot (reported only): ${String(view.longestPlaySeconds ?? "n/a")} s</p>`;
 }
 
+/** The speed radios; fast-forward is checked by default. */
+function paceChoiceMarkup(): string {
+  return PACE_OPTIONS.map(
+    (option, index) =>
+      `<label class="run__pace-option"><input type="radio" name="pace" value="${option.value}"${index === 0 ? " checked" : ""}><span>${esc(option.label)}</span></label>`,
+  ).join("");
+}
+
 /** The Run section's static shell: picker, status, graph, log and result areas. */
 export function replayShellMarkup(
   catalog: readonly CatalogEntry[],
@@ -90,6 +98,10 @@ export function replayShellMarkup(
         <label for="prompt-picker">Recorded prompt</label>
         <select id="prompt-picker" name="promptId" data-picker>${optionsMarkup(catalog, selected)}</select>
       </div>
+      <fieldset class="run__pace-choice">
+        <legend>Speed</legend>
+        ${paceChoiceMarkup()}
+      </fieldset>
       <div class="run__buttons">
         <button type="submit" class="button button--primary" data-run>${icon("play")}<span data-run-label>Run the replay</span></button>
         <button type="button" class="button" data-stop disabled>${icon("square")}Stop</button>

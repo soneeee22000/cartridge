@@ -1,5 +1,9 @@
 import { query } from "../lib/dom";
-import { type Disconnect, openReplay } from "../lib/replay-source";
+import {
+  type Disconnect,
+  type ReplayPace,
+  openReplay,
+} from "../lib/replay-source";
 import type { CatalogEntry, CatalogSource } from "../viewmodel/catalog";
 import {
   INITIAL_REPLAY_STATE,
@@ -20,7 +24,7 @@ const FRAME_SANDBOX = "allow-scripts";
 
 /** Imperative handle for the replay panel. */
 export interface ReplayController {
-  run(promptId: string): void;
+  run(promptId: string, pace?: ReplayPace): void;
   stop(): void;
   setCatalog(catalog: readonly CatalogEntry[], source: CatalogSource): void;
   /** Capture hook: draw the state after the first `count` received messages; returns the count drawn. */
@@ -108,13 +112,21 @@ function disconnect(panel: Panel): void {
 }
 
 /** Start a replay, closing any previous one first. */
-function run(panel: Panel, promptId: string): void {
+/** The speed picked in the form, fast-forward unless recorded pace is checked. */
+function pickedPace(panel: Panel): ReplayPace {
+  const checked = panel.root.querySelector<HTMLInputElement>(
+    'input[name="pace"]:checked',
+  );
+  return checked?.value === "recorded" ? "recorded" : "fast";
+}
+
+function run(panel: Panel, promptId: string, pace: ReplayPace): void {
   disconnect(panel);
   panel.received = [];
   panel.startedAt = performance.now();
   apply(panel, { type: "start", promptId });
   let open = true;
-  const close = openReplay(promptId, (action) => {
+  const close = openReplay(promptId, pace, (action) => {
     if (!open) return;
     panel.received.push(action);
     apply(panel, action);
@@ -182,7 +194,7 @@ function bindControls(panel: Panel): void {
     "submit",
     (event) => {
       event.preventDefault();
-      run(panel, panel.picker.value);
+      run(panel, panel.picker.value, pickedPace(panel));
     },
   );
   query(panel.root, "[data-stop]", HTMLButtonElement).addEventListener(
@@ -221,8 +233,8 @@ export function initReplay(
   renderSelection(root, selected(panel));
   reset(panel);
   return {
-    run: (promptId) => {
-      run(panel, promptId);
+    run: (promptId, pace) => {
+      run(panel, promptId, pace ?? pickedPace(panel));
     },
     stop: () => {
       stop(panel);

@@ -1,8 +1,11 @@
 import type { ReplayAction } from "../viewmodel/replay-state";
 
-/** The replay endpoint for one catalog item. */
-export function replayUrl(promptId: string): string {
-  return `/api/replay?promptId=${encodeURIComponent(promptId)}`;
+/** The two speeds a visitor can pick; the server rejects anything else. */
+export type ReplayPace = "fast" | "recorded";
+
+/** The replay endpoint for one catalog item at one speed. */
+export function replayUrl(promptId: string, pace: ReplayPace): string {
+  return `/api/replay?promptId=${encodeURIComponent(promptId)}&pace=${pace}`;
 }
 
 /** Closes one replay connection. */
@@ -35,14 +38,16 @@ function onError(
  * reconnects on its own with `Last-Event-ID`; after the terminal event the connection is closed
  * here, and the server would answer a late reconnect with 204.
  * @param promptId catalog item id
+ * @param pace fast-forward or recorded pace
  * @param dispatch receives every action, in arrival order
  * @returns a function that closes the connection; the server then stops the run
  */
 export function openReplay(
   promptId: string,
+  pace: ReplayPace,
   dispatch: (action: ReplayAction) => void,
 ): Disconnect {
-  const source = new EventSource(replayUrl(promptId));
+  const source = new EventSource(replayUrl(promptId, pace));
   source.addEventListener("progress", (event: MessageEvent<string>) => {
     dispatch({ type: "progress", seq: seqOf(event), data: event.data });
   });

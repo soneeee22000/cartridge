@@ -11,7 +11,13 @@ export const E2_OFFLINE_LABEL =
 
 /** How the replay is paced. */
 export const PACE_NOTE =
-  "Replayed at the recorded pace, with each gap capped at {gapSeconds} s, so a run takes about as long as the original. This item's recorded run took {recordedSeconds}.";
+  "Recorded pace replays each gap between model events as it was recorded, capped at {gapSeconds} s, so a run takes about as long as the original; fast-forward divides every gap by {factor}. The events and the game are the same at either speed. This item's recorded run took {recordedSeconds}.";
+
+/** The speed choices, fast-forward first because it is the default. */
+export const PACE_OPTIONS = [
+  { value: "fast", label: "Fast-forward" },
+  { value: "recorded", label: "Recorded pace" },
+] as const;
 
 /** Shown when the prompt list could not be fetched and the bundled copy is used instead. */
 export const FALLBACK_NOTE =

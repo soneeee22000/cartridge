@@ -1,0 +1,475 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:e595661f7335d481a99b34a04cfb2207071261e0e1659c0a08634720d84cacf0",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\na tiny maze\n\nPlan:\n{\"gameType\":\"stage-clear\",\"input\":\"swipe-lanes\",\"lang\":\"en\",\"loop\":\"Guide your token through a small maze toward the glowing exit using swipes to move between lanes of the grid. Reaching the exit clears the maze and opens a new one; there is no way to fail, only to keep exploring.\",\"slug\":\"tiny-maze\",\"style\":\"chalkboard\",\"title\":\"Tiny Maze\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Tiny Maze</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #2f3e3a;\n11|     overflow: hidden;\n12|     touch-action: none;\n13|     font-family: 'Segoe UI', system-ui, sans-serif;\n14|   }\n15|   canvas {\n16|     display: block;\n17|     width: 100vw;\n18|     height: 100dvh;\n19|     background: #2f3e3a;\n20|   }\n21|   #hint {\n22|     position: fixed;\n23|     left: 0; right: 0; bottom: 10px;\n24|     text-align: center;\n25|     color: #eeeae0;\n26|     opacity: 0.6;\n27|     font-size: 13px;\n28|     pointer-events: none;\n29|     user-select: none;\n30|   }\n31| </style>\n32| </head>\n33| <body>\n34| <canvas id=\"game\"></canvas>\n35| <div id=\"hint\">Swipe left/right to change lanes &middot; swipe up/down or arrows to move forward/back</div>\n36| <script>\n37| // ---- Bridge helper (verbatim) ----\n38| const CARTRIDGE = {\n39|   send(type, payload = {}) {\n40|     window.parent.postMessage(\n41|       { source: \"cartridge\", v: 1, type, payload },\n42|       \"*\",\n43|     );\n44|   },\n45| };\n46| \n47| window.addEventListener(\"message\", (event) => {\n48|   const data = event.data;\n49|   if (!data || data.source !== \"cartridge-host\") return;\n50|   if (data.type === \"pause\") paused = true;\n51|   if (data.type === \"resume\") paused = false;\n52|   if (data.type === \"reset\") backToTitle();\n53| });\n54| \n55| // ---- Canvas setup ----\n56| const canvas = document.getElementById(\"game\");\n57| const ctx = canvas.getContext(\"2d\");\n58| let DPR = Math.max(1, window.devicePixelRatio || 1);\n59| let W = 0, H = 0;\n60| \n61| function resize() {\n62|   W = window.innerWidth;\n63|   H = window.innerHeight;\n64|   DPR = Math.max(1, window.devicePixelRatio || 1);\n65|   canvas.width = Math.floor(W * DPR);\n66|   canvas.height = Math.floor(H * DPR);\n67|   canvas.style.width = W + \"px\";\n68|   canvas.style.height = H + \"px\";\n69|   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n70| }\n71| window.addEventListener(\"resize\", resize);\n72| resize();\n73| \n74| // ---- Palette ----\n75| const COL = {\n76|   slate: \"#2f3e3a\",\n77|   chalk: \"#eeeae0\",\n78|   accent: \"#f2c14e\",\n79|   second: \"#8fc1e3\",\n80| };\n81| \n82| // ---- Chalk drawing helpers ----\n83| function wobble(amount) {\n84|   return (Math.random() - 0.5) * amount;\n85| }\n86| \n87| function chalkLine(x1, y1, x2, y2, color, width) {\n88|   ctx.lineCap = \"round\";\n89|   ctx.lineJoin = \"round\";\n90|   for (let i = 0; i < 2; i++) {\n91|     ctx.beginPath();\n92|     const ox = wobble(1.4) + (i === 1 ? 1 : 0);\n93|     const oy = wobble(1.4) + (i === 1 ? 1 : 0);\n94|     const mx = (x1 + x2) / 2 + wobble(3);\n95|     const my = (y1 + y2) / 2 + wobble(3);\n96|     ctx.moveTo(x1 + ox, y1 + oy);\n97|     ctx.quadraticCurveTo(mx + ox, my + oy, x2 + ox, y2 + oy);\n98|     ctx.strokeStyle = color;\n99|     ctx.globalAlpha = i === 0 ? 0.85 : 0.35;\n100|     ctx.lineWidth = width;\n101|     ctx.stroke();\n102|   }\n103|   ctx.globalAlpha = 1;\n104| }\n105| \n106| function chalkHatchRect(x, y, w, h, color, spacing) {\n107|   spacing = spacing || 6;\n108|   ctx.save();\n109|   ctx.beginPath();\n110|   ctx.rect(x, y, w, h);\n111|   ctx.clip();\n112|   for (let i = -h; i < w + h; i += spacing) {\n113|     chalkLine(x + i, y, x + i - h, y + h, color, 2);\n114|   }\n115|   ctx.restore();\n116| }\n117| \n118| function chalkCircle(cx, cy, r, color, width) {\n119|   const segs = 24;\n120|   ctx.lineCap = \"round\";\n121|   for (let pass = 0; pass < 2; pass++) {\n122|     ctx.beginPath();\n123|     for (let i = 0; i <= segs; i++) {\n124|       const a = (i / segs) * Math.PI * 2;\n125|       const rr = r + wobble(1.5);\n126|       const x = cx + Math.cos(a) * rr + (pass === 1 ? 1 : 0);\n127|       const y = cy + Math.sin(a) * rr + (pass === 1 ? 1 : 0);\n128|       if (i === 0) ctx.moveTo(x, y);\n129|       else ctx.lineTo(x, y);\n130|     }\n131|     ctx.strokeStyle = color;\n132|     ctx.globalAlpha = pass === 0 ? 0.85 : 0.3;\n133|     ctx.lineWidth = width;\n134|     ctx.stroke();\n135|   }\n136|   ctx.globalAlpha = 1;\n137| }\n138| \n139| function drawSmudges() {\n140|   const smudgeCount = 5;\n141|   ctx.save();\n142|   for (let i = 0; i < smudgeCount; i++) {\n143|     const sx = smudgeSeeds[i].x * W;\n144|     const sy = smudgeSeeds[i].y * H;\n145|     const r = smudgeSeeds[i].r * Math.min(W, H);\n146|     const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);\n147|     grad.addColorStop(0, \"rgba(238,234,224,0.05)\");\n148|     grad.addColorStop(1, \"rgba(238,234,224,0)\");\n149|     ctx.fillStyle = grad;\n150|     ctx.beginPath();\n151|     ctx.ellipse(sx, sy, r, r * 0.6, smudgeSeeds[i].rot, 0, Math.PI * 2);\n152|     ctx.fill();\n153|   }\n154|   ctx.restore();\n155| }\n156| \n157| const smudgeSeeds = [];\n158| for (let i = 0; i < 6; i++) {\n159|   smudgeSeeds.push({\n160|     x: Math.random(),\n161|     y: Math.random(),\n162|     r: 0.15 + Math.random() * 0.2,\n163|     rot: Math.random() * Math.PI,\n164|   });\n165| }\n166| \n167| // ---- Maze / game state ----\n168| const LANES = 4; // lane count across width\n169| let laneCount = LANES;\n170| let lane = 1; // current lane index (x)\n171| let row = 0; // current row (progress toward exit, y)\n172| let ROWS = 5; // rows per maze, grows a bit with stage\n173| const TOTAL_STAGES = 8; // final stage triggers win\n174| let stage = 0;\n175| let score = 0;\n176| let maze = []; // maze[row] = array of booleans: which lanes are open/walkable in that row\n177| let exitRow = 0;\n178| let started = false;\n179| let paused = false;\n180| let finished = false; // true once end has been sent, waiting for reset\n181| let particles = [];\n182| let messageTimer = 0;\n183| let messageText = \"\";\n184| let graceTimer = 0;\n185| \n186| function backToTitle() {\n187|   started = false;\n188|   paused = false;\n189|   finished = false;\n190|   stage = 0;\n191|   score = 0;\n192|   row = 0;\n193|   lane = Math.floor(LANES / 2);\n194|   particles = [];\n195| }\n196| \n197| function randInt(n) {\n198|   return Math.floor(Math.random() * n);\n199| }\n200| \n201| // Build a maze: each row has a random subset of walkable lanes (at least one),\n202| // and consecutive rows always share at least one connected lane so it's always solvable.\n203| function buildStage(s) {\n204|   ROWS = 4 + Math.min(4, s); // grows slowly\n205|   maze = [];\n206|   // start row: all lanes open (safe start)\n207|   let prevOpen = [true, true, true, true].slice(0, laneCount);\n208|   maze.push(prevOpen.slice());\n209|   for (let r = 1; r < ROWS; r++) {\n210|     const openCount = 1 + randInt(laneCount - 1 >= 1 ? laneCount - 1 : 1);\n211|     const lanes = [...Array(laneCount).keys()];\n212|     // shuffle\n213|     for (let i = lanes.length - 1; i > 0; i--) {\n214|       const j = randInt(i + 1);\n215|       [lanes[i], lanes[j]] = [lanes[j], lanes[i]];\n216|     }\n217|     let chosen = new Set(lanes.slice(0, Math.max(1, openCount)));\n218|     // guarantee connectivity: ensure at least one lane open in prevOpen intersects with chosen\n219|     const prevOpenLanes = [];\n220|     for (let i = 0; i < laneCount; i++) if (prevOpen[i]) prevOpenLanes.push(i);\n221|     const hasOverlap = prevOpenLanes.some((l) => chosen.has(l));\n222|     if (!hasOverlap && prevOpenLanes.length > 0) {\n223|       const forced = prevOpenLanes[randInt(prevOpenLanes.length)];\n224|       chosen.add(forced);\n225|     }\n226|     const rowArr = [];\n227|     for (let i = 0; i < laneCount; i++) rowArr.push(chosen.has(i));\n228|     maze.push(rowArr);\n229|     prevOpen = rowArr;\n230|   }\n231|   exitRow = ROWS - 1;\n232|   // place player at a valid lane in row 0\n233|   const startLanes = [];\n234|   for (let i = 0; i < laneCount; i++) if (maze[0][i]) startLanes.push(i);\n235|   lane = startLanes[randInt(startLanes.length)];\n236|   row = 0;\n237|   graceTimer = 2.5; // seconds of grace, though no threats exist\n238|   messageText = \"Reach the glowing exit \\u2014 stage \" + s + \" / \" + TOTAL_STAGES;\n239|   messageTimer = 2.2;\n240| }\n241| \n242| function enterStage(next) {\n243|   stage = next;\n244|   buildStage(stage);\n245|   CARTRIDGE.send(\"level\", { index: stage });\n246| }\n247| \n248| function onGoalMet() {\n249|   score += 10;\n250|   CARTRIDGE.send(\"score\", { value: score });\n251|   particles = particles.concat(makeBurst());\n252|   if (stage >= TOTAL_STAGES) {\n253|     finished = true;\n254|     messageText = \"You escaped every maze!\";\n255|     messageTimer = 3;\n256|     CARTRIDGE.send(\"end\", { reason: \"win\", value: score });\n257|   } else {\n258|     enterStage(stage + 1);\n259|   }\n260| }\n261| \n262| // try to move forward one row if current lane is open in next row\n263| function tryAdvance(dir) {\n264|   if (!started || paused || finished) return;\n265|   const targetRow = row + dir;\n266|   if (targetRow < 0) return;\n267|   if (targetRow >= ROWS) return;\n268|   if (maze[targetRow][lane]) {\n269|     row = targetRow;\n270|     if (row === exitRow) {\n271|       onGoalMet();\n272|     }\n273|   } else {\n274|     // bump feedback\n275|     particles = particles.concat(makeBump());\n276|   }\n277| }\n278| \n279| function tryLaneChange(dir) {\n280|   if (!started || paused || finished) return;\n281|   const newLane = Math.max(0, Math.min(laneCount - 1, lane + dir));\n282|   if (newLane === lane) return;\n283|   if (maze[row][newLane]) {\n284|     lane = newLane;\n285|   } else {\n286|     particles = particles.concat(makeBump());\n287|   }\n288| }\n289| \n290| function makeBurst() {\n291|   const arr = [];\n292|   for (let i = 0; i < 18; i++) {\n293|     arr.push({\n294|       x: 0, y: 0,\n295|       vx: (Math.random() - 0.5) * 4,\n296|       vy: (Math.random() - 0.5) * 4,\n297|       life: 1,\n298|       type: \"burst\",\n299|       color: Math.random() < 0.5 ? COL.accent : COL.second,\n300|     });\n301|   }\n302|   return arr;\n303| }\n304| \n305| function makeBump() {\n306|   const arr = [];\n307|   for (let i = 0; i < 6; i++) {\n308|     arr.push({\n309|       x: 0, y: 0,\n310|       vx: (Math.random() - 0.5) * 2,\n311|       vy: (Math.random() - 0.5) * 2,\n312|       life: 0.5,\n313|       type: \"bump\",\n314|       color: COL.chalk,\n315|     });\n316|   }\n317|   return arr;\n318| }\n319| \n320| // ---- Input: swipe lanes + forward/back ----\n321| const SWIPE_FRACTION = 0.08;\n322| let pressX = 0, pressY = 0;\n323| canvas.addEventListener(\"pointerdown\", (event) => {\n324|   pressX = event.clientX;\n325|   pressY = event.clientY;\n326|   if (!started) {\n327|     started = true;\n328|     CARTRIDGE.send(\"start\");\n329|     enterStage(1);\n330|     return;\n331|   }\n332|   if (finished) {\n333|     backToTitle();\n334|   }\n335| });\n336| canvas.addEventListener(\"pointerup\", (event) => {\n337|   const dx = event.clientX - pressX;\n338|   const dy = event.clientY - pressY;\n339|   const w = canvas.clientWidth;\n340|   const h = canvas.clientHeight;\n341|   if (Math.abs(dx) > Math.abs(dy)) {\n342|     if (Math.abs(dx) < w * SWIPE_FRACTION) return;\n343|     tryLaneChange(Math.sign(dx));\n344|   } else {\n345|     if (Math.abs(dy) < h * SWIPE_FRACTION) return;\n346|     tryAdvance(dy < 0 ? 1 : -1);\n347|   }\n348| });\n349| \n350| window.addEventListener(\"keydown\", (e) => {\n351|   if (!started) {\n352|     if (e.key === \"Enter\" || e.key === \" \") {\n353|       started = true;\n354|       CARTRIDGE.send(\"start\");\n355|       enterStage(1);\n356|     }\n357|     return;\n358|   }\n359|   if (finished) {\n360|     if (e.key === \"Enter\" || e.key === \" \") backToTitle();\n361|     return;\n362|   }\n363|   if (e.key === \"ArrowLeft\") tryLaneChange(-1);\n364|   if (e.key === \"ArrowRight\") tryLaneChange(1);\n365|   if (e.key === \"ArrowUp\") tryAdvance(1);\n366|   if (e.key === \"ArrowDown\") tryAdvance(-1);\n367| });\n368| \n369| // ---- Rendering ----\n370| let lastTime = performance.now();\n371| \n372| function drawTitleScreen() {\n373|   ctx.clearRect(0, 0, W, H);\n374|   drawSmudges();\n375|   const cx = W / 2, cy = H / 2;\n376|   ctx.font = \"bold 34px system-ui, sans-serif\";\n377|   ctx.fillStyle = COL.chalk;\n378|   ctx.textAlign = \"center\";\n379|   ctx.globalAlpha = 0.9;\n380|   ctx.fillText(\"Tiny Maze\", cx, cy - 60);\n381|   ctx.globalAlpha = 1;\n382|   ctx.font = \"16px system-ui, sans-serif\";\n383|   ctx.fillStyle = COL.second;\n384|   ctx.fillText(\"Swipe or tap to begin\", cx, cy - 20);\n385| \n386|   chalkCircle(cx, cy + 40, 26, COL.accent, 4);\n387|   ctx.font = \"13px system-ui, sans-serif\";\n388|   ctx.fillStyle = COL.chalk;\n389|   ctx.globalAlpha = 0.7;\n390|   ctx.fillText(\"find the exit\", cx, cy + 100);\n391|   ctx.globalAlpha = 1;\n392| }\n393| \n394| function drawFinishScreen() {\n395|   const cx = W / 2, cy = H / 2;\n396|   ctx.font = \"bold 30px system-ui, sans-serif\";\n397|   ctx.fillStyle = COL.accent;\n398|   ctx.textAlign = \"center\";\n399|   ctx.fillText(\"Maze Master!\", cx, cy - 30);\n400|   ctx.font = \"18px system-ui, sans-serif\";\n401|   ctx.fillStyle = COL.chalk;\n402|   ctx.fillText(\"Score \" + score, cx, cy + 6);\n403|   ctx.font = \"14px system-ui, sans-serif\";\n404|   ctx.globalAlpha = 0.7;\n405|   ctx.fillText(\"Tap to play again\", cx, cy + 40);\n406|   ctx.globalAlpha = 1;\n407| }\n408| \n409| function layoutMetrics() {\n410|   const marginTop = 90;\n411|   const marginBottom = 60;\n412|   const fieldH = H - marginTop - marginBottom;\n413|   const rowH = fieldH / ROWS;\n414|   const fieldW = Math.min(W * 0.8, 420);\n415|   const fieldX = (W - fieldW) / 2;\n416|   const colW = fieldW / laneCount;\n417|   return { marginTop, fieldH, rowH, fieldW, fieldX, colW };\n418| }\n419| \n420| function drawMaze() {\n421|   const { marginTop, rowH, fieldW, fieldX, colW } = layoutMetrics();\n422| \n423|   // draw rows from bottom (row 0) to top (exitRow), so exit appears at top\n424|   for (let r = 0; r < ROWS; r++) {\n425|     const y = marginTop + (ROWS - 1 - r) * rowH;\n426|     for (let c = 0; c < laneCount; c++) {\n427|       const x = fieldX + c * colW;\n428|       const open = maze[r][c];\n429|       if (open) {\n430|         chalkHatchRect(x + 4, y + 4, colW - 8, rowH - 8, \"rgba(143,193,227,0.25)\", 8);\n431|       } else {\n432|         // wall X marks\n433|         chalkLine(x + 6, y + 6, x + colW - 6, y + rowH - 6, \"rgba(238,234,224,0.25)\", 2);\n434|         chalkLine(x + colW - 6, y + 6, x + 6, y + rowH - 6, \"rgba(238,234,224,0.25)\", 2);\n435|       }\n436|       // cell border\n437|       chalkLine(x, y, x + colW, y, COL.chalk, 2);\n438|       chalkLine(x, y, x, y + rowH, COL.chalk, 2);\n439|     }\n440|   }\n441|   // outer border\n442|   const totalH = rowH * ROWS;\n443|   chalkLine(fieldX, marginTop, fieldX + fieldW, marginTop, COL.chalk, 3);\n444|   chalkLine(fieldX, marginTop + totalH, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);\n445|   chalkLine(fieldX, marginTop, fieldX, marginTop + totalH, COL.chalk, 3);\n446|   chalkLine(fieldX + fieldW, marginTop, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);\n447| \n448|   // exit glow\n449|   const exitY = marginTop + (ROWS - 1 - exitRow) * rowH;\n450|   for (let c = 0; c < laneCount; c++) {\n451|     if (maze[exitRow][c]) {\n452|       const x = fieldX + c * colW + colW / 2;\n453|       const y = exitY + rowH / 2;\n454|       const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n455|       chalkCircle(x, y, 14 + pulse * 4, COL.accent, 4);\n456|     }\n457|   }\n458| \n459|   // player token\n460|   const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;\n461|   const px = fieldX + lane * colW + colW / 2;\n462|   chalkCircle(px, py, 12, COL.second, 4);\n463|   chalkLine(px - 5, py, px + 5, py, COL.second, 2);\n464|   chalkLine(px, py - 5, px, py + 5, COL.second, 2);\n465| }\n466| \n467| function drawHUD() {\n468|   ctx.textAlign = \"left\";\n469|   ctx.font = \"16px system-ui, sans-serif\";\n470|   ctx.fillStyle = COL.chalk;\n471|   ctx.globalAlpha = 0.85;\n472|   ctx.fillText(\"Stage \" + stage + \" / \" + TOTAL_STAGES, 16, 30);\n473|   ctx.textAlign = \"right\";\n474|   ctx.fillText(\"Score \" + score, W - 16, 30);\n475|   ctx.globalAlpha = 1;\n476|   ctx.textAlign = \"center\";\n477| \n478|   if (messageTimer > 0) {\n479|     ctx.font = \"18px system-ui, sans-serif\";\n480|     ctx.fillStyle = COL.accent;\n481|     ctx.globalAlpha = Math.min(1, messageTimer);\n482|     ctx.fillText(messageText, W / 2, 62);\n483|     ctx.globalAlpha = 1;\n484|   }\n485| }\n486| \n487| function updateParticles(dt) {\n488|   const { fieldX, fieldW, marginTop, rowH } = layoutMetrics();\n489|   const px = fieldX + lane * (fieldW / laneCount) + (fieldW / laneCount) / 2;\n490|   const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;\n491|   for (const p of particles) {\n492|     p.x += p.vx;\n493|     p.y += p.vy;\n494|     p.life -= dt * 1.2;\n495|   }\n496|   particles = particles.filter((p) => p.life > 0);\n497|   ctx.save();\n498|   for (const p of particles) {\n499|     ctx.globalAlpha = Math.max(0, p.life);\n500|     chalkCircle(px + p.x * 10, py + p.y * 10, 3, p.color, 2);\n501|   }\n502|   ctx.restore();\n503|   ctx.globalAlpha = 1;\n504| }\n505| \n506| function frame(now) {\n507|   const dt = Math.min(0.05, (now - lastTime) / 1000);\n508|   lastTime = now;\n509| \n510|   ctx.clearRect(0, 0, W, H);\n511|   ctx.fillStyle = COL.slate;\n512|   ctx.fillRect(0, 0, W, H);\n513|   drawSmudges();\n514| \n515|   if (!started) {\n516|     drawTitleScreen();\n517|   } else if (finished) {\n518|     drawFinishScreen();\n519|   } else {\n520|     if (!paused) {\n521|       if (messageTimer > 0) messageTimer -= dt;\n522|       if (graceTimer > 0) graceTimer -= dt;\n523|     }\n524|     drawMaze();\n525|     updateParticles(paused ? 0 : dt);\n526|     drawHUD();\n527|     if (paused) {\n528|       ctx.font = \"bold 28px system-ui, sans-serif\";\n529|       ctx.fillStyle = COL.chalk;\n530|       ctx.textAlign = \"center\";\n531|       ctx.fillText(\"Paused\", W / 2, H / 2);\n532|     }\n533|   }\n534| \n535|   requestAnimationFrame(frame);\n536| }\n537| \n538| // ---- Boot ----\n539| function boot() {\n540|   resize();\n541|   ctx.fillStyle = COL.slate;\n542|   ctx.fillRect(0, 0, W, H);\n543|   requestAnimationFrame((t) => {\n544|     lastTime = t;\n545|     CARTRIDGE.send(\"boot\", { title: \"Tiny Maze\", gameType: \"stage-clear\", lang: \"en\" });\n546|     requestAnimationFrame(frame);\n547|   });\n548| }\n549| boot();\n550| </script>\n551| </body>\n552| </html>\n553| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNsq5FbsLJamPSyaRBc8\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8939,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}       }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}              }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"prompt\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"168\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LANES\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 4\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" //\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lane\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" count across\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" width\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 176\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"let\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" maze\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = [\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"]; // maze[\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"row\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"]\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = array\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" of b\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ooleans:\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" which\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lanes\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" are open\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"walk\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"able in\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" row\\\"}, {\\\"line\\\": 238\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Reach\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the gl\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"owing exit\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\\\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"u\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2014\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stage\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + s\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + \\\\\\\" /\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\" + TOTAL_STAGES\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 343\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"try\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"L\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ane\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Change\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(Math\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".sign\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(dx\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"))\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 346\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"try\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Adv\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ance(\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"dy\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"< 0 \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"? 1 : -\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1);\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"The code\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a maze with lanes\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" token\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves through it\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sw\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ipes\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", an\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" exit to\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reach\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and stage\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" progression with\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fail\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"goal\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 238\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"messageText =\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"Reach the glowing exit \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\\u2014 stage \\\\\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + s + \\\\\\\" / \\\\\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + TOTAL_STAGES;\\\"},\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 449\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"//\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" exit\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" g\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"low\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 455\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ch\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"alkCircle(x\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" y, 14\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pulse\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 4\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", COL.accent\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", 4\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" an\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicit\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" message\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stating\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the goal and\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" draws\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a glowing p\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ulsing circle at\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the exit location\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" vis\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ually c\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ue the player's\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" objective\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 269\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"row\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" target\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Row;\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 284\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"lane\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = new\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Lane;\\\"}, {\\\"line\\\": \"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"275\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"particles\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" particles.concat\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(mak\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eB\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ump\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"());\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"Player\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" swipe or\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" arrow\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" keys immediately\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the token\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" position\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" generates\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" visible\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bump\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" particles in\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" event\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" changes\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drawn\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" next\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame.\\\"}, \\\"fail\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 252\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (stage\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" >=\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" TOTAL_STAGES) {\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 254\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text = \\\\\\\"You\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" escaped\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" every\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" maze\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\";\\\"}, {\\\"line\\\": 399\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Maze\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Master\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!\\\\\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", cx\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", cy -\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 30\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stages are cleared\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the game displays a completion\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" message and shows\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a finish\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen with score\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the player can tap\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" again.\\\"}}\"}         }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0      }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8939,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":608}           }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"       }\n\n",
+    "gapsMs": [
+      0,
+      217,
+      217,
+      217,
+      1,
+      1,
+      1,
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      2,
+      9,
+      205,
+      205,
+      205,
+      205,
+      205,
+      205,
+      4,
+      30,
+      27,
+      22,
+      27,
+      28,
+      90,
+      90,
+      90,
+      16,
+      37,
+      15,
+      26,
+      27,
+      31,
+      22,
+      26,
+      28,
+      24,
+      26,
+      26,
+      28,
+      28,
+      26,
+      25,
+      27,
+      27,
+      28,
+      26,
+      25,
+      27,
+      28,
+      27,
+      22,
+      28,
+      28,
+      23,
+      28,
+      25,
+      27,
+      26,
+      27,
+      27,
+      25,
+      28,
+      43,
+      8,
+      27,
+      26,
+      26,
+      26,
+      34,
+      19,
+      26,
+      33,
+      22,
+      30,
+      24,
+      23,
+      26,
+      27,
+      26,
+      26,
+      26,
+      27,
+      26,
+      26,
+      26,
+      31,
+      22,
+      26,
+      29,
+      24,
+      38,
+      15,
+      26,
+      26,
+      28,
+      25,
+      26,
+      27,
+      26,
+      25,
+      28,
+      26,
+      34,
+      20,
+      26,
+      26,
+      28,
+      29,
+      23,
+      51,
+      4,
+      57,
+      4,
+      17,
+      24,
+      31,
+      23,
+      25,
+      36,
+      0,
+      26,
+      29,
+      24,
+      27,
+      26,
+      26,
+      28,
+      24,
+      34,
+      23,
+      25,
+      26,
+      24,
+      26,
+      26,
+      26,
+      51,
+      4,
+      37,
+      15,
+      27,
+      25,
+      26,
+      30,
+      25,
+      28,
+      24,
+      25,
+      27,
+      25,
+      26,
+      27,
+      28,
+      25,
+      53,
+      6,
+      20,
+      27,
+      28,
+      45,
+      7,
+      34,
+      19,
+      24,
+      28,
+      25,
+      27,
+      49,
+      8,
+      25,
+      24,
+      26,
+      25,
+      33,
+      23,
+      23,
+      27,
+      27,
+      27,
+      26,
+      28,
+      26,
+      23,
+      26,
+      28,
+      33,
+      19,
+      29,
+      22,
+      27,
+      34,
+      22,
+      24,
+      25,
+      27,
+      31,
+      24,
+      33,
+      27,
+      17,
+      26,
+      35,
+      28,
+      19,
+      23,
+      27,
+      26,
+      27,
+      28,
+      26,
+      26,
+      25,
+      26,
+      25,
+      28,
+      26,
+      26,
+      27,
+      26,
+      26,
+      27,
+      32,
+      20,
+      28,
+      25,
+      31,
+      25,
+      22,
+      30,
+      23,
+      37,
+      126,
+      2,
+      2
+    ]
+  },
+  "usage": {
+    "input": 8939,
+    "output": 608,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

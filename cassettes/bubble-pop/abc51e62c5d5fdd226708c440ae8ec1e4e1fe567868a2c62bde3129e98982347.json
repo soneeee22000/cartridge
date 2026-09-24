@@ -1,0 +1,416 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:abc51e62c5d5fdd226708c440ae8ec1e4e1fe567868a2c62bde3129e98982347",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\npop the bubbles\n\nPlan:\n{\"gameType\":\"toy-box\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap floating bubbles to pop them and watch your pop tally climb, with new bubbles drifting up to replace them. Use the clear button anytime to empty the screen and start a fresh batch.\",\"slug\":\"pop-the-bubbles\",\"style\":\"paper-cut\",\"title\":\"Pop the Bubbles\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Pop the Bubbles</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     background: #f4ecd8;\n14|     overflow: hidden;\n15|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;\n16|   }\n17|   #wrap {\n18|     position: fixed;\n19|     inset: 0;\n20|     display: flex;\n21|     flex-direction: column;\n22|   }\n23|   canvas {\n24|     display: block;\n25|     touch-action: none;\n26|     flex: 1;\n27|   }\n28|   #hud {\n29|     position: absolute;\n30|     top: 0;\n31|     left: 0;\n32|     right: 0;\n33|     display: flex;\n34|     justify-content: space-between;\n35|     align-items: center;\n36|     padding: 10px 14px;\n37|     box-sizing: border-box;\n38|     pointer-events: none;\n39|   }\n40|   #tally {\n41|     background: #e07a5f;\n42|     color: #f4ecd8;\n43|     font-weight: 800;\n44|     font-size: 18px;\n45|     padding: 8px 16px;\n46|     border-radius: 14px;\n47|     box-shadow: 0 3px 6px rgba(61,64,91,0.3);\n48|   }\n49|   #clearBtn {\n50|     pointer-events: auto;\n51|     background: #3d405b;\n52|     color: #f4ecd8;\n53|     border: none;\n54|     font-weight: 800;\n55|     font-size: 16px;\n56|     padding: 10px 18px;\n57|     min-height: 44px;\n58|     border-radius: 14px;\n59|     box-shadow: 0 3px 6px rgba(61,64,91,0.3);\n60|     cursor: pointer;\n61|   }\n62|   #clearBtn:active {\n63|     transform: translateY(1px);\n64|   }\n65| </style>\n66| </head>\n67| <body>\n68| <div id=\"wrap\">\n69|   <div id=\"hud\">\n70|     <div id=\"tally\">Pops: 0</div>\n71|     <button id=\"clearBtn\">Clear Table</button>\n72|   </div>\n73|   <canvas id=\"game\"></canvas>\n74| </div>\n75| <script>\n76| const CARTRIDGE = {\n77|   send(type, payload = {}) {\n78|     window.parent.postMessage(\n79|       { source: \"cartridge\", v: 1, type, payload },\n80|       \"*\",\n81|     );\n82|   },\n83| };\n84| </script>\n85| <script>\n86| (function() {\n87|   const canvas = document.getElementById(\"game\");\n88|   const ctx = canvas.getContext(\"2d\");\n89|   const tallyEl = document.getElementById(\"tally\");\n90|   const clearBtn = document.getElementById(\"clearBtn\");\n91| \n92|   let dpr = window.devicePixelRatio || 1;\n93|   let W = 0, H = 0;\n94| \n95|   function resize() {\n96|     W = window.innerWidth;\n97|     H = window.innerHeight;\n98|     dpr = window.devicePixelRatio || 1;\n99|     canvas.width = Math.floor(W * dpr);\n100|     canvas.height = Math.floor(H * dpr);\n101|     canvas.style.width = W + \"px\";\n102|     canvas.style.height = H + \"px\";\n103|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n104|   }\n105|   window.addEventListener(\"resize\", resize);\n106|   resize();\n107| \n108|   // seeded jitter helper for paper-cut edges\n109|   function seededRand(seed) {\n110|     let s = seed;\n111|     return function() {\n112|       s = (s * 9301 + 49297) % 233280;\n113|       return s / 233280;\n114|     };\n115|   }\n116| \n117|   const PALETTE = {\n118|     background: \"#f4ecd8\",\n119|     layer: \"#e07a5f\",\n120|     accent: \"#3d405b\",\n121|     highlight: \"#81b29a\"\n122|   };\n123| \n124|   const bubbleColors = [PALETTE.layer, PALETTE.highlight, PALETTE.accent];\n125| \n126|   let running = false;\n127|   let paused = false;\n128|   let tally = 0;\n129|   const bubbles = [];\n130|   let bubbleId = 0;\n131|   const pops = []; // pop animations\n132| \n133|   const MAX_BUBBLES = 9;\n134| \n135|   function rand(min, max) {\n136|     return min + Math.random() * (max - min);\n137|   }\n138| \n139|   function spawnBubble() {\n140|     const r = rand(28, 48);\n141|     const x = rand(r + 10, Math.max(r + 20, W - r - 10));\n142|     const y = H + r + rand(0, 200);\n143|     const speed = rand(0.4, 1.0);\n144|     const wobbleSeed = Math.floor(rand(1, 99999));\n145|     const color = bubbleColors[Math.floor(rand(0, bubbleColors.length))];\n146|     bubbles.push({\n147|       id: bubbleId++,\n148|       x, y, r,\n149|       speed,\n150|       color,\n151|       wobblePhase: rand(0, Math.PI * 2),\n152|       seed: wobbleSeed\n153|     });\n154|   }\n155| \n156|   function ensureBubbles() {\n157|     while (bubbles.length < MAX_BUBBLES) {\n158|       spawnBubble();\n159|     }\n160|   }\n161| \n162|   // clearTable is THE single function that resets everything:\n163|   // clears pieces, zeroes tally, sends score, redraws.\n164|   // It is called both by the host \"reset\" command and by the\n165|   // visible Clear Table button. It also returns the toy to the\n166|   // pre-start title screen, matching the toy-box \"hard reset\" contract.\n167|   function clearTable() {\n168|     running = false;\n169|     bubbles.length = 0;\n170|     pops.length = 0;\n171|     tally = 0;\n172|     tallyEl.textContent = \"Pops: 0\";\n173|     CARTRIDGE.send(\"score\", { value: 0 });\n174|     draw();\n175|   }\n176| \n177|   clearBtn.addEventListener(\"click\", clearTable);\n178| \n179|   window.addEventListener(\"message\", (event) => {\n180|     const data = event.data;\n181|     if (!data || data.source !== \"cartridge-host\") return;\n182|     if (data.type === \"pause\") paused = true;\n183|     if (data.type === \"resume\") paused = false;\n184|     if (data.type === \"reset\") clearTable();\n185|   });\n186| \n187|   function popBubble(b) {\n188|     bubbles.splice(bubbles.indexOf(b), 1);\n189|     tally += 1;\n190|     tallyEl.textContent = \"Pops: \" + tally;\n191|     CARTRIDGE.send(\"score\", { value: tally });\n192|     pops.push({ x: b.x, y: b.y, r: b.r, t: 0, color: b.color });\n193|   }\n194| \n195|   function hitTest(px, py) {\n196|     for (let i = bubbles.length - 1; i >= 0; i--) {\n197|       const b = bubbles[i];\n198|       const dx = px - b.x;\n199|       const dy = py - b.y;\n200|       if (dx * dx + dy * dy <= b.r * b.r * 1.15) {\n201|         return b;\n202|       }\n203|     }\n204|     return null;\n205|   }\n206| \n207|   canvas.style.touchAction = \"none\";\n208|   canvas.addEventListener(\"pointerdown\", (event) => {\n209|     event.preventDefault();\n210|     if (paused) return;\n211|     if (!running) {\n212|       running = true;\n213|       CARTRIDGE.send(\"start\");\n214|       ensureBubbles();\n215|       return;\n216|     }\n217|     const rect = canvas.getBoundingClientRect();\n218|     const px = event.clientX - rect.left;\n219|     const py = event.clientY - rect.top;\n220|     const hit = hitTest(px, py);\n221|     if (hit) {\n222|       popBubble(hit);\n223|     }\n224|   });\n225| \n226|   function settle() {\n227|     for (let i = bubbles.length - 1; i >= 0; i--) {\n228|       const b = bubbles[i];\n229|       b.y -= b.speed;\n230|       b.wobblePhase += 0.02;\n231|       b.x += Math.sin(b.wobblePhase) * 0.3;\n232|       if (b.y < -b.r - 20) {\n233|         bubbles.splice(i, 1);\n234|       }\n235|     }\n236|     if (running) ensureBubbles();\n237|     for (let i = pops.length - 1; i >= 0; i--) {\n238|       pops[i].t += 1;\n239|       if (pops[i].t > 14) pops.splice(i, 1);\n240|     }\n241|   }\n242| \n243|   function drawJitterCircle(cx, cy, r, seed, fillStyle) {\n244|     const rnd = seededRand(seed);\n245|     const points = 14;\n246|     ctx.beginPath();\n247|     for (let i = 0; i <= points; i++) {\n248|       const angle = (i / points) * Math.PI * 2;\n249|       const jitter = (rnd() - 0.5) * 2.2;\n250|       const rr = r + jitter;\n251|       const x = cx + Math.cos(angle) * rr;\n252|       const y = cy + Math.sin(angle) * rr;\n253|       if (i === 0) ctx.moveTo(x, y);\n254|       else ctx.lineTo(x, y);\n255|     }\n256|     ctx.closePath();\n257|     ctx.fillStyle = fillStyle;\n258|     ctx.fill();\n259|   }\n260| \n261|   function drawBackground() {\n262|     ctx.fillStyle = PALETTE.background;\n263|     ctx.fillRect(0, 0, W, H);\n264|     // subtle layered strips at bottom for paper-cut depth\n265|     ctx.save();\n266|     ctx.shadowColor = \"rgba(61,64,91,0.25)\";\n267|     ctx.shadowBlur = 6;\n268|     ctx.shadowOffsetY = 3;\n269|     const rnd = seededRand(777);\n270|     ctx.beginPath();\n271|     ctx.moveTo(0, H);\n272|     for (let x = 0; x <= W; x += 40) {\n273|       const jitter = (rnd() - 0.5) * 6;\n274|       ctx.lineTo(x, H - 30 + jitter);\n275|     }\n276|     ctx.lineTo(W, H);\n277|     ctx.closePath();\n278|     ctx.fillStyle = PALETTE.highlight;\n279|     ctx.globalAlpha = 0.5;\n280|     ctx.fill();\n281|     ctx.globalAlpha = 1;\n282|     ctx.restore();\n283|   }\n284| \n285|   function draw() {\n286|     drawBackground();\n287| \n288|     if (!running) {\n289|       drawTitleScreen();\n290|       return;\n291|     }\n292| \n293|     // bubbles with shadow layer\n294|     for (const b of bubbles) {\n295|       ctx.save();\n296|       ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n297|       ctx.shadowBlur = 6;\n298|       ctx.shadowOffsetY = 3;\n299|       drawJitterCircle(b.x, b.y, b.r, b.seed, b.color);\n300|       ctx.restore();\n301| \n302|       // inner highlight circle (paper layer stacked)\n303|       ctx.save();\n304|       drawJitterCircle(b.x - b.r * 0.25, b.y - b.r * 0.25, b.r * 0.35, b.seed + 5, PALETTE.background);\n305|       ctx.globalAlpha = 0.5;\n306|       ctx.restore();\n307|     }\n308| \n309|     // pop animations\n310|     for (const p of pops) {\n311|       const progress = p.t / 14;\n312|       const rr = p.r * (1 + progress * 0.8);\n313|       ctx.save();\n314|       ctx.globalAlpha = Math.max(0, 1 - progress);\n315|       ctx.strokeStyle = PALETTE.accent;\n316|       ctx.lineWidth = 2;\n317|       ctx.beginPath();\n318|       const spikes = 8;\n319|       for (let i = 0; i < spikes; i++) {\n320|         const angle = (i / spikes) * Math.PI * 2;\n321|         const x1 = p.x + Math.cos(angle) * rr * 0.6;\n322|         const y1 = p.y + Math.sin(angle) * rr * 0.6;\n323|         const x2 = p.x + Math.cos(angle) * rr;\n324|         const y2 = p.y + Math.sin(angle) * rr;\n325|         ctx.moveTo(x1, y1);\n326|         ctx.lineTo(x2, y2);\n327|       }\n328|       ctx.stroke();\n329|       ctx.restore();\n330|     }\n331|   }\n332| \n333|   let hintPhase = 0;\n334|   function drawTitleScreen() {\n335|     hintPhase += 0.06;\n336|     const cx = W / 2;\n337|     const cy = H / 2;\n338| \n339|     // title plate\n340|     ctx.save();\n341|     ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n342|     ctx.shadowBlur = 6;\n343|     ctx.shadowOffsetY = 3;\n344|     const plateW = Math.min(320, W * 0.8);\n345|     const plateH = 90;\n346|     roundRect(cx - plateW / 2, cy - 120, plateW, plateH, 16);\n347|     ctx.fillStyle = PALETTE.layer;\n348|     ctx.fill();\n349|     ctx.restore();\n350| \n351|     ctx.fillStyle = PALETTE.background;\n352|     ctx.font = \"800 26px sans-serif\";\n353|     ctx.textAlign = \"center\";\n354|     ctx.textBaseline = \"middle\";\n355|     ctx.fillText(\"Pop the Bubbles\", cx, cy - 75);\n356| \n357|     // pulsing hint\n358|     const alpha = 0.6 + 0.4 * Math.sin(hintPhase);\n359|     ctx.save();\n360|     ctx.globalAlpha = alpha;\n361|     ctx.fillStyle = PALETTE.accent;\n362|     ctx.font = \"700 20px sans-serif\";\n363|     ctx.fillText(\"Tap to begin\", cx, cy + 20);\n364|     ctx.restore();\n365| \n366|     // decorative bubble samples\n367|     drawJitterCircle(cx - 80, cy + 90, 26, 12, PALETTE.highlight);\n368|     drawJitterCircle(cx, cy + 100, 32, 34, PALETTE.layer);\n369|     drawJitterCircle(cx + 80, cy + 90, 22, 56, PALETTE.accent);\n370|   }\n371| \n372|   function roundRect(x, y, w, h, r) {\n373|     ctx.beginPath();\n374|     ctx.moveTo(x + r, y);\n375|     ctx.arcTo(x + w, y, x + w, y + h, r);\n376|     ctx.arcTo(x + w, y + h, x, y + h, r);\n377|     ctx.arcTo(x, y + h, x, y, r);\n378|     ctx.arcTo(x, y, x + w, y, r);\n379|     ctx.closePath();\n380|   }\n381| \n382|   function frame() {\n383|     if (!paused) settle();\n384|     draw();\n385|     requestAnimationFrame(frame);\n386|   }\n387| \n388|   CARTRIDGE.send(\"boot\", { title: \"Pop the Bubbles\", gameType: \"toy-box\", lang: \"en\" });\n389|   requestAnimationFrame(() => {\n390|     draw();\n391|     requestAnimationFrame(frame);\n392|   });\n393| })();\n394| </script>\n395| </body>\n396| </html>\n397| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNqhLRTUH8rh6hCRa5ZU\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6325,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}              }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"70\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"P\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ops\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 139\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sp\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"awn\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Bubble()\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"}, {\\\"line\\\": 187\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function pop\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Bubble(\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"b\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\\\"}, {\\\"line\\\": 71\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"Clear\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Table\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The code\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" key\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns and verbs from the brief\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bub\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bles are\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" spaw\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ned and\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drift\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" up\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ward, t\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apping\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" p\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ops them with\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" counter\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and a\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" button\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" emp\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ties the screen\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 355\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\\\\\\\"Pop\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the Bubbles\\\\\\\", cx,\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cy - 75)\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 363\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Tap to begin\\\\\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", cx, cy + 20);\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen explicitly\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" states the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game title\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and instru\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to tap to begin,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" making\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the objective\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear before\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" starts\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 189\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"t\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1;\\\"}, {\\\"line\\\": \"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"190, \\\"quote\\\": \\\"tal\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lyEl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".textContent = \\\\\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Pops: \\\\\\\" + t\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally;\\\"}, {\\\"line\\\": 192\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"p\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ops.push({\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" x: b\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x, y: b.y\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" r\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": b.r,\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": \"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0,\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" color\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": b.color });\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bubble is t\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apped, the\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tally incre\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ments and updates\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pop\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" animation\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" que\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ued for\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the next frame.\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, \\\"fail\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"ab\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rupt\\\", \\\"evidence\\\": [{\\\"line\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 288\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"quote\\\": \\\"if\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (!\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"running\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\\\"}, {\\\"line\\\": 289\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"draw\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"TitleScreen();\\\"}, {\\\"line\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 363\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Tap to begin\\\\\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", cx, cy + 20);\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game returns\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to the title screen when cleared\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reset\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", but\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" does\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" not explain\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ended\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" provide\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" context\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" about the final\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" before\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" returning\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to the start\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}}\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":6325,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":516}        }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"  }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      227,
+      7,
+      7,
+      7,
+      7,
+      7,
+      1,
+      1,
+      5,
+      27,
+      30,
+      24,
+      143,
+      143,
+      143,
+      143,
+      143,
+      16,
+      28,
+      31,
+      22,
+      36,
+      18,
+      26,
+      67,
+      67,
+      14,
+      25,
+      26,
+      29,
+      23,
+      27,
+      30,
+      23,
+      26,
+      25,
+      28,
+      27,
+      25,
+      25,
+      26,
+      31,
+      23,
+      27,
+      29,
+      22,
+      37,
+      17,
+      24,
+      27,
+      28,
+      24,
+      26,
+      27,
+      26,
+      29,
+      23,
+      27,
+      26,
+      27,
+      25,
+      26,
+      26,
+      33,
+      24,
+      26,
+      30,
+      20,
+      28,
+      26,
+      26,
+      31,
+      23,
+      36,
+      16,
+      31,
+      25,
+      25,
+      26,
+      27,
+      25,
+      25,
+      27,
+      28,
+      25,
+      27,
+      25,
+      26,
+      32,
+      20,
+      29,
+      24,
+      31,
+      23,
+      26,
+      26,
+      26,
+      26,
+      27,
+      27,
+      26,
+      26,
+      26,
+      27,
+      26,
+      39,
+      15,
+      25,
+      27,
+      30,
+      25,
+      24,
+      29,
+      23,
+      27,
+      26,
+      26,
+      27,
+      1,
+      24,
+      27,
+      26,
+      26,
+      26,
+      97,
+      230,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      4,
+      6,
+      26,
+      27,
+      31,
+      21,
+      27,
+      26,
+      27,
+      26,
+      28,
+      26,
+      25,
+      26,
+      26,
+      27,
+      26,
+      28,
+      33,
+      21,
+      24,
+      27,
+      26,
+      25,
+      29,
+      25,
+      27,
+      32,
+      19,
+      27,
+      29,
+      23,
+      27,
+      26,
+      29,
+      24,
+      27,
+      27,
+      27,
+      27
+    ]
+  },
+  "usage": {
+    "input": 6325,
+    "output": 516,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

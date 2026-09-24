@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course d'Escargots</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background: #fbf7ee;
+    overflow: hidden;
+    font-family: 'Arial Narrow', Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+    background: #fbf7ee;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---------- Bridge helper (verbatim) ----------
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+// ---------- Setup ----------
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.style.touchAction = "none";
+
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  buildGrain();
+}
+window.addEventListener("resize", resize);
+
+// ---------- Risograph palette ----------
+const PAPER = "#fbf7ee";
+const INK1 = "#ff48b0";
+const INK2 = "#0078bf";
+const OVERLAP = "#5b3a8c";
+
+// ---------- Grain tile (pre-rendered) ----------
+let grainCanvas = null;
+function buildGrain() {
+  const size = 128;
+  grainCanvas = document.createElement("canvas");
+  grainCanvas.width = size;
+  grainCanvas.height = size;
+  const gctx = grainCanvas.getContext("2d");
+  const imgData = gctx.createImageData(size, size);
+  for (let i = 0; i < imgData.data.length; i += 4) {
+    const v = Math.random() * 255;
+    imgData.data[i] = v;
+    imgData.data[i + 1] = v;
+    imgData.data[i + 2] = v;
+    imgData.data[i + 3] = 255;
+  }
+  gctx.putImageData(imgData, 0, 0);
+}
+
+function drawGrain() {
+  if (!grainCanvas) return;
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  const pattern = ctx.createPattern(grainCanvas, "repeat");
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+// ---------- Game state ----------
+let last = 0;
+let running = false;
+let paused = false;
+let started = false; // whether boot/start flow has begun
+let score = 0;
+let scoreShown = -1;
+
+const GROUND_Y_FRAC = 0.75;
+let groundY = 0;
+
+let snail = {
+  x: 0,
+  y: 0,
+  vy: 0,
+  w: 56,
+  h: 34,
+  onGround: true,
+  jumpForce: -620,
+};
+const GRAVITY = 1700;
+
+let obstacles = [];
+let leaves = [];
+let spawnTimer = 0;
+let leafTimer = 0;
+let speed = 220;
+const BASE_SPEED = 220;
+const MAX_SPEED = 520;
+let elapsed = 0;
+let firstHazardSpawned = false;
+
+let clouds = [];
+function initClouds() {
+  clouds = [];
+  for (let i = 0; i < 5; i++) {
+    clouds.push({
+      x: Math.random() * 1000,
+      y: 40 + Math.random() * 140,
+      s: 0.6 + Math.random() * 0.8,
+      speed: 15 + Math.random() * 15,
+    });
+  }
+}
+
+let tapHintPulse = 0;
+
+function resetState() {
+  score = 0;
+  scoreShown = -1;
+  obstacles = [];
+  leaves = [];
+  spawnTimer = 1.4; // opening lane clear
+  leafTimer = 0.8;
+  speed = BASE_SPEED;
+  elapsed = 0;
+  firstHazardSpawned = false;
+  groundY = H * GROUND_Y_FRAC;
+  snail.x = W * 0.22;
+  snail.y = groundY - snail.h;
+  snail.vy = 0;
+  snail.onGround = true;
+  initClouds();
+}
+
+function backToTitle() {
+  running = false;
+  paused = false;
+  started = false;
+  resetState();
+}
+
+// ---------- Input ----------
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  if (paused) return;
+  if (!started) {
+    started = true;
+    running = true;
+    resetState();
+    CARTRIDGE.send("start");
+    return;
+  }
+  if (running) {
+    act();
+  } else {
+    // after crash, tap restarts to title-ready state, then next tap starts
+    backToTitle();
+  }
+});
+
+function act() {
+  if (snail.onGround) {
+    snail.vy = snail.jumpForce;
+    snail.onGround = false;
+  }
+}
+
+// ---------- Host messages ----------
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---------- Spawning ----------
+function spawnObstacle() {
+  const size = 34 + Math.random() * 20;
+  obstacles.push({
+    x: W + size,
+    y: groundY - size,
+    w: size,
+    h: size,
+    passed: false,
+  });
+  firstHazardSpawned = true;
+}
+
+function spawnLeaf() {
+  const y = groundY - 60 - Math.random() * 120;
+  leaves.push({
+    x: W + 20,
+    y: y,
+    r: 12,
+    taken: false,
+  });
+}
+
+// ---------- Update ----------
+function advance(dt) {
+  elapsed += dt;
+  speed = Math.min(MAX_SPEED, BASE_SPEED + elapsed * 9);
+
+  // clouds always move for liveliness
+  for (const c of clouds) {
+    c.x -= c.speed * dt;
+    if (c.x < -80) c.x = W + 80;
+  }
+
+  // physics
+  snail.vy += GRAVITY * dt;
+  snail.y += snail.vy * dt;
+  if (snail.y >= groundY - snail.h) {
+    snail.y = groundY - snail.h;
+    snail.vy = 0;
+    snail.onGround = true;
+  }
+
+  // spawn timers
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnObstacle();
+    spawnTimer = Math.max(0.9, 1.9 - elapsed * 0.02) + Math.random() * 0.6;
+  }
+  leafTimer -= dt;
+  if (leafTimer <= 0) {
+    spawnLeaf();
+    leafTimer = 1.2 + Math.random() * 1.4;
+  }
+
+  // move obstacles
+  for (const o of obstacles) {
+    o.x -= speed * dt;
+    if (!o.passed && o.x + o.w < snail.x) {
+      o.passed = true;
+      score += 1;
+      CARTRIDGE.send("score", { value: score });
+    }
+  }
+  obstacles = obstacles.filter((o) => o.x > -60);
+
+  // move leaves
+  for (const l of leaves) {
+    l.x -= speed * dt;
+  }
+  leaves = leaves.filter((l) => l.x > -40 && !l.taken);
+}
+
+function collide() {
+  // obstacle collision
+  const sx = snail.x + 8;
+  const sy = snail.y + 4;
+  const sw = snail.w - 16;
+  const sh = snail.h - 8;
+  for (const o of obstacles) {
+    if (
+      sx < o.x + o.w &&
+      sx + sw > o.x &&
+      sy < o.y + o.h &&
+      sy + sh > o.y
+    ) {
+      crash();
+      return;
+    }
+  }
+  // leaf pickup
+  for (const l of leaves) {
+    const dx = (snail.x + snail.w / 2) - l.x;
+    const dy = (snail.y + snail.h / 2) - l.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < l.r + 20) {
+      l.taken = true;
+      score += 3;
+      CARTRIDGE.send("score", { value: score });
+    }
+  }
+}
+
+function crash() {
+  running = false;
+  CARTRIDGE.send("end", { reason: "lose", value: score });
+}
+
+// ---------- Drawing ----------
+function drawCloud(c) {
+  ctx.save();
+  ctx.translate(c.x, c.y);
+  ctx.scale(c.s, c.s);
+  ctx.fillStyle = INK2;
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 22, 0, Math.PI * 2);
+  ctx.arc(24, -6, 16, 0, Math.PI * 2);
+  ctx.arc(-22, -4, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawGround() {
+  // ground band ink2
+  ctx.fillStyle = INK2;
+  ctx.fillRect(0, groundY, W, H - groundY);
+  // misregistered offset strip ink1
+  ctx.fillStyle = INK1;
+  ctx.globalAlpha = 0.85;
+  ctx.fillRect(0, groundY + 2, W, 6);
+  ctx.globalAlpha = 1;
+  // dashes for motion
+  ctx.fillStyle = PAPER;
+  const dashW = 30, gap = 26;
+  const offset = (elapsed * speed) % (dashW + gap);
+  for (let x = -offset; x < W; x += dashW + gap) {
+    ctx.fillRect(x, groundY + H * 0.06, dashW, 4);
+  }
+}
+
+function drawSnail() {
+  const x = snail.x, y = snail.y;
+  ctx.save();
+  ctx.translate(x, y);
+
+  // shell (ink1) with slight offset ink2 outline for misregistration
+  ctx.fillStyle = INK2;
+  ctx.beginPath();
+  ctx.arc(18, 12, 17, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = INK1;
+  ctx.beginPath();
+  ctx.arc(16, 10, 16, 0, Math.PI * 2);
+  ctx.fill();
+
+  // shell spiral (overlap color)
+  ctx.strokeStyle = OVERLAP;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(16, 10, 9, 0, Math.PI * 1.5);
+  ctx.stroke();
+
+  // body (ink2)
+  ctx.fillStyle = INK2;
+  ctx.beginPath();
+  ctx.moveTo(0, snail.h);
+  ctx.quadraticCurveTo(-4, snail.h - 14, 10, snail.h - 18);
+  ctx.quadraticCurveTo(30, snail.h - 22, 46, snail.h - 6);
+  ctx.quadraticCurveTo(50, snail.h, 44, snail.h);
+  ctx.lineTo(0, snail.h);
+  ctx.fill();
+
+  // eye stalks
+  ctx.strokeStyle = INK2;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(42, snail.h - 10);
+  ctx.lineTo(50, snail.h - 22);
+  ctx.stroke();
+  ctx.fillStyle = OVERLAP;
+  ctx.beginPath();
+  ctx.arc(50, snail.h - 22, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawObstacle(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  // rock shape, ink2 base, ink1 offset top for misregistration
+  ctx.fillStyle = INK2;
+  ctx.beginPath();
+  ctx.moveTo(0, o.h);
+  ctx.lineTo(o.w * 0.15, o.h * 0.2);
+  ctx.lineTo(o.w * 0.55, 0);
+  ctx.lineTo(o.w, o.h * 0.35);
+  ctx.lineTo(o.w * 0.9, o.h);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = INK1;
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(2, o.h - 2);
+  ctx.lineTo(o.w * 0.15 + 2, o.h * 0.2 - 2);
+  ctx.lineTo(o.w * 0.55 + 2, -2);
+  ctx.lineTo(o.w + 2, o.h * 0.35 - 2);
+  ctx.lineTo(o.w * 0.9 + 2, o.h - 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+function drawLeaf(l) {
+  ctx.save();
+  ctx.translate(l.x, l.y);
+  ctx.fillStyle = INK1;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, l.r, l.r * 0.6, Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = OVERLAP;
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  ctx.ellipse(1, 1, l.r, l.r * 0.6, Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawScore() {
+  ctx.fillStyle = OVERLAP;
+  ctx.font = "bold 28px Arial Narrow, Arial, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("Score: " + score, 16, 16);
+}
+
+function drawTitleScreen() {
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const c of clouds) drawCloud(c);
+  drawGround();
+  drawSnail();
+
+  ctx.fillStyle = OVERLAP;
+  ctx.textAlign = "center";
+  ctx.font = "bold 40px Arial Narrow, Arial, sans-serif";
+  ctx.fillText("Course d'Escargots", W / 2, H * 0.25);
+
+  tapHintPulse += 0.05;
+  const alpha = 0.6 + 0.4 * Math.sin(tapHintPulse);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = INK1;
+  ctx.font = "bold 26px Arial Narrow, Arial, sans-serif";
+  ctx.fillText("Touchez pour commencer", W / 2, H * 0.4);
+  ctx.globalAlpha = 1;
+
+  drawGrain();
+}
+
+function drawGameOver() {
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+  for (const c of clouds) drawCloud(c);
+  drawGround();
+  for (const o of obstacles) drawObstacle(o);
+  for (const l of leaves) if (!l.taken) drawLeaf(l);
+  drawSnail();
+
+  ctx.fillStyle = "rgba(251,247,238,0.85)";
+  ctx.fillRect(0, H * 0.28, W, H * 0.3);
+
+  ctx.fillStyle = OVERLAP;
+  ctx.textAlign = "center";
+  ctx.font = "bold 38px Arial Narrow, Arial, sans-serif";
+  ctx.fillText("Course terminée !", W / 2, H * 0.35);
+
+  ctx.font = "bold 28px Arial Narrow, Arial, sans-serif";
+  ctx.fillStyle = INK2;
+  ctx.fillText("Score final: " + score, W / 2, H * 0.42);
+
+  tapHintPulse += 0.05;
+  const alpha = 0.6 + 0.4 * Math.sin(tapHintPulse);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = INK1;
+  ctx.font = "bold 22px Arial Narrow, Arial, sans-serif";
+  ctx.fillText("Touchez pour revenir au titre", W / 2, H * 0.5);
+  ctx.globalAlpha = 1;
+
+  drawGrain();
+}
+
+function drawGameplay() {
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const c of clouds) drawCloud(c);
+  drawGround();
+  for (const o of obstacles) drawObstacle(o);
+  for (const l of leaves) if (!l.taken) drawLeaf(l);
+  drawSnail();
+  drawScore();
+
+  if (paused) {
+    ctx.fillStyle = "rgba(91,58,140,0.5)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = PAPER;
+    ctx.textAlign = "center";
+    ctx.font = "bold 32px Arial Narrow, Arial, sans-serif";
+    ctx.fillText("Pause", W / 2, H / 2);
+  }
+
+  drawGrain();
+}
+
+function draw() {
+  if (!started) {
+    drawTitleScreen();
+  } else if (running) {
+    drawGameplay();
+  } else {
+    drawGameOver();
+  }
+}
+
+// ---------- Main loop ----------
+let booted = false;
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (running && !paused) {
+    advance(dt);
+    collide();
+  }
+  draw();
+  if (!booted) {
+    booted = true;
+    CARTRIDGE.send("boot", {
+      title: "Course d'Escargots",
+      gameType: "arcade-run",
+      lang: "fr",
+    });
+  }
+  requestAnimationFrame(frame);
+}
+
+resize();
+resetState();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

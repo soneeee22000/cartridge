@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trois Secondes</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #2f3e3a;
+    overflow: hidden;
+    font-family: "Comic Sans MS", "Segoe UI", sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---- Setup canvas ----
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.style.touchAction = "none";
+
+let dpr = Math.max(1, window.devicePixelRatio || 1);
+let W = 0, H = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---- Palette ----
+const COL_SLATE = "#2f3e3a";
+const COL_CHALK = "#eeeae0";
+const COL_ACCENT = "#f2c14e";
+const COL_SECOND = "#8fc1e3";
+
+// ---- Chalk drawing helpers ----
+function wobble(amount) {
+  return (Math.random() - 0.5) * amount;
+}
+
+function chalkLine(x1, y1, x2, y2, color, width) {
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (let i = 0; i < 2; i++) {
+    const ox = wobble(1.2);
+    const oy = wobble(1.2);
+    ctx.globalAlpha = i === 0 ? 0.85 : 0.35;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1 + ox + wobble(1.5), y1 + oy + wobble(1.5));
+    ctx.lineTo(x2 + ox + wobble(1.5), y2 + oy + wobble(1.5));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkRect(x, y, w, h, color, width) {
+  chalkLine(x, y, x + w, y, color, width);
+  chalkLine(x + w, y, x + w, y + h, color, width);
+  chalkLine(x + w, y + h, x, y + h, color, width);
+  chalkLine(x, y + h, x, y, color, width);
+}
+
+function chalkHatchFill(x, y, w, h, color, spacing) {
+  spacing = spacing || 8;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  for (let i = -h; i < w + h; i += spacing) {
+    chalkLine(x + i, y, x + i - h, y + h, color, 2.5);
+  }
+  ctx.restore();
+}
+
+function chalkCircle(cx, cy, r, color, width) {
+  ctx.lineCap = "round";
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.globalAlpha = pass === 0 ? 0.85 : 0.35;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    const segs = 24;
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      const rr = r + wobble(1.5);
+      const px = cx + Math.cos(a) * rr + wobble(1);
+      const py = cy + Math.sin(a) * rr + wobble(1);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkText(text, x, y, size, color, align) {
+  ctx.font = `${size}px "Comic Sans MS", cursive, sans-serif`;
+  ctx.textAlign = align || "center";
+  ctx.textBaseline = "middle";
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = color;
+  ctx.fillText(text, x + wobble(0.6), y + wobble(0.6));
+  ctx.globalAlpha = 0.4;
+  ctx.fillText(text, x + wobble(1) + 1, y + wobble(1) + 1);
+  ctx.globalAlpha = 1;
+}
+
+// ---- Smudge layer ----
+let smudges = [];
+function initSmudges() {
+  smudges = [];
+  const n = 5;
+  for (let i = 0; i < n; i++) {
+    smudges.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 80 + Math.random() * 160,
+      a: 0.02 + Math.random() * 0.04,
+    });
+  }
+}
+function drawSmudges() {
+  for (const s of smudges) {
+    ctx.beginPath();
+    ctx.fillStyle = COL_CHALK;
+    ctx.globalAlpha = s.a;
+    ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---- Game state ----
+let paused = false;
+let running = false; // becomes true after first tap (start)
+let gameOver = false;
+let stage = 0;
+let score = 0;
+let cells = []; // grid cells for current stage
+let gridCols = 2, gridRows = 2;
+let targetIndex = -1;
+let stageStartTime = 0;
+let timeLimit = 3000; // ms
+let graceMs = 900; // grace period before threat can end stage
+let stageDeadlineActive = false;
+let flashTimer = 0;
+let flashColor = null;
+let resultMessage = "";
+let lastFrameTime = 0;
+
+const MAX_STAGE_FOR_GRID = 20;
+
+function backToTitle() {
+  running = false;
+  gameOver = false;
+  stage = 0;
+  score = 0;
+  paused = false;
+  resultMessage = "";
+}
+
+function gridSizeForStage(s) {
+  // stage 1: 2x2, grows slowly
+  if (s <= 1) return { cols: 2, rows: 2 };
+  if (s <= 3) return { cols: 2, rows: 3 };
+  if (s <= 6) return { cols: 3, rows: 3 };
+  if (s <= 10) return { cols: 3, rows: 4 };
+  return { cols: 4, rows: 4 };
+}
+
+function timeLimitForStage(s) {
+  // always "3 seconds" per plan loop, keep constant but shrink slightly at higher stages, floor at 1.4s
+  const t = 3000 - (s - 1) * 80;
+  return Math.max(1400, t);
+}
+
+function buildStage(s) {
+  const size = gridSizeForStage(s);
+  gridCols = size.cols;
+  gridRows = size.rows;
+  const total = gridCols * gridRows;
+  targetIndex = Math.floor(Math.random() * total);
+  cells = [];
+  for (let i = 0; i < total; i++) {
+    cells.push({ hit: false });
+  }
+  timeLimit = timeLimitForStage(s);
+  stageStartTime = performance.now();
+  stageDeadlineActive = false;
+  // grace period before threat becomes active
+  setTimeout(() => {
+    if (!gameOver && running) stageDeadlineActive = true;
+  }, graceMs);
+}
+
+function enterStage(next) {
+  stage = next;
+  buildStage(stage);
+  CARTRIDGE.send("level", { index: stage });
+}
+
+function onGoalMet() {
+  score += 1;
+  CARTRIDGE.send("score", { value: score });
+  flashColor = COL_SECOND;
+  flashTimer = 250;
+  enterStage(stage + 1);
+}
+
+function onStageFailed(reason) {
+  gameOver = true;
+  running = false;
+  resultMessage = reason;
+  flashColor = "#c96a5a";
+  flashTimer = 400;
+  CARTRIDGE.send("end", { reason: "lose" });
+}
+
+function layoutCellRects() {
+  const margin = 40;
+  const topPad = 140;
+  const areaW = W - margin * 2;
+  const areaH = H - topPad - margin;
+  const gap = 12;
+  const cw = (areaW - gap * (gridCols - 1)) / gridCols;
+  const ch = (areaH - gap * (gridRows - 1)) / gridRows;
+  const size = Math.min(cw, ch);
+  const totalW = size * gridCols + gap * (gridCols - 1);
+  const totalH = size * gridRows + gap * (gridRows - 1);
+  const startX = margin + (areaW - totalW) / 2;
+  const startY = topPad + (areaH - totalH) / 2;
+  const rects = [];
+  for (let r = 0; r < gridRows; r++) {
+    for (let c = 0; c < gridCols; c++) {
+      rects.push({
+        x: startX + c * (size + gap),
+        y: startY + r * (size + gap),
+        w: size,
+        h: size,
+      });
+    }
+  }
+  return rects;
+}
+
+function hitTestCell(px, py) {
+  const rects = layoutCellRects();
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i];
+    if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// ---- Input ----
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  if (paused) return;
+  if (!running && !gameOver) {
+    running = true;
+    CARTRIDGE.send("start");
+    enterStage(1);
+    return;
+  }
+  if (gameOver) {
+    // tap to restart to title (soft reset behavior via tap)
+    backToTitle();
+    return;
+  }
+  if (!running) return;
+  const rect = canvas.getBoundingClientRect();
+  const px = event.clientX - rect.left;
+  const py = event.clientY - rect.top;
+  const idx = hitTestCell(px, py);
+  if (idx === -1) return;
+  if (idx === targetIndex) {
+    onGoalMet();
+  } else {
+    onStageFailed("wrong");
+  }
+});
+
+// ---- Draw functions ----
+function drawTitleScreen(t) {
+  drawSmudges();
+  chalkText("Trois Secondes", W / 2, H / 2 - 60, Math.min(48, W / 10), COL_CHALK);
+  const pulse = 0.6 + 0.4 * Math.sin(t / 300);
+  ctx.globalAlpha = pulse;
+  chalkText("Touche l'écran pour commencer", W / 2, H / 2 + 20, Math.min(24, W / 20), COL_ACCENT);
+  ctx.globalAlpha = 1;
+  chalkText("Trouve la bonne case avant la fin du temps !", W / 2, H / 2 + 70, Math.min(18, W / 26), COL_SECOND);
+}
+
+function drawGameOverScreen() {
+  drawSmudges();
+  chalkText("Partie terminée", W / 2, H / 2 - 60, Math.min(44, W / 11), COL_CHALK);
+  chalkText("Score : " + score, W / 2, H / 2 + 0, Math.min(30, W / 15), COL_ACCENT);
+  chalkText("Touche l'écran pour revenir", W / 2, H / 2 + 60, Math.min(20, W / 22), COL_SECOND);
+}
+
+function drawStage(t) {
+  drawSmudges();
+
+  // Header
+  chalkText(`Étage ${stage}`, W / 2, 45, Math.min(32, W / 14), COL_CHALK);
+  chalkText("Trouve la case marquée !", W / 2, 85, Math.min(20, W / 24), COL_SECOND);
+
+  // Timer bar
+  const elapsed = performance.now() - stageStartTime;
+  const remaining = Math.max(0, timeLimit - Math.max(0, elapsed - graceMs));
+  const frac = stageDeadlineActive ? remaining / timeLimit : 1;
+  const barW = Math.min(420, W - 80);
+  const barX = W / 2 - barW / 2;
+  const barY = 105;
+  chalkRect(barX, barY, barW, 14, COL_CHALK, 3);
+  const fillColor = frac < 0.3 ? "#c96a5a" : COL_ACCENT;
+  chalkHatchFill(barX + 2, barY + 2, Math.max(0, (barW - 4) * frac), 10, fillColor, 6);
+
+  // Score
+  chalkText("Score : " + score, W - 20, 30, 18, COL_CHALK, "right");
+
+  // Grid
+  const rects = layoutCellRects();
+  for (let i = 0; i < rects.length; i++) {
+    const r = rects[i];
+    const isTarget = i === targetIndex;
+    if (isTarget) {
+      chalkHatchFill(r.x, r.y, r.w, r.h, COL_ACCENT, 10);
+      chalkRect(r.x, r.y, r.w, r.h, COL_ACCENT, 4);
+    } else {
+      chalkRect(r.x, r.y, r.w, r.h, COL_CHALK, 3);
+    }
+  }
+
+  // Check stage failure by timeout
+  if (stageDeadlineActive && remaining <= 0 && !gameOver) {
+    onStageFailed("timeout");
+  }
+}
+
+function drawFlash(dt) {
+  if (flashTimer > 0 && flashColor) {
+    flashTimer -= dt;
+    const alpha = Math.max(0, Math.min(0.35, flashTimer / 400 * 0.35));
+    ctx.fillStyle = flashColor;
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---- Main loop ----
+function frame(t) {
+  if (!lastFrameTime) lastFrameTime = t;
+  const dt = t - lastFrameTime;
+  lastFrameTime = t;
+
+  ctx.fillStyle = COL_SLATE;
+  ctx.fillRect(0, 0, W, H);
+
+  if (paused) {
+    drawSmudges();
+    chalkText("Pause", W / 2, H / 2, 40, COL_CHALK);
+    requestAnimationFrame(frame);
+    return;
+  }
+
+  if (!running && !gameOver) {
+    drawTitleScreen(t);
+  } else if (gameOver) {
+    drawGameOverScreen();
+  } else {
+    drawStage(t);
+  }
+
+  drawFlash(dt);
+
+  requestAnimationFrame(frame);
+}
+
+// ---- Boot ----
+initSmudges();
+window.addEventListener("resize", initSmudges);
+
+requestAnimationFrame((t) => {
+  lastFrameTime = t;
+  ctx.fillStyle = COL_SLATE;
+  ctx.fillRect(0, 0, W, H);
+  drawTitleScreen(t);
+  CARTRIDGE.send("boot", { title: "Trois Secondes", gameType: "stage-clear", lang: "fr" });
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,459 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:e0a02a111fd67448174a448e9d06cacf82a2e17120db3174114e4fcb82bacc91",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\ncomet dodger\n\nPlan:\n{\"gameType\":\"arcade-run\",\"input\":\"drag-follow\",\"lang\":\"en\",\"loop\":\"Drag your ship left and right to dodge falling comets and survive as long as possible while your score climbs. Colliding with a comet ends the run.\",\"slug\":\"comet-dodger\",\"style\":\"chalkboard\",\"title\":\"Comet Dodger\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Comet Dodger</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     background: #2f3e3a;\n14|     overflow: hidden;\n15|     touch-action: none;\n16|   }\n17|   canvas {\n18|     display: block;\n19|     width: 100vw;\n20|     height: 100dvh;\n21|     background: #2f3e3a;\n22|   }\n23| </style>\n24| </head>\n25| <body>\n26| <canvas id=\"game\"></canvas>\n27| <script>\n28| const CARTRIDGE = {\n29|   send(type, payload = {}) {\n30|     window.parent.postMessage(\n31|       { source: \"cartridge\", v: 1, type, payload },\n32|       \"*\",\n33|     );\n34|   },\n35| };\n36| </script>\n37| <script>\n38| (function(){\n39|   const canvas = document.getElementById('game');\n40|   const ctx = canvas.getContext('2d');\n41| \n42|   const COL_SLATE = '#2f3e3a';\n43|   const COL_CHALK = '#eeeae0';\n44|   const COL_ACCENT = '#f2c14e';\n45|   const COL_SECOND = '#8fc1e3';\n46| \n47|   let dpr = Math.max(1, window.devicePixelRatio || 1);\n48|   let W = 0, H = 0;\n49| \n50|   function resize() {\n51|     W = window.innerWidth;\n52|     H = window.innerHeight;\n53|     dpr = Math.max(1, window.devicePixelRatio || 1);\n54|     canvas.width = Math.floor(W * dpr);\n55|     canvas.height = Math.floor(H * dpr);\n56|     canvas.style.width = W + 'px';\n57|     canvas.style.height = H + 'px';\n58|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n59|   }\n60|   window.addEventListener('resize', resize);\n61|   resize();\n62| \n63|   // ---------- state ----------\n64|   let last = 0;\n65|   let running = false;\n66|   let paused = false;\n67|   let started = false;\n68|   let score = 0;\n69|   let scoreSent = -1;\n70|   let stateName = 'title'; // title, playing, dead\n71| \n72|   let elapsed = 0;\n73|   let speedMult = 1;\n74|   let idleTimer = 0;\n75|   let hasMoved = false;\n76| \n77|   let ship = { x: 0, y: 0, target: 0, r: 22 };\n78|   let comets = [];\n79|   let spawnTimer = 0;\n80|   let spawnInterval = 1.4;\n81| \n82|   let smudges = [];\n83| \n84|   function makeSmudges() {\n85|     smudges = [];\n86|     for (let i = 0; i < 5; i++) {\n87|       smudges.push({\n88|         x: Math.random() * W,\n89|         y: Math.random() * H,\n90|         r: 80 + Math.random() * 160,\n91|         a: 0.02 + Math.random() * 0.03\n92|       });\n93|     }\n94|   }\n95| \n96|   function resetGameState() {\n97|     score = 0;\n98|     scoreSent = -1;\n99|     elapsed = 0;\n100|     speedMult = 1;\n101|     comets = [];\n102|     spawnTimer = 0;\n103|     spawnInterval = 1.4;\n104|     ship.x = W / 2;\n105|     ship.y = H - 100;\n106|     ship.target = ship.x;\n107|     idleTimer = 0;\n108|     hasMoved = false;\n109|     makeSmudges();\n110|   }\n111| \n112|   function backToTitle() {\n113|     running = false;\n114|     paused = false;\n115|     started = false;\n116|     stateName = 'title';\n117|     resetGameState();\n118|   }\n119| \n120|   resetGameState();\n121| \n122|   // ---------- input ----------\n123|   let held = false;\n124| \n125|   function toCanvas(evt) {\n126|     const rect = canvas.getBoundingClientRect();\n127|     return {\n128|       x: (evt.clientX - rect.left),\n129|       y: (evt.clientY - rect.top)\n130|     };\n131|   }\n132| \n133|   function startPlay() {\n134|     if (started) return;\n135|     started = true;\n136|     running = true;\n137|     paused = false;\n138|     stateName = 'playing';\n139|     resetGameState();\n140|     CARTRIDGE.send('start');\n141|   }\n142| \n143|   canvas.addEventListener('pointerdown', (evt) => {\n144|     if (stateName === 'title' || stateName === 'dead') {\n145|       startPlay();\n146|     }\n147|     const p = toCanvas(evt);\n148|     ship.target = p.x;\n149|     held = true;\n150|     hasMoved = true;\n151|     try { canvas.setPointerCapture(evt.pointerId); } catch(e) {}\n152|   });\n153|   canvas.addEventListener('pointermove', (evt) => {\n154|     if (held) {\n155|       const p = toCanvas(evt);\n156|       ship.target = p.x;\n157|       hasMoved = true;\n158|     }\n159|   });\n160|   function release() { held = false; }\n161|   canvas.addEventListener('pointerup', release);\n162|   canvas.addEventListener('pointercancel', release);\n163| \n164|   // ---------- host messages ----------\n165|   window.addEventListener('message', (event) => {\n166|     const data = event.data;\n167|     if (!data || data.source !== 'cartridge-host') return;\n168|     if (data.type === 'pause') paused = true;\n169|     if (data.type === 'resume') paused = false;\n170|     if (data.type === 'reset') backToTitle();\n171|   });\n172| \n173|   // ---------- chalk drawing helpers ----------\n174|   function wobble(seed) {\n175|     return Math.sin(seed * 12.9898) * 0.6;\n176|   }\n177| \n178|   function chalkLine(x1, y1, x2, y2, color, width) {\n179|     ctx.lineCap = 'round';\n180|     ctx.lineJoin = 'round';\n181|     for (let pass = 0; pass < 2; pass++) {\n182|       const off = pass === 0 ? 0 : 1;\n183|       const alpha = pass === 0 ? 0.9 : 0.35;\n184|       ctx.strokeStyle = color;\n185|       ctx.globalAlpha = alpha;\n186|       ctx.lineWidth = width;\n187|       ctx.beginPath();\n188|       ctx.moveTo(x1 + off, y1 + off * 0.5);\n189|       ctx.lineTo(x2 + off, y2 + off * 0.5);\n190|       ctx.stroke();\n191|     }\n192|     ctx.globalAlpha = 1;\n193|   }\n194| \n195|   function chalkCircle(cx, cy, r, color, width, segs) {\n196|     segs = segs || 20;\n197|     for (let pass = 0; pass < 2; pass++) {\n198|       const off = pass === 0 ? 0 : 1;\n199|       const alpha = pass === 0 ? 0.9 : 0.3;\n200|       ctx.strokeStyle = color;\n201|       ctx.globalAlpha = alpha;\n202|       ctx.lineWidth = width;\n203|       ctx.lineCap = 'round';\n204|       ctx.beginPath();\n205|       for (let i = 0; i <= segs; i++) {\n206|         const t = (i / segs) * Math.PI * 2;\n207|         const wob = wobble(i + cx + cy) * 1.2;\n208|         const x = cx + Math.cos(t) * r + wob + off;\n209|         const y = cy + Math.sin(t) * r + wob + off * 0.5;\n210|         if (i === 0) ctx.moveTo(x, y);\n211|         else ctx.lineTo(x, y);\n212|       }\n213|       ctx.stroke();\n214|     }\n215|     ctx.globalAlpha = 1;\n216|   }\n217| \n218|   function hatchCircle(cx, cy, r, color, count) {\n219|     ctx.strokeStyle = color;\n220|     ctx.lineWidth = 2;\n221|     ctx.globalAlpha = 0.5;\n222|     for (let i = 0; i < count; i++) {\n223|       const ang = (i / count) * Math.PI * 2 + wobble(i) * 0.1;\n224|       const inner = r * 0.3;\n225|       const outer = r * 0.85;\n226|       const x1 = cx + Math.cos(ang) * inner;\n227|       const y1 = cy + Math.sin(ang) * inner;\n228|       const x2 = cx + Math.cos(ang) * outer;\n229|       const y2 = cy + Math.sin(ang) * outer;\n230|       ctx.beginPath();\n231|       ctx.moveTo(x1, y1);\n232|       ctx.lineTo(x2, y2);\n233|       ctx.stroke();\n234|     }\n235|     ctx.globalAlpha = 1;\n236|   }\n237| \n238|   function drawSmudges() {\n239|     for (const s of smudges) {\n240|       ctx.beginPath();\n241|       ctx.fillStyle = COL_CHALK;\n242|       ctx.globalAlpha = s.a;\n243|       ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);\n244|       ctx.fill();\n245|       ctx.globalAlpha = 1;\n246|     }\n247|   }\n248| \n249|   // ---------- ship ----------\n250|   function drawShip() {\n251|     const x = ship.x, y = ship.y;\n252|     // body triangle-ish\n253|     chalkLine(x, y - 26, x - 18, y + 18, COL_CHALK, 4);\n254|     chalkLine(x - 18, y + 18, x + 18, y + 18, COL_CHALK, 4);\n255|     chalkLine(x + 18, y + 18, x, y - 26, COL_CHALK, 4);\n256|     // cockpit\n257|     chalkCircle(x, y - 2, 7, COL_SECOND, 3, 12);\n258|     // flame flicker\n259|     const flick = 6 + Math.sin(elapsed * 20) * 3;\n260|     chalkLine(x - 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);\n261|     chalkLine(x + 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);\n262|   }\n263| \n264|   // ---------- comets ----------\n265|   function spawnComet() {\n266|     const r = 16 + Math.random() * 18;\n267|     const x = r + Math.random() * (W - r * 2);\n268|     const speed = (120 + Math.random() * 80) * speedMult;\n269|     comets.push({ x, y: -r - 20, r, speed, rot: Math.random() * Math.PI });\n270|   }\n271| \n272|   function drawComet(c) {\n273|     ctx.save();\n274|     ctx.translate(c.x, c.y);\n275|     ctx.rotate(c.rot);\n276|     chalkCircle(0, 0, c.r, COL_CHALK, 3, 14);\n277|     hatchCircle(0, 0, c.r, COL_SECOND, 8);\n278|     ctx.restore();\n279|     // trailing streak\n280|     chalkLine(c.x, c.y - c.r, c.x - c.r * 0.5, c.y - c.r - 20, COL_ACCENT, 2);\n281|   }\n282| \n283|   // ---------- game logic ----------\n284|   function advance(dt) {\n285|     elapsed += dt;\n286|     speedMult = 1 + elapsed / 25;\n287| \n288|     // ease ship toward target\n289|     const dx = ship.target - ship.x;\n290|     ship.x += dx * Math.min(1, dt * 10);\n291|     ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));\n292| \n293|     if (!hasMoved) {\n294|       idleTimer += dt;\n295|     }\n296| \n297|     // spawn\n298|     spawnTimer -= dt;\n299|     if (spawnTimer <= 0) {\n300|       // fairness: don't spawn near player's opening lane during first 2s\n301|       if (elapsed > 1.8) {\n302|         spawnComet();\n303|       }\n304|       spawnInterval = Math.max(0.45, 1.4 - elapsed * 0.02);\n305|       spawnTimer = spawnInterval;\n306|     }\n307| \n308|     for (const c of comets) {\n309|       c.y += c.speed * dt;\n310|       c.rot += dt * 1.2;\n311|     }\n312|     comets = comets.filter(c => c.y - c.r < H + 40);\n313| \n314|     // score by survival time\n315|     score = Math.floor(elapsed * 10);\n316|     if (score !== scoreSent) {\n317|       scoreSent = score;\n318|       CARTRIDGE.send('score', { value: score });\n319|     }\n320|   }\n321| \n322|   function collide() {\n323|     for (const c of comets) {\n324|       const dx = c.x - ship.x;\n325|       const dy = c.y - ship.y;\n326|       const dist = Math.sqrt(dx * dx + dy * dy);\n327|       if (dist < c.r + ship.r * 0.7) {\n328|         crash();\n329|         return;\n330|       }\n331|     }\n332|   }\n333| \n334|   function crash() {\n335|     running = false;\n336|     stateName = 'dead';\n337|     CARTRIDGE.send('end', { reason: 'lose', value: score });\n338|   }\n339| \n340|   // ---------- drawing ----------\n341|   function drawBackground() {\n342|     ctx.fillStyle = COL_SLATE;\n343|     ctx.fillRect(0, 0, W, H);\n344|     drawSmudges();\n345|     // border frame like chalk edge\n346|     chalkLine(10, 10, W - 10, 10, COL_CHALK, 3);\n347|     chalkLine(10, H - 10, W - 10, H - 10, COL_CHALK, 3);\n348|     chalkLine(10, 10, 10, H - 10, COL_CHALK, 3);\n349|     chalkLine(W - 10, 10, W - 10, H - 10, COL_CHALK, 3);\n350|   }\n351| \n352|   function drawTitle() {\n353|     ctx.fillStyle = COL_CHALK;\n354|     ctx.textAlign = 'center';\n355|     ctx.font = 'bold 42px system-ui, sans-serif';\n356|     ctx.globalAlpha = 0.9;\n357|     ctx.fillText('Comet Dodger', W / 2, H / 2 - 60);\n358|     ctx.globalAlpha = 1;\n359|     ctx.font = '20px system-ui, sans-serif';\n360|     ctx.fillStyle = COL_SECOND;\n361|     const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;\n362|     ctx.globalAlpha = pulse;\n363|     ctx.fillText('Drag anywhere to steer and start', W / 2, H / 2);\n364|     ctx.globalAlpha = 1;\n365| \n366|     // drifting demo comet\n367|     const dcx = W / 2 + Math.sin(elapsed) * 60;\n368|     const dcy = H / 2 + 80 + Math.cos(elapsed * 0.7) * 10;\n369|     chalkCircle(dcx, dcy, 14, COL_CHALK, 3, 12);\n370|     hatchCircle(dcx, dcy, 14, COL_SECOND, 6);\n371|   }\n372| \n373|   function drawDead() {\n374|     ctx.fillStyle = COL_CHALK;\n375|     ctx.textAlign = 'center';\n376|     ctx.font = 'bold 36px system-ui, sans-serif';\n377|     ctx.fillText('Crashed!', W / 2, H / 2 - 40);\n378|     ctx.font = '22px system-ui, sans-serif';\n379|     ctx.fillStyle = COL_ACCENT;\n380|     ctx.fillText('Score: ' + score, W / 2, H / 2);\n381|     ctx.fillStyle = COL_SECOND;\n382|     const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;\n383|     ctx.globalAlpha = pulse;\n384|     ctx.font = '18px system-ui, sans-serif';\n385|     ctx.fillText('Tap to try again', W / 2, H / 2 + 40);\n386|     ctx.globalAlpha = 1;\n387|   }\n388| \n389|   function drawHUD() {\n390|     ctx.fillStyle = COL_CHALK;\n391|     ctx.textAlign = 'left';\n392|     ctx.font = '20px system-ui, sans-serif';\n393|     ctx.globalAlpha = 0.9;\n394|     ctx.fillText('Score: ' + score, 24, 42);\n395|     ctx.globalAlpha = 1;\n396|   }\n397| \n398|   function draw() {\n399|     drawBackground();\n400| \n401|     if (stateName === 'title') {\n402|       drawTitle();\n403|     } else if (stateName === 'playing') {\n404|       for (const c of comets) drawComet(c);\n405|       drawShip();\n406|       drawHUD();\n407|       if (paused) {\n408|         ctx.fillStyle = COL_CHALK;\n409|         ctx.textAlign = 'center';\n410|         ctx.font = 'bold 32px system-ui, sans-serif';\n411|         ctx.fillText('Paused', W / 2, H / 2);\n412|       }\n413|     } else if (stateName === 'dead') {\n414|       for (const c of comets) drawComet(c);\n415|       drawShip();\n416|       drawDead();\n417|     }\n418|   }\n419| \n420|   // ---------- main loop ----------\n421|   function frame(now) {\n422|     if (!last) last = now;\n423|     const dt = Math.min((now - last) / 1000, 0.05);\n424|     last = now;\n425|     if (running && !paused && stateName === 'playing') {\n426|       advance(dt);\n427|       collide();\n428|     } else if (stateName === 'title' || stateName === 'dead') {\n429|       elapsed += dt; // keep decorative motion alive\n430|     }\n431|     draw();\n432|     requestAnimationFrame(frame);\n433|   }\n434| \n435|   requestAnimationFrame((t) => {\n436|     last = t;\n437|     draw();\n438|     CARTRIDGE.send('boot', { title: 'Comet Dodger', gameType: 'arcade-run', lang: 'en' });\n439|     requestAnimationFrame(frame);\n440|   });\n441| })();\n442| </script>\n443| </body>\n444| </html>\n445| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNr6nXF5KhcRRb6an3yB\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":7153,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}   }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}  }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"label\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"covered\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":[{\\\"line\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":77\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"let\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ship\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = { x:\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0, y\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 0,\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" target\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0, r\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 22\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"};\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":78\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"let\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" comets = [];\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"148\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ship\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".target = p\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"},{\\\"line\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":327\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"if\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (dist\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" < c\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".r + ship\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".r *\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".7\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"]\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"rat\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\":\\\"The code\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" key\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ship, comets\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and verbs (\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"drag\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" st\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eer, dodge\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", coll\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ide)\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" from\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" corresponding\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" objects\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collision\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" logic\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\\\"goal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\":{\\\"label\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"stated\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":363\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"('Drag\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" anywhere\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to st\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eer and\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" start\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"',\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" W / 2\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H / \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2);\\\"},{\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\":377\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Crashed\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!', W /\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2, H\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2 \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"- 40);\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"394\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Score: ' +\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score, \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"24, 42\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"rationale\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"The title\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicitly\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the player to\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drag to\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" steer and\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" start, and the\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" H\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"UD displays\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the score during\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" making the objective\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear.\\\"},\\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"feedback\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":{\\\"label\\\":\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"immediate\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":148\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ship\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".target = p\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x;\\\"},\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":156\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ship\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".target\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = p.x\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"},{\\\"line\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":290\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ship\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dx\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * Math\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".min\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(1\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", dt * \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"10\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"rationale\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Pointer\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates the ship's\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" target position, which\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is then\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" smooth\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ly e\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ased toward\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" target\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the next\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame,\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" providing\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediate visual feedback.\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\\\"fail\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\\\":{\\\"label\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"explained\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":377\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Crashed!',\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" W / 2\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H / \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2 - \"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"40);\\\"},{\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\":380\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Score: ' +\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score, W /\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2, H\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2);\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"385\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap to try\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" again', W /\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2, H\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2 \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+ 40);\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\\\"rat\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\":\\\"When\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the game\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the screen\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'Crashed!'\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with the final\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score and\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instructions to tap to\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" restart\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explaining\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" both\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ended and how\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to continue\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\"}            }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0               }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":7153,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":548}  }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"  }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      228,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      13,
+      26,
+      27,
+      27,
+      132,
+      132,
+      132,
+      132,
+      2,
+      26,
+      28,
+      26,
+      26,
+      27,
+      25,
+      28,
+      45,
+      7,
+      28,
+      25,
+      27,
+      26,
+      27,
+      27,
+      26,
+      26,
+      26,
+      27,
+      26,
+      30,
+      22,
+      28,
+      26,
+      28,
+      25,
+      28,
+      23,
+      26,
+      27,
+      26,
+      28,
+      24,
+      27,
+      26,
+      26,
+      32,
+      22,
+      24,
+      28,
+      26,
+      29,
+      23,
+      26,
+      27,
+      26,
+      27,
+      26,
+      29,
+      22,
+      27,
+      25,
+      29,
+      25,
+      26,
+      27,
+      26,
+      32,
+      25,
+      22,
+      27,
+      26,
+      28,
+      26,
+      27,
+      26,
+      26,
+      27,
+      25,
+      31,
+      21,
+      29,
+      26,
+      24,
+      31,
+      22,
+      31,
+      22,
+      27,
+      25,
+      31,
+      24,
+      25,
+      26,
+      27,
+      26,
+      26,
+      27,
+      28,
+      24,
+      26,
+      27,
+      26,
+      26,
+      27,
+      26,
+      26,
+      26,
+      27,
+      28,
+      26,
+      26,
+      0,
+      26,
+      27,
+      26,
+      27,
+      27,
+      25,
+      26,
+      27,
+      26,
+      27,
+      25,
+      27,
+      28,
+      27,
+      24,
+      26,
+      28,
+      26,
+      33,
+      19,
+      27,
+      26,
+      26,
+      32,
+      20,
+      27,
+      33,
+      22,
+      25,
+      25,
+      26,
+      27,
+      30,
+      22,
+      28,
+      25,
+      26,
+      28,
+      30,
+      26,
+      23,
+      26,
+      24,
+      27,
+      27,
+      27,
+      32,
+      29,
+      21,
+      22,
+      27,
+      25,
+      30,
+      27,
+      24,
+      26,
+      28,
+      27,
+      24,
+      26,
+      29,
+      23,
+      35,
+      25,
+      22,
+      23,
+      27,
+      29,
+      24,
+      35,
+      18,
+      28,
+      24,
+      26,
+      28,
+      24,
+      27,
+      27,
+      26,
+      28,
+      25,
+      26,
+      29,
+      25,
+      39,
+      14,
+      25,
+      29,
+      23,
+      26,
+      27,
+      26,
+      27,
+      29,
+      77,
+      31,
+      1,
+      1
+    ]
+  },
+  "usage": {
+    "input": 7153,
+    "output": 548,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

@@ -1,0 +1,550 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:73b17dfe5d0727e99476bc886902ffd8c48e04003e0ac733f4d31afaea4ddd9b",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nUn long cahier des charges pour un jeu de phare en plusieurs niveaux. Le joueur est le gardien d'un vieux phare sur une côte rocheuse, et chaque niveau se passe pendant une nuit de tempête. Des bateaux approchent depuis le large, et le joueur doit tourner le faisceau du phare en glissant le doigt autour de la tour pour éclairer chaque bateau avant qu'il ne touche les rochers. Un bateau éclairé assez longtemps trouve le chenal et rentre au port, ce qui compte pour l'objectif du niveau. Quand tous les bateaux d'une nuit sont rentrés, le niveau est gagné et une courte carte annonce la nuit suivante. Les nuits suivantes amènent plus de bateaux, du brouillard qui cache une partie de la mer et des vagues qui déplacent les bateaux. Si un bateau touche les rochers, la partie est perdue, avec un message qui dit quel bateau a coulé et un bouton pour rejouer la nuit. Je voudrais une mer bleu nuit, un faisceau jaune pâle et des bateaux rouges, dessinés simplement avec des formes plates. Le texte du jeu doit rester en français, avec le numéro de la nuit affiché en haut de l'écran pendant toute la partie.\n\nPlan:\n{\"gameType\":\"stage-clear\",\"input\":\"drag-follow\",\"lang\":\"fr\",\"loop\":\"Faites glisser le doigt autour de la tour pour tourner le faisceau et éclairer chaque bateau assez longtemps pour qu'il rentre au port. Guidez tous les bateaux de la nuit pour gagner ; un bateau qui touche les rochers fait perdre la nuit.\",\"slug\":\"le-gardien-du-phare\",\"style\":\"paper-cut\",\"title\":\"Le Gardien du Phare\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"fr\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Le Gardien du Phare</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #f4ecd8;\n11|     overflow: hidden;\n12|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;\n13|     touch-action: none;\n14|   }\n15|   canvas {\n16|     display: block;\n17|     width: 100vw;\n18|     height: 100dvh;\n19|   }\n20| </style>\n21| </head>\n22| <body>\n23| <canvas id=\"game\"></canvas>\n24| <script>\n25| // ---- Bridge helper (verbatim) ----\n26| const CARTRIDGE = {\n27|   send(type, payload = {}) {\n28|     window.parent.postMessage(\n29|       { source: \"cartridge\", v: 1, type, payload },\n30|       \"*\",\n31|     );\n32|   },\n33| };\n34| \n35| window.addEventListener(\"message\", (event) => {\n36|   const data = event.data;\n37|   if (!data || data.source !== \"cartridge-host\") return;\n38|   if (data.type === \"pause\") paused = true;\n39|   if (data.type === \"resume\") paused = false;\n40|   if (data.type === \"reset\") backToTitle();\n41| });\n42| </script>\n43| <script>\n44| (function(){\n45|   const canvas = document.getElementById(\"game\");\n46|   const ctx = canvas.getContext(\"2d\");\n47| \n48|   // ---- Palette ----\n49|   const COLORS = {\n50|     bg: \"#f4ecd8\",\n51|     layer: \"#e07a5f\",\n52|     accent: \"#3d405b\",\n53|     highlight: \"#81b29a\"\n54|   };\n55| \n56|   // ---- Sizing ----\n57|   let W = 0, H = 0, DPR = 1;\n58|   function resize() {\n59|     DPR = window.devicePixelRatio || 1;\n60|     W = window.innerWidth;\n61|     H = window.innerHeight;\n62|     canvas.width = Math.round(W * DPR);\n63|     canvas.height = Math.round(H * DPR);\n64|     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n65|   }\n66|   window.addEventListener(\"resize\", resize);\n67|   resize();\n68| \n69|   // ---- Seeded jitter for paper-cut edges ----\n70|   function mulberry32(a) {\n71|     return function() {\n72|       a |= 0; a = (a + 0x6D2B79F5) | 0;\n73|       let t = Math.imul(a ^ (a >>> 15), 1 | a);\n74|       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n75|       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n76|     };\n77|   }\n78|   const rng = mulberry32(1337);\n79|   function jitter(amount) { return (rng() - 0.5) * 2 * amount; }\n80| \n81|   // Precompute jittered polygon points once per shape id, cached\n82|   const jitterCache = {};\n83|   function jitteredPoly(id, points, amt) {\n84|     if (jitterCache[id]) return jitterCache[id];\n85|     const out = points.map(p => [p[0] + jitter(amt), p[1] + jitter(amt)]);\n86|     jitterCache[id] = out;\n87|     return out;\n88|   }\n89| \n90|   function drawPaperShadow(fn) {\n91|     ctx.save();\n92|     ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n93|     ctx.shadowBlur = 6;\n94|     ctx.shadowOffsetY = 3;\n95|     fn();\n96|     ctx.restore();\n97|   }\n98| \n99|   function roundRectPath(x, y, w, h, r) {\n100|     ctx.beginPath();\n101|     ctx.moveTo(x + r, y);\n102|     ctx.arcTo(x + w, y, x + w, y + h, r);\n103|     ctx.arcTo(x + w, y + h, x, y + h, r);\n104|     ctx.arcTo(x, y + h, x, y, r);\n105|     ctx.arcTo(x, y, x + w, y, r);\n106|     ctx.closePath();\n107|   }\n108| \n109|   // ---- Game state ----\n110|   const STAGES = [\n111|     { goal: 1, boats: 1, speed: 0.55, rockDanger: 1 },\n112|     { goal: 2, boats: 2, speed: 0.65, rockDanger: 1 },\n113|     { goal: 3, boats: 3, speed: 0.75, rockDanger: 1.2 },\n114|     { goal: 4, boats: 4, speed: 0.85, rockDanger: 1.3 },\n115|     { goal: 5, boats: 5, speed: 0.95, rockDanger: 1.5 }\n116|   ];\n117| \n118|   let stage = 0;\n119|   let screenState = \"title\"; // title, grace, playing, stagewin, win, lose\n120|   let paused = false;\n121|   let booted = false;\n122|   let started = false;\n123| \n124|   let beamAngle = 0; // radians\n125|   let targetAngle = 0;\n126|   let center = { x: 0, y: 0 };\n127|   let towerRadius = 60;\n128|   let rocksAngle = []; // list of rock angle ranges (rad)\n129|   let boats = [];\n130|   let savedCount = 0;\n131|   let goalCount = 1;\n132|   let graceTimer = 0;\n133|   let stageMessage = \"\";\n134|   let stageMessageTimer = 0;\n135|   let elapsed = 0;\n136| \n137|   function backToTitle() {\n138|     screenState = \"title\";\n139|     started = false;\n140|     stage = 0;\n141|     savedCount = 0;\n142|   }\n143| \n144|   function angleDiff(a, b) {\n145|     let d = (a - b) % (Math.PI * 2);\n146|     if (d > Math.PI) d -= Math.PI * 2;\n147|     if (d < -Math.PI) d += Math.PI * 2;\n148|     return d;\n149|   }\n150| \n151|   function buildStage(n) {\n152|     const cfg = STAGES[n - 1];\n153|     goalCount = cfg.goal;\n154|     savedCount = 0;\n155|     boats = [];\n156|     // rocks: 2-3 fixed danger arcs around the tower\n157|     rocksAngle = [];\n158|     const rockCount = 2 + (n > 2 ? 1 : 0);\n159|     for (let i = 0; i < rockCount; i++) {\n160|       const a = (Math.PI * 2 / rockCount) * i + jitter(0.3);\n161|       rocksAngle.push({ center: a, width: 0.35 * cfg.rockDanger });\n162|     }\n163|     for (let i = 0; i < cfg.boats; i++) {\n164|       spawnBoat(cfg.speed, i * 1.3);\n165|     }\n166|     stageMessage = \"Phare \" + n + \" : guidez \" + cfg.goal + \" bateau\" + (cfg.goal > 1 ? \"x\" : \"\") + \" au port\";\n167|     stageMessageTimer = 3.5;\n168|     graceTimer = 3.0; // grace period before rocks can sink boats\n169|     screenState = \"grace\";\n170|     elapsed = 0;\n171|     CARTRIDGE.send(\"level\", { index: n });\n172|   }\n173| \n174|   function spawnBoat(speed, delayOffset) {\n175|     const startAngle = rng() * Math.PI * 2;\n176|     const dir = rng() < 0.5 ? 1 : -1;\n177|     boats.push({\n178|       angle: startAngle,\n179|       dist: 1.0, // 1 = far, 0 = at port (center ring)\n180|       speed: speed * (0.85 + rng() * 0.3),\n181|       dir,\n182|       lit: 0, // how long continuously lit\n183|       needLit: 1.6, // seconds of light needed to guide safely inward\n184|       saved: false,\n185|       sunk: false,\n186|       wobble: rng() * 10,\n187|       delay: delayOffset\n188|     });\n189|   }\n190| \n191|   function enterStage(next) {\n192|     stage = next;\n193|     buildStage(stage);\n194|   }\n195| \n196|   function onGoalMet() {\n197|     if (stage === STAGES.length) {\n198|       screenState = \"win\";\n199|       CARTRIDGE.send(\"end\", { reason: \"win\" });\n200|     } else {\n201|       screenState = \"stagewin\";\n202|       stageMessageTimer = 1.8;\n203|     }\n204|   }\n205| \n206|   function onStageFailed() {\n207|     screenState = \"lose\";\n208|     CARTRIDGE.send(\"end\", { reason: \"lose\" });\n209|   }\n210| \n211|   // ---- Input: drag to rotate beam ----\n212|   function toCanvas(evt) {\n213|     const rect = canvas.getBoundingClientRect();\n214|     return {\n215|       x: (evt.clientX - rect.left),\n216|       y: (evt.clientY - rect.top)\n217|     };\n218|   }\n219| \n220|   let held = false;\n221| \n222|   canvas.addEventListener(\"pointerdown\", (event) => {\n223|     const p = toCanvas(event);\n224|     if (screenState === \"title\") {\n225|       startGame();\n226|       return;\n227|     }\n228|     if (screenState === \"stagewin\" || screenState === \"win\" || screenState === \"lose\") {\n229|       return;\n230|     }\n231|     held = true;\n232|     canvas.setPointerCapture(event.pointerId);\n233|     updateTargetFromPoint(p);\n234|   });\n235|   canvas.addEventListener(\"pointermove\", (event) => {\n236|     if (!held) return;\n237|     updateTargetFromPoint(toCanvas(event));\n238|   });\n239|   canvas.addEventListener(\"pointerup\", () => { held = false; });\n240|   canvas.addEventListener(\"pointercancel\", () => { held = false; });\n241| \n242|   function updateTargetFromPoint(p) {\n243|     const dx = p.x - center.x;\n244|     const dy = p.y - center.y;\n245|     targetAngle = Math.atan2(dy, dx);\n246|   }\n247| \n248|   function startGame() {\n249|     started = true;\n250|     CARTRIDGE.send(\"start\");\n251|     enterStage(1);\n252|   }\n253| \n254|   // ---- Update ----\n255|   function update(dt) {\n256|     if (paused) return;\n257|     center.x = W / 2;\n258|     center.y = H / 2;\n259| \n260|     if (screenState === \"title\" || screenState === \"win\" || screenState === \"lose\") {\n261|       // idle animation of the beam\n262|       targetAngle += dt * 0.15;\n263|     }\n264| \n265|     // ease beam angle towards target\n266|     let diff = angleDiff(targetAngle, beamAngle);\n267|     beamAngle += diff * Math.min(1, dt * 6);\n268| \n269|     if (stageMessageTimer > 0) stageMessageTimer -= dt;\n270| \n271|     if (screenState === \"grace\") {\n272|       graceTimer -= dt;\n273|       updateBoats(dt, false);\n274|       if (graceTimer <= 0) screenState = \"playing\";\n275|       return;\n276|     }\n277| \n278|     if (screenState === \"playing\") {\n279|       elapsed += dt;\n280|       updateBoats(dt, true);\n281|     }\n282| \n283|     if (screenState === \"stagewin\") {\n284|       if (stageMessageTimer <= 0) {\n285|         enterStage(stage + 1);\n286|       }\n287|     }\n288|   }\n289| \n290|   const beamHalfWidth = 0.24; // radians of beam cone\n291| \n292|   function isLit(boat) {\n293|     const d = Math.abs(angleDiff(beamAngle, boat.angle));\n294|     return d < beamHalfWidth;\n295|   }\n296| \n297|   function inRockZone(angle) {\n298|     for (const r of rocksAngle) {\n299|       const d = Math.abs(angleDiff(angle, r.center));\n300|       if (d < r.width) return true;\n301|     }\n302|     return false;\n303|   }\n304| \n305|   function updateBoats(dt, dangerActive) {\n306|     for (const boat of boats) {\n307|       if (boat.saved || boat.sunk) continue;\n308|       boat.wobble += dt * 3;\n309| \n310|       if (isLit(boat)) {\n311|         boat.lit += dt;\n312|       } else {\n313|         boat.lit = Math.max(0, boat.lit - dt * 0.5);\n314|       }\n315| \n316|       // boat drifts slowly around the tower\n317|       boat.angle += boat.dir * dt * 0.12;\n318| \n319|       // move inward only if sufficiently lit\n320|       if (boat.lit >= boat.needLit) {\n321|         boat.dist -= dt * boat.speed * 0.18;\n322|       } else {\n323|         // drifts outward slowly if neglected too long\n324|         boat.dist += dt * 0.02;\n325|         if (boat.dist > 1.15) boat.dist = 1.15;\n326|       }\n327| \n328|       if (boat.dist <= 0.18) {\n329|         boat.saved = true;\n330|         savedCount++;\n331|         if (savedCount >= goalCount) {\n332|           onGoalMet();\n333|         }\n334|         continue;\n335|       }\n336| \n337|       // danger: if boat is within rock zone distance band and not lit enough\n338|       if (dangerActive) {\n339|         const dangerBand = boat.dist < 0.75 && boat.dist > 0.25;\n340|         if (dangerBand && inRockZone(boat.angle) && boat.lit < 0.5) {\n341|           boat.sunk = true;\n342|           onStageFailed();\n343|         }\n344|       }\n345|     }\n346|   }\n347| \n348|   // ---- Drawing ----\n349|   function drawBackground() {\n350|     ctx.fillStyle = COLORS.bg;\n351|     ctx.fillRect(0, 0, W, H);\n352|     // subtle paper texture lines (cut layers)\n353|     ctx.save();\n354|     ctx.globalAlpha = 0.05;\n355|     ctx.strokeStyle = COLORS.accent;\n356|     for (let i = 0; i < 6; i++) {\n357|       ctx.beginPath();\n358|       ctx.moveTo(0, (H / 6) * i);\n359|       ctx.lineTo(W, (H / 6) * i + 20);\n360|       ctx.stroke();\n361|     }\n362|     ctx.restore();\n363|   }\n364| \n365|   function drawSea() {\n366|     const R = Math.min(W, H) * 0.42;\n367|     drawPaperShadow(() => {\n368|       ctx.fillStyle = COLORS.highlight;\n369|       ctx.beginPath();\n370|       ctx.arc(center.x, center.y, R, 0, Math.PI * 2);\n371|       ctx.fill();\n372|     });\n373|   }\n374| \n375|   function drawRocks() {\n376|     const R = Math.min(W, H) * 0.42;\n377|     for (let i = 0; i < rocksAngle.length; i++) {\n378|       const r = rocksAngle[i];\n379|       ctx.save();\n380|       ctx.translate(center.x, center.y);\n381|       ctx.rotate(r.center);\n382|       drawPaperShadow(() => {\n383|         ctx.fillStyle = COLORS.accent;\n384|         ctx.beginPath();\n385|         const rockDist = R * 0.72;\n386|         const pts = jitteredPoly(\"rock\" + i, [\n387|           [rockDist - 14, -16],\n388|           [rockDist + 14, -10],\n389|           [rockDist + 18, 8],\n390|           [rockDist - 6, 18],\n391|           [rockDist - 20, 2]\n392|         ], 2);\n393|         ctx.moveTo(pts[0][0], pts[0][1]);\n394|         for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);\n395|         ctx.closePath();\n396|         ctx.fill();\n397|       });\n398|       ctx.restore();\n399|     }\n400|   }\n401| \n402|   function drawPort() {\n403|     drawPaperShadow(() => {\n404|       ctx.fillStyle = \"#c9b183\";\n405|       ctx.beginPath();\n406|       ctx.arc(center.x, center.y, towerRadius * 0.6, 0, Math.PI * 2);\n407|       ctx.fill();\n408|     });\n409|   }\n410| \n411|   function drawTower() {\n412|     drawPaperShadow(() => {\n413|       ctx.fillStyle = COLORS.layer;\n414|       roundRectPath(center.x - towerRadius * 0.35, center.y - towerRadius, towerRadius * 0.7, towerRadius * 2, 10);\n415|       ctx.fill();\n416|     });\n417|     // lamp housing\n418|     ctx.save();\n419|     ctx.translate(center.x, center.y);\n420|     ctx.rotate(beamAngle);\n421|     drawPaperShadow(() => {\n422|       ctx.fillStyle = COLORS.accent;\n423|       roundRectPath(0, -12, 34, 24, 8);\n424|       ctx.fill();\n425|     });\n426|     ctx.restore();\n427|   }\n428| \n429|   function drawBeam() {\n430|     const R = Math.min(W, H) * 0.48;\n431|     ctx.save();\n432|     ctx.translate(center.x, center.y);\n433|     const grad = ctx.createRadialGradient(0, 0, 5, 0, 0, R);\n434|     grad.addColorStop(0, \"rgba(244,236,216,0.65)\");\n435|     grad.addColorStop(1, \"rgba(244,236,216,0)\");\n436|     ctx.fillStyle = grad;\n437|     ctx.beginPath();\n438|     ctx.moveTo(0, 0);\n439|     ctx.arc(0, 0, R, beamAngle - beamHalfWidth, beamAngle + beamHalfWidth);\n440|     ctx.closePath();\n441|     ctx.fill();\n442|     ctx.restore();\n443|   }\n444| \n445|   function drawBoat(boat) {\n446|     const R = Math.min(W, H) * 0.42;\n447|     const dist = 30 + boat.dist * (R - 30);\n448|     const x = center.x + Math.cos(boat.angle) * dist;\n449|     const y = center.y + Math.sin(boat.angle) * dist + Math.sin(boat.wobble) * 2;\n450|     const lit = isLit(boat);\n451| \n452|     ctx.save();\n453|     ctx.translate(x, y);\n454|     ctx.rotate(boat.angle + Math.PI / 2);\n455|     drawPaperShadow(() => {\n456|       ctx.fillStyle = lit ? COLORS.highlight : COLORS.accent;\n457|       ctx.beginPath();\n458|       const pts = jitteredPoly(\"boat\" + boats.indexOf(boat), [\n459|         [0, -12],\n460|         [8, 6],\n461|         [0, 10],\n462|         [-8, 6]\n463|       ], 1.5);\n464|       ctx.moveTo(pts[0][0], pts[0][1]);\n465|       for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);\n466|       ctx.closePath();\n467|       ctx.fill();\n468|     });\n469|     ctx.restore();\n470| \n471|     // lit progress ring\n472|     if (lit && !boat.saved) {\n473|       ctx.save();\n474|       ctx.strokeStyle = COLORS.layer;\n475|       ctx.lineWidth = 3;\n476|       ctx.beginPath();\n477|       const frac = Math.min(1, boat.lit / boat.needLit);\n478|       ctx.arc(x, y, 16, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);\n479|       ctx.stroke();\n480|       ctx.restore();\n481|     }\n482|   }\n483| \n484|   function drawBoats() {\n485|     for (const boat of boats) {\n486|       if (boat.saved || boat.sunk) continue;\n487|       drawBoat(boat);\n488|     }\n489|   }\n490| \n491|   function drawCard(text, subtext, y) {\n492|     ctx.save();\n493|     ctx.font = \"bold 26px sans-serif\";\n494|     const w = Math.max(260, ctx.measureText(text).width + 60);\n495|     const h = subtext ? 110 : 70;\n496|     const x = center.x - w / 2;\n497|     const yy = y - h / 2;\n498|     drawPaperShadow(() => {\n499|       ctx.fillStyle = \"#fffaf0\";\n500|       roundRectPath(x, yy, w, h, 14);\n501|       ctx.fill();\n502|     });\n503|     ctx.fillStyle = COLORS.accent;\n504|     ctx.textAlign = \"center\";\n505|     ctx.textBaseline = \"middle\";\n506|     ctx.fillText(text, center.x, yy + (subtext ? 38 : h / 2));\n507|     if (subtext) {\n508|       ctx.font = \"16px sans-serif\";\n509|       ctx.fillText(subtext, center.x, yy + 78);\n510|     }\n511|     ctx.restore();\n512|   }\n513| \n514|   function drawHUD() {\n515|     ctx.save();\n516|     ctx.font = \"bold 18px sans-serif\";\n517|     ctx.fillStyle = COLORS.accent;\n518|     ctx.textAlign = \"left\";\n519|     ctx.textBaseline = \"top\";\n520|     ctx.fillText(\"Phare \" + stage + \"  •  Sauvés: \" + savedCount + \"/\" + goalCount, 16, 16);\n521|     ctx.restore();\n522|   }\n523| \n524|   function render() {\n525|     towerRadius = Math.min(W, H) * 0.09;\n526|     drawBackground();\n527|     drawSea();\n528|     drawRocks();\n529|     drawBeam();\n530|     drawBoats();\n531|     drawTower();\n532|     drawPort();\n533| \n534|     if (screenState === \"title\") {\n535|       drawCard(\"Le Gardien du Phare\", \"Touchez et glissez pour tourner le faisceau\", center.y);\n536|     } else if (screenState === \"grace\" || screenState === \"playing\") {\n537|       drawHUD();\n538|       if (stageMessageTimer > 0) {\n539|         drawCard(stageMessage, null, 90);\n540|       }\n541|       if (screenState === \"grace\") {\n542|         ctx.save();\n543|         ctx.font = \"bold 16px sans-serif\";\n544|         ctx.fillStyle = COLORS.accent;\n545|         ctx.textAlign = \"center\";\n546|         ctx.fillText(\"Préparez-vous...\", center.x, H - 40);\n547|         ctx.restore();\n548|       }\n549|     } else if (screenState === \"stagewin\") {\n550|       drawHUD();\n551|       drawCard(\"Phare \" + stage + \" terminé !\", \"Prochain phare...\", center.y);\n552|     } else if (screenState === \"win\") {\n553|       drawCard(\"Toutes les nuits sont sauves !\", \"Vous avez gagné\", center.y);\n554|     } else if (screenState === \"lose\") {\n555|       drawCard(\"Un bateau a heurté les rochers...\", \"Nuit perdue\", center.y);\n556|     }\n557| \n558|     if (paused && (screenState === \"grace\" || screenState === \"playing\")) {\n559|       ctx.save();\n560|       ctx.fillStyle = \"rgba(61,64,91,0.4)\";\n561|       ctx.fillRect(0, 0, W, H);\n562|       ctx.restore();\n563|       drawCard(\"Pause\", null, center.y);\n564|     }\n565|   }\n566| \n567|   // ---- Main loop ----\n568|   let lastTime = null;\n569|   function frame(ts) {\n570|     if (lastTime === null) lastTime = ts;\n571|     let dt = (ts - lastTime) / 1000;\n572|     lastTime = ts;\n573|     if (dt > 0.1) dt = 0.1;\n574| \n575|     update(dt);\n576|     render();\n577| \n578|     if (!booted) {\n579|       booted = true;\n580|       CARTRIDGE.send(\"boot\", { title: \"Le Gardien du Phare\", gameType: \"stage-clear\", lang: \"fr\" });\n581|     }\n582| \n583|     requestAnimationFrame(frame);\n584|   }\n585| \n586|   center.x = window.innerWidth / 2;\n587|   center.y = window.innerHeight / 2;\n588|   targetAngle = 0;\n589|   requestAnimationFrame(frame);\n590| })();\n591| </script>\n592| </body>\n593| </html>\n594| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNsAj2s8RUTxuFdBBsKx\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":9284,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}       }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}        }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"partly\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"evidence\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 110\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" STAGES\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = [\\\\\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"n    \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{ goal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 1,\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boats\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 1\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", speed\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 0\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".55\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", rock\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Danger\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": 1\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": \"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"166\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"st\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ageMessage = \\\\\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Phare \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + n\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + \\\\\\\" :\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" guid\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + cfg\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".goal\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + \\\\\\\" ba\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"teau\\\\\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + (cfg.\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" >\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1 ?\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"x\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" : \\\\\\\"\\\\\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\") + \\\\\\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" au\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" port\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 340\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"if (dan\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"gerB\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"and\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" &&\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"R\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ock\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Z\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"one(boat\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"angle\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" && boat\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".lit\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"< 0\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".5) {\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code implements\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" multi\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-level\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" progression\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boats\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" approaching\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rocks\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", beam\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rotation\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drag\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and boats\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" s\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"inking on\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rock\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" contact\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" but\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lacks fog\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" waves\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dis\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"place\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boats, and the\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pale\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" yellow\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" beam\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" specified\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in the brief\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"stated\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 520\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"Ph\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"are \\\\\\\" +\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stage + \\\\\\\"  \"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"•  Sa\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uvés: \"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + savedCount\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + \\\\\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"/\\\\\\\" + goal\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Count, 16\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", 16)\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 166\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"stageMessage\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"Ph\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"are \\\\\\\" +\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" n + \\\\\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" : guidez \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + cfg.\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal + \\\\\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bateau\\\\\\\" +\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (cfg.goal\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" > 1 \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"? \\\\\\\"x\\\\\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" : \\\\\\\"\\\\\\\")\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + \\\\\\\" au\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" port\\\\\\\";\\\"},\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"535\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"draw\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Card\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Le Gardien\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" du Phare\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", \\\\\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Touchez et gl\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"issez pour tour\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ner le faisc\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eau\\\\\\\", center\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".y);\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the night\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" number\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" at\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the top during\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", shows\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the goal count\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen, and provides\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicit\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instructions about\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dra\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"gging to\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rotate\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the beam.\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, \\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"feedback\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"immediate\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 242\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"function\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" update\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Targ\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"etFrom\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Point\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(p\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n     \"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"const dx = p\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x - center\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x;\\\\n\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"     const dy =\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" p.y -\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" center.y;\\\\\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"n     target\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Angle = Math\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".atan2\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(dy, dx\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\\n   \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\\\"}, {\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 266\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"let\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" diff\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = angl\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eDiff(target\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Angle, be\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amAngle)\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\\n     \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"be\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amAngle +=\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" diff * Math\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".min\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(1, dt\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 6\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 529\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"drawBe\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"am();\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Pointer\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input immediately\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates the target\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" angle,\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" which\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is then\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" smooth\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ly applied\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to the beam angle\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rendered\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame cycle\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ab\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rupt\\\", \\\"evidence\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [{\\\"line\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 555\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"draw\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Card(\\\\\\\"Un\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bateau a h\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eurté les ro\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"chers...\\\\\\\",\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"Nuit\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" perdue\\\\\\\",\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" center.y)\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 341\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"boat\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".s\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"unk = true;\\\\\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"n           \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"on\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"S\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tag\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eF\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ailed\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"();\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game shows\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a message\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boat hit\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rocks when\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" losing\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", but provides\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no button\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mechanism to replay\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the night\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" specified\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in the brief.\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}}\"}    }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":9284,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":748}              }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      245,
+      245,
+      245,
+      245,
+      245,
+      245,
+      245,
+      245,
+      245,
+      0,
+      0,
+      0,
+      247,
+      247,
+      247,
+      247,
+      247,
+      247,
+      0,
+      0,
+      0,
+      0,
+      12,
+      67,
+      102,
+      102,
+      102,
+      0,
+      0,
+      14,
+      26,
+      86,
+      0,
+      0,
+      23,
+      27,
+      70,
+      0,
+      9,
+      25,
+      25,
+      64,
+      0,
+      17,
+      25,
+      81,
+      0,
+      2,
+      23,
+      27,
+      134,
+      0,
+      0,
+      0,
+      0,
+      23,
+      26,
+      28,
+      30,
+      141,
+      0,
+      0,
+      0,
+      0,
+      12,
+      28,
+      25,
+      31,
+      147,
+      0,
+      0,
+      0,
+      0,
+      8,
+      31,
+      21,
+      31,
+      20,
+      135,
+      0,
+      0,
+      0,
+      0,
+      21,
+      68,
+      0,
+      16,
+      79,
+      0,
+      0,
+      22,
+      31,
+      69,
+      0,
+      10,
+      21,
+      26,
+      27,
+      27,
+      135,
+      0,
+      1,
+      0,
+      0,
+      20,
+      30,
+      133,
+      0,
+      0,
+      0,
+      0,
+      23,
+      71,
+      0,
+      8,
+      90,
+      0,
+      0,
+      17,
+      24,
+      0,
+      0,
+      0,
+      26,
+      27,
+      70,
+      0,
+      8,
+      27,
+      87,
+      0,
+      0,
+      19,
+      24,
+      98,
+      0,
+      0,
+      10,
+      29,
+      124,
+      0,
+      0,
+      0,
+      5,
+      80,
+      0,
+      0,
+      24,
+      79,
+      0,
+      21,
+      9,
+      25,
+      73,
+      0,
+      11,
+      23,
+      84,
+      0,
+      0,
+      23,
+      23,
+      82,
+      0,
+      0,
+      23,
+      25,
+      65,
+      0,
+      16,
+      24,
+      94,
+      1,
+      0,
+      25,
+      23,
+      72,
+      0,
+      0,
+      23,
+      25,
+      68,
+      0,
+      14,
+      23,
+      85,
+      0,
+      0,
+      22,
+      25,
+      74,
+      0,
+      6,
+      25,
+      26,
+      65,
+      0,
+      19,
+      26,
+      78,
+      1,
+      0,
+      23,
+      25,
+      74,
+      0,
+      7,
+      26,
+      27,
+      63,
+      0,
+      16,
+      27,
+      79,
+      0,
+      6,
+      22,
+      31,
+      65,
+      0,
+      9,
+      28,
+      26,
+      25,
+      23,
+      26,
+      30,
+      24,
+      81,
+      0,
+      0,
+      25,
+      76,
+      1,
+      0,
+      26,
+      26,
+      71,
+      0,
+      33,
+      7,
+      83,
+      0,
+      0,
+      19,
+      1,
+      78,
+      0,
+      19,
+      8,
+      25,
+      90,
+      0,
+      0,
+      16,
+      146,
+      0,
+      0,
+      0,
+      0,
+      12,
+      72,
+      0,
+      14,
+      22,
+      68,
+      0,
+      12,
+      23,
+      92,
+      0,
+      11,
+      4,
+      103,
+      1,
+      0,
+      2,
+      24,
+      26,
+      75,
+      0,
+      6,
+      24,
+      87,
+      0,
+      0,
+      20,
+      25,
+      75,
+      0,
+      5,
+      28,
+      100,
+      0,
+      0,
+      6,
+      22,
+      84,
+      0,
+      0,
+      24,
+      26,
+      72,
+      0,
+      5,
+      27,
+      109,
+      109,
+      109
+    ]
+  },
+  "usage": {
+    "input": 9284,
+    "output": 748,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

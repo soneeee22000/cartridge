@@ -1,0 +1,491 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:3a706755fac365048ddc4e145793284c92a6c1a4266e2a34d445028526c25f19",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nSlide coloured tiles on a small square board until each row holds a single colour. There is no timer, only moves.\n\nPlan:\n{\"gameType\":\"puzzle-board\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap a tile to slide it into the empty slot on a small board, rearranging colours until every row is a single solid colour. The puzzle ends when you solve it or no moves remain.\",\"slug\":\"colour-rows\",\"style\":\"paper-cut\",\"title\":\"Colour Rows\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Colour Rows</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #f4ecd8;\n11|     overflow: hidden;\n12|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n13|   }\n14|   canvas {\n15|     display: block;\n16|     touch-action: none;\n17|   }\n18| </style>\n19| </head>\n20| <body>\n21| <canvas id=\"game\"></canvas>\n22| <script>\n23| // ---- Bridge helper (verbatim) ----\n24| const CARTRIDGE = {\n25|   send(type, payload = {}) {\n26|     window.parent.postMessage(\n27|       { source: \"cartridge\", v: 1, type, payload },\n28|       \"*\",\n29|     );\n30|   },\n31| };\n32| \n33| window.addEventListener(\"message\", (event) => {\n34|   const data = event.data;\n35|   if (!data || data.source !== \"cartridge-host\") return;\n36|   if (data.type === \"pause\") paused = true;\n37|   if (data.type === \"resume\") paused = false;\n38|   if (data.type === \"reset\") backToTitle();\n39| });\n40| \n41| // ---- Game setup ----\n42| const canvas = document.getElementById(\"game\");\n43| const ctx = canvas.getContext(\"2d\");\n44| canvas.style.touchAction = \"none\";\n45| \n46| let dpr = Math.max(1, window.devicePixelRatio || 1);\n47| let W = 0, H = 0;\n48| \n49| function resize() {\n50|   W = window.innerWidth;\n51|   H = window.innerHeight;\n52|   dpr = Math.max(1, window.devicePixelRatio || 1);\n53|   canvas.width = Math.floor(W * dpr);\n54|   canvas.height = Math.floor(H * dpr);\n55|   canvas.style.width = W + \"px\";\n56|   canvas.style.height = H + \"px\";\n57|   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n58|   draw();\n59| }\n60| window.addEventListener(\"resize\", resize);\n61| \n62| // ---- Paper-cut palette ----\n63| const PAL = {\n64|   bg: \"#f4ecd8\",\n65|   layer: \"#e07a5f\",\n66|   accent: \"#3d405b\",\n67|   highlight: \"#81b29a\",\n68| };\n69| \n70| // A few extra colours for tiles (cut-paper feel), derived tastefully\n71| const TILE_COLORS = [\"#e07a5f\", \"#81b29a\", \"#3d405b\", \"#f2cc8f\"];\n72| \n73| // seeded jitter so it doesn't flicker between draws\n74| function seededRand(seed) {\n75|   let s = seed % 2147483647;\n76|   if (s <= 0) s += 2147483646;\n77|   return function () {\n78|     s = (s * 16807) % 2147483647;\n79|     return (s - 1) / 2147483646;\n80|   };\n81| }\n82| const rand = seededRand(918273);\n83| function jitter(px) {\n84|   return (rand() - 0.5) * 2 * px;\n85| }\n86| \n87| // ---- Puzzle state ----\n88| const ROWS = 3;\n89| const COLS = 3;\n90| const BOARD_SIZE = ROWS * COLS; // 9 cells, one empty\n91| let board = []; // array of colour index, -1 = empty\n92| let emptyIndex = 0;\n93| let moves = 0;\n94| let running = false;\n95| let paused = false;\n96| let gameOver = false;\n97| let winFlag = false;\n98| let stuckFlag = false;\n99| let tapHintPulse = 0;\n100| \n101| // Precompute jitter offsets per cell corner, stable per cell id\n102| const cellJitters = {};\n103| function getCellJitter(id) {\n104|   if (!cellJitters[id]) {\n105|     const localRand = seededRand(1000 + id * 37);\n106|     cellJitters[id] = {\n107|       tl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n108|       tr: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n109|       br: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n110|       bl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n111|     };\n112|   }\n113|   return cellJitters[id];\n114| }\n115| \n116| function makeSolvedBoard() {\n117|   // Each row gets its own colour, filled fully, then remove one tile for empty slot\n118|   const b = [];\n119|   for (let r = 0; r < ROWS; r++) {\n120|     for (let c = 0; c < COLS; c++) {\n121|       b.push(r); // colour index = row index (0..ROWS-1), matches TILE_COLORS\n122|     }\n123|   }\n124|   return b;\n125| }\n126| \n127| function isRowSolved(r, b) {\n128|   const start = r * COLS;\n129|   let colour = -2;\n130|   for (let c = 0; c < COLS; c++) {\n131|     const idx = start + c;\n132|     if (b[idx] === -1) return false; // empty counts as not solved for that row unless we allow it\n133|     if (colour === -2) colour = b[idx];\n134|     else if (b[idx] !== colour) return false;\n135|   }\n136|   return true;\n137| }\n138| \n139| function solved() {\n140|   for (let r = 0; r < ROWS; r++) {\n141|     if (!isRowSolved(r, board)) return false;\n142|   }\n143|   return true;\n144| }\n145| \n146| function neighborsOf(idx) {\n147|   const r = Math.floor(idx / COLS);\n148|   const c = idx % COLS;\n149|   const list = [];\n150|   if (r > 0) list.push(idx - COLS);\n151|   if (r < ROWS - 1) list.push(idx + COLS);\n152|   if (c > 0) list.push(idx - 1);\n153|   if (c < COLS - 1) list.push(idx + 1);\n154|   return list;\n155| }\n156| \n157| function anyLegalMove() {\n158|   // legal move = any neighbor of empty can slide (always true unless solved is the only state and there's no move to make progress)\n159|   // Since a slide is always possible if empty has any neighbor, \"stuck\" happens only if no move can ever change the board's solved status.\n160|   // For this puzzle, a legal move exists whenever empty has neighbors AND board is not already solved.\n161|   if (solved()) return false;\n162|   return neighborsOf(emptyIndex).length > 0;\n163| }\n164| \n165| function shuffleBoard() {\n166|   // Start solved then perform random legal slides to scramble, guaranteeing solvability\n167|   board = makeSolvedBoard();\n168|   emptyIndex = Math.floor(BOARD_SIZE / 2);\n169|   board[emptyIndex] = -1;\n170|   // Actually need emptyIndex chosen consistently; recompute properly:\n171|   board = makeSolvedBoard();\n172|   const startEmpty = BOARD_SIZE - 1;\n173|   board[startEmpty] = -1;\n174|   emptyIndex = startEmpty;\n175| \n176|   const scrambleSteps = 60 + Math.floor(rand() * 30);\n177|   let lastMove = -1;\n178|   for (let i = 0; i < scrambleSteps; i++) {\n179|     const neigh = neighborsOf(emptyIndex).filter((n) => n !== lastMove);\n180|     const pick = neigh.length > 0 ? neigh[Math.floor(rand() * neigh.length)] : neighborsOf(emptyIndex)[0];\n181|     board[emptyIndex] = board[pick];\n182|     board[pick] = -1;\n183|     lastMove = emptyIndex;\n184|     emptyIndex = pick;\n185|   }\n186|   // Avoid accidental already-solved shuffle\n187|   if (solved()) {\n188|     // do one more swap to break it, if possible\n189|     const neigh = neighborsOf(emptyIndex);\n190|     if (neigh.length > 0) {\n191|       const pick = neigh[0];\n192|       board[emptyIndex] = board[pick];\n193|       board[pick] = -1;\n194|       emptyIndex = pick;\n195|     }\n196|   }\n197| }\n198| \n199| function resetGameState() {\n200|   moves = 0;\n201|   gameOver = false;\n202|   winFlag = false;\n203|   stuckFlag = false;\n204|   shuffleBoard();\n205| }\n206| \n207| function backToTitle() {\n208|   running = false;\n209|   paused = false;\n210|   resetGameState();\n211|   draw();\n212| }\n213| \n214| // ---- Drawing helpers (paper-cut style) ----\n215| function roundRectPath(x, y, w, h, r) {\n216|   ctx.beginPath();\n217|   ctx.moveTo(x + r, y);\n218|   ctx.arcTo(x + w, y, x + w, y + h, r);\n219|   ctx.arcTo(x + w, y + h, x, y + h, r);\n220|   ctx.arcTo(x, y + h, x, y, r);\n221|   ctx.arcTo(x, y, x + w, y, r);\n222|   ctx.closePath();\n223| }\n224| \n225| function drawJitteredRoundedRect(x, y, w, h, r, cellId) {\n226|   const j = getCellJitter(cellId);\n227|   ctx.beginPath();\n228|   ctx.moveTo(x + r + j.tl[0], y + j.tl[1]);\n229|   ctx.lineTo(x + w - r + j.tr[0], y + j.tr[1]);\n230|   ctx.quadraticCurveTo(x + w + j.tr[0], y + j.tr[1], x + w + j.tr[0], y + r + j.tr[1]);\n231|   ctx.lineTo(x + w + j.br[0], y + h - r + j.br[1]);\n232|   ctx.quadraticCurveTo(x + w + j.br[0], y + h + j.br[1], x + w - r + j.br[0], y + h + j.br[1]);\n233|   ctx.lineTo(x + r + j.bl[0], y + h + j.bl[1]);\n234|   ctx.quadraticCurveTo(x + j.bl[0], y + h + j.bl[1], x + j.bl[0], y + h - r + j.bl[1]);\n235|   ctx.lineTo(x + j.tl[0], y + r + j.tl[1]);\n236|   ctx.quadraticCurveTo(x + j.tl[0], y + j.tl[1], x + r + j.tl[0], y + j.tl[1]);\n237|   ctx.closePath();\n238| }\n239| \n240| function layout() {\n241|   const margin = Math.min(W, H) * 0.08;\n242|   const boardTop = H * 0.18;\n243|   const boardSize = Math.min(W - margin * 2, H * 0.62);\n244|   const cellSize = boardSize / COLS;\n245|   const boardLeft = (W - boardSize) / 2;\n246|   return { boardLeft, boardTop, boardSize, cellSize };\n247| }\n248| \n249| function drawBackground() {\n250|   ctx.fillStyle = PAL.bg;\n251|   ctx.fillRect(0, 0, W, H);\n252| }\n253| \n254| function drawTitlePlate() {\n255|   const plateW = Math.min(W * 0.86, 520);\n256|   const plateH = 90;\n257|   const x = (W - plateW) / 2;\n258|   const y = H * 0.05;\n259| \n260|   ctx.save();\n261|   ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n262|   ctx.shadowBlur = 6;\n263|   ctx.shadowOffsetY = 4;\n264|   ctx.fillStyle = PAL.accent;\n265|   drawJitteredRoundedRect(x, y, plateW, plateH, 16, 9001);\n266|   ctx.fill();\n267|   ctx.restore();\n268| \n269|   ctx.fillStyle = PAL.bg;\n270|   ctx.font = \"bold \" + Math.floor(plateH * 0.4) + \"px sans-serif\";\n271|   ctx.textAlign = \"center\";\n272|   ctx.textBaseline = \"middle\";\n273|   ctx.fillText(\"Colour Rows\", W / 2, y + plateH / 2);\n274| }\n275| \n276| function drawBoard() {\n277|   const { boardLeft, boardTop, boardSize, cellSize } = layout();\n278| \n279|   // backing board plate (layer of card)\n280|   ctx.save();\n281|   ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n282|   ctx.shadowBlur = 6;\n283|   ctx.shadowOffsetY = 4;\n284|   ctx.fillStyle = PAL.accent;\n285|   drawJitteredRoundedRect(boardLeft - 10, boardTop - 10, boardSize + 20, boardSize + 20, 20, 9002);\n286|   ctx.fill();\n287|   ctx.restore();\n288| \n289|   for (let idx = 0; idx < BOARD_SIZE; idx++) {\n290|     const r = Math.floor(idx / COLS);\n291|     const c = idx % COLS;\n292|     const x = boardLeft + c * cellSize;\n293|     const y = boardTop + r * cellSize;\n294|     const pad = cellSize * 0.06;\n295|     const cx = x + pad;\n296|     const cy = y + pad;\n297|     const cw = cellSize - pad * 2;\n298|     const ch = cellSize - pad * 2;\n299| \n300|     const val = board[idx];\n301|     if (val === -1) {\n302|       // empty slot: draw a subtle inset\n303|       ctx.save();\n304|       ctx.fillStyle = \"rgba(61,64,91,0.08)\";\n305|       drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx + 500);\n306|       ctx.fill();\n307|       ctx.restore();\n308|       continue;\n309|     }\n310| \n311|     ctx.save();\n312|     ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n313|     ctx.shadowBlur = 6;\n314|     ctx.shadowOffsetY = 3;\n315|     ctx.fillStyle = TILE_COLORS[val % TILE_COLORS.length];\n316|     drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx);\n317|     ctx.fill();\n318|     ctx.restore();\n319| \n320|     // highlight strip for depth\n321|     ctx.save();\n322|     ctx.globalAlpha = 0.18;\n323|     ctx.fillStyle = PAL.bg;\n324|     drawJitteredRoundedRect(cx + cw * 0.08, cy + ch * 0.08, cw * 0.5, ch * 0.25, 6, idx + 700);\n325|     ctx.fill();\n326|     ctx.restore();\n327|   }\n328| \n329|   // row solved indicators\n330|   for (let r = 0; r < ROWS; r++) {\n331|     if (isRowSolved(r, board)) {\n332|       const y = boardTop + r * cellSize;\n333|       ctx.save();\n334|       ctx.strokeStyle = PAL.highlight;\n335|       ctx.lineWidth = 3;\n336|       ctx.beginPath();\n337|       ctx.moveTo(boardLeft - 6, y + cellSize / 2);\n338|       ctx.lineTo(boardLeft - 18, y + cellSize / 2);\n339|       ctx.stroke();\n340|       ctx.restore();\n341|     }\n342|   }\n343| }\n344| \n345| function drawHud() {\n346|   ctx.fillStyle = PAL.accent;\n347|   ctx.font = \"bold 20px sans-serif\";\n348|   ctx.textAlign = \"left\";\n349|   ctx.textBaseline = \"top\";\n350|   ctx.fillText(\"Moves: \" + moves, 16, H - 40);\n351| }\n352| \n353| function drawEndOverlay() {\n354|   ctx.save();\n355|   ctx.fillStyle = \"rgba(61,64,91,0.55)\";\n356|   ctx.fillRect(0, 0, W, H);\n357| \n358|   const plateW = Math.min(W * 0.8, 460);\n359|   const plateH = 160;\n360|   const x = (W - plateW) / 2;\n361|   const y = (H - plateH) / 2;\n362| \n363|   ctx.shadowColor = \"rgba(0,0,0,0.3)\";\n364|   ctx.shadowBlur = 6;\n365|   ctx.shadowOffsetY = 4;\n366|   ctx.fillStyle = PAL.bg;\n367|   drawJitteredRoundedRect(x, y, plateW, plateH, 18, 9003);\n368|   ctx.fill();\n369|   ctx.shadowBlur = 0;\n370|   ctx.shadowOffsetY = 0;\n371| \n372|   ctx.fillStyle = PAL.accent;\n373|   ctx.textAlign = \"center\";\n374|   ctx.textBaseline = \"middle\";\n375|   ctx.font = \"bold 28px sans-serif\";\n376|   const msg = winFlag ? \"Solved!\" : \"No moves left\";\n377|   ctx.fillText(msg, W / 2, y + plateH * 0.4);\n378| \n379|   ctx.font = \"18px sans-serif\";\n380|   ctx.fillText(\"Moves: \" + moves + \" — tap to play again\", W / 2, y + plateH * 0.72);\n381|   ctx.restore();\n382| }\n383| \n384| function drawTitleScreen() {\n385|   drawTitlePlate();\n386| \n387|   // hint pulse\n388|   tapHintPulse += 0.05;\n389|   const alpha = 0.5 + 0.5 * Math.sin(tapHintPulse);\n390|   ctx.save();\n391|   ctx.globalAlpha = alpha;\n392|   ctx.fillStyle = PAL.accent;\n393|   ctx.font = \"bold 22px sans-serif\";\n394|   ctx.textAlign = \"center\";\n395|   ctx.textBaseline = \"middle\";\n396|   ctx.fillText(\"Tap to begin\", W / 2, H * 0.85);\n397|   ctx.restore();\n398| \n399|   // small preview board (static, decorative)\n400|   drawBoard();\n401| }\n402| \n403| function draw() {\n404|   drawBackground();\n405| \n406|   if (!running) {\n407|     drawTitleScreen();\n408|     return;\n409|   }\n410| \n411|   drawTitlePlate();\n412|   drawBoard();\n413|   drawHud();\n414| \n415|   if (gameOver) {\n416|     drawEndOverlay();\n417|   } else if (paused) {\n418|     ctx.save();\n419|     ctx.fillStyle = \"rgba(61,64,91,0.5)\";\n420|     ctx.fillRect(0, 0, W, H);\n421|     ctx.fillStyle = PAL.bg;\n422|     ctx.font = \"bold 26px sans-serif\";\n423|     ctx.textAlign = \"center\";\n424|     ctx.textBaseline = \"middle\";\n425|     ctx.fillText(\"Paused\", W / 2, H / 2);\n426|     ctx.restore();\n427|   }\n428| }\n429| \n430| // ---- Interaction ----\n431| function cellFromPoint(px, py) {\n432|   const { boardLeft, boardTop, boardSize, cellSize } = layout();\n433|   if (px < boardLeft || px > boardLeft + boardSize) return -1;\n434|   if (py < boardTop || py > boardTop + boardSize) return -1;\n435|   const c = Math.floor((px - boardLeft) / cellSize);\n436|   const r = Math.floor((py - boardTop) / cellSize);\n437|   if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return -1;\n438|   return r * COLS + c;\n439| }\n440| \n441| function isLegal(cell) {\n442|   if (cell < 0 || cell >= BOARD_SIZE) return false;\n443|   if (board[cell] === -1) return false;\n444|   return neighborsOf(emptyIndex).includes(cell);\n445| }\n446| \n447| function apply(cell) {\n448|   board[emptyIndex] = board[cell];\n449|   board[cell] = -1;\n450|   emptyIndex = cell;\n451| }\n452| \n453| function points() {\n454|   // simple scoring: count solved rows\n455|   let s = 0;\n456|   for (let r = 0; r < ROWS; r++) if (isRowSolved(r, board)) s++;\n457|   return s;\n458| }\n459| \n460| function onCellTapped(cell) {\n461|   if (!isLegal(cell)) return;\n462|   apply(cell);\n463|   moves += 1;\n464|   CARTRIDGE.send(\"score\", { value: points() });\n465|   if (solved()) {\n466|     winFlag = true;\n467|     gameOver = true;\n468|     CARTRIDGE.send(\"end\", { reason: \"win\", value: moves });\n469|   } else if (!anyLegalMove()) {\n470|     stuckFlag = true;\n471|     gameOver = true;\n472|     CARTRIDGE.send(\"end\", { reason: \"stuck\" });\n473|   }\n474|   draw();\n475| }\n476| \n477| canvas.addEventListener(\"pointerdown\", (event) => {\n478|   event.preventDefault();\n479|   if (paused) return;\n480| \n481|   if (!running) {\n482|     running = true;\n483|     resetGameState();\n484|     CARTRIDGE.send(\"start\");\n485|     draw();\n486|     return;\n487|   }\n488| \n489|   const rect = canvas.getBoundingClientRect();\n490|   const px = event.clientX - rect.left;\n491|   const py = event.clientY - rect.top;\n492| \n493|   if (gameOver) {\n494|     resetGameState();\n495|     draw();\n496|     return;\n497|   }\n498| \n499|   const cell = cellFromPoint(px, py);\n500|   if (cell >= 0) onCellTapped(cell);\n501| });\n502| \n503| // ---- Boot ----\n504| resetGameState();\n505| resize();\n506| CARTRIDGE.send(\"boot\", { title: \"Colour Rows\", gameType: \"puzzle-board\", lang: \"en\" });\n507| draw();\n508| \n509| // light animation loop just for the title pulse (no timers with strings, RAF used)\n510| function loop() {\n511|   if (!running && !paused) {\n512|     draw();\n513|   }\n514|   requestAnimationFrame(loop);\n515| }\n516| requestAnimationFrame(loop);\n517| </script>\n518| </body>\n519| </html>\n520| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNsYzHm1AxMYrHJ6HTvG\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8157,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}               }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}             }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"prompt\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"88\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ROWS\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 3\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\\n\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"  \"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"const COLS = 3;\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 116\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mak\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eS\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ol\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"vedBoard() \"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n    \"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"//\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Each\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" row gets\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" its\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" own colour\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" filled\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fully\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" then remove\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" one\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tile\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" for\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" empty\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" slot\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 127\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" isRowSolved(r\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", b\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\\\\n    const\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" start\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = r * COLS;\\\\\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"n    let\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" colour\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = -\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\\n    for (let c\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 0; c < COLS\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"; c++) {\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 447\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function apply\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(cell) {\\\\n    board\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"[emptyIndex] = board[\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cell];\\\\n    board[cell\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"] = -1;\\\\n    em\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ptyIndex = cell;\\\\n  \"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\\\"}, {\\\"line\\\": 93\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"let\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 0;\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"The code\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a small\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" square\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" board\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"3x3),\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" col\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"oured tiles\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"TILE\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"_COLORS\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" array\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), sliding\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mech\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"anic (\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apply\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" function sw\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aps tiles with\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" empty slot\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), and win\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" condition\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" checking\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" each\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" row for\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" single\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" colour\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"is\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"RowSolved function)\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-leg\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"stated\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 273\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\\\\\\\"Colour\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Rows\\\\\\\", W / 2\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", y\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" plate\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"H\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2);\\\"}, {\\\"line\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 396\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Tap\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to begin\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W / 2, H\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".85\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 350\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Moves\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + moves, \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"16\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H -\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 40\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays \\\\\\\"Colour Rows\\\\\\\" and\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"Tap to begin\\\\\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", and\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" during\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" counter is shown\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" but\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the specific\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" goal\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" of\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" making\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" each\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" row a single colour is not explicitly stated\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen.\\\"},\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 460\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" onCellTapped(cell)\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n    if (!isLegal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(cell)) return;\\\\n    apply\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(cell);\\\\n    moves +=\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1;\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 474\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"draw\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"();\\\"}, {\\\"line\\\": 477\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"canvas\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".addEventListener(\\\\\\\"pointerdown\\\\\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", (event) => {\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"When\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" taps a tile\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the apply function immediately\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the board state\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and moves\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" counter\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", followed\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" by an\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediate\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" draw call\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to render\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the change\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 376\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"const\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" msg\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = win\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Flag ? \\\\\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Solved\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!\\\\\\\" : \\\\\\\"No\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" left\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\\\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"n    ctx.fillText(msg\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", W / 2, y\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + plateH *\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0.4\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 380\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Moves: \\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + moves +\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" —\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tap\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to play\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" again\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W / 2, y\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + plateH * 0.72\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 353\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" draw\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"End\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Over\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lay() {\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the game ends, an\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" overlay displays\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" either\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Solved!\\\\\\\" or \\\\\\\"No moves\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" left\\\\\\\" to\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explain\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the outcome\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the player to \\\\\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tap to play again\\\\\\\" to\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" restart.\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}}\"}             }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8157,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":788}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"       }\n\n",
+    "gapsMs": [
+      0,
+      271,
+      271,
+      271,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      22,
+      24,
+      203,
+      203,
+      203,
+      203,
+      203,
+      1,
+      11,
+      25,
+      27,
+      32,
+      28,
+      19,
+      90,
+      90,
+      90,
+      20,
+      24,
+      26,
+      24,
+      30,
+      28,
+      20,
+      33,
+      20,
+      28,
+      31,
+      21,
+      27,
+      28,
+      23,
+      30,
+      59,
+      15,
+      49,
+      43,
+      1,
+      1,
+      16,
+      30,
+      23,
+      28,
+      26,
+      26,
+      25,
+      28,
+      27,
+      24,
+      29,
+      28,
+      28,
+      28,
+      36,
+      15,
+      29,
+      20,
+      26,
+      31,
+      24,
+      27,
+      26,
+      24,
+      25,
+      27,
+      27,
+      30,
+      21,
+      27,
+      30,
+      22,
+      32,
+      51,
+      24,
+      26,
+      28,
+      24,
+      26,
+      29,
+      27,
+      25,
+      24,
+      26,
+      27,
+      27,
+      27,
+      31,
+      25,
+      21,
+      26,
+      27,
+      27,
+      25,
+      28,
+      25,
+      27,
+      26,
+      29,
+      25,
+      25,
+      28,
+      31,
+      24,
+      27,
+      21,
+      30,
+      22,
+      31,
+      33,
+      0,
+      29,
+      25,
+      25,
+      31,
+      98,
+      1,
+      1,
+      1,
+      28,
+      24,
+      33,
+      33,
+      15,
+      26,
+      27,
+      25,
+      25,
+      28,
+      28,
+      26,
+      29,
+      30,
+      23,
+      37,
+      16,
+      25,
+      26,
+      28,
+      21,
+      25,
+      34,
+      22,
+      28,
+      25,
+      25,
+      26,
+      41,
+      16,
+      35,
+      17,
+      32,
+      16,
+      27,
+      26,
+      25,
+      31,
+      23,
+      27,
+      26,
+      28,
+      24,
+      29,
+      27,
+      22,
+      28,
+      29,
+      26,
+      24,
+      30,
+      22,
+      37,
+      17,
+      25,
+      25,
+      30,
+      23,
+      30,
+      23,
+      26,
+      30,
+      26,
+      25,
+      25,
+      32,
+      21,
+      28,
+      25,
+      26,
+      26,
+      27,
+      33,
+      29,
+      18,
+      25,
+      26,
+      36,
+      32,
+      12,
+      27,
+      41,
+      18,
+      20,
+      27,
+      32,
+      21,
+      24,
+      29,
+      26,
+      28,
+      23,
+      26,
+      31,
+      22,
+      27,
+      25,
+      29,
+      23,
+      31,
+      24,
+      27,
+      23,
+      41,
+      28,
+      17,
+      19,
+      33,
+      21,
+      28,
+      23,
+      30,
+      24,
+      0,
+      26,
+      29,
+      25,
+      28,
+      29,
+      20,
+      148,
+      148,
+      148
+    ]
+  },
+  "usage": {
+    "input": 8157,
+    "output": 788,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

@@ -1,0 +1,481 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:aea6ca166ca3b5992a6b254cfdbfff2192be6a8acba7e7a4f53f8cc51bd4df1e",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nBuild an online multiplayer chess game with player accounts and a leaderboard saved on a server.\n\nPlan:\n{\"gameType\":\"puzzle-board\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Move pieces on the board to checkmate the lone king in as few moves as possible. The game ends when you deliver checkmate or have no legal move left.\",\"slug\":\"chess-puzzle\",\"style\":\"chalkboard\",\"title\":\"Chess Puzzle\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Chess Puzzle</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; overflow: hidden;\n10|     background: #2f3e3a;\n11|     height: 100%;\n12|     width: 100%;\n13|     font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;\n14|   }\n15|   canvas {\n16|     display: block;\n17|     touch-action: none;\n18|     background: #2f3e3a;\n19|   }\n20| </style>\n21| </head>\n22| <body>\n23| <canvas id=\"game\"></canvas>\n24| <script>\n25|   const CARTRIDGE = {\n26|     send(type, payload = {}) {\n27|       window.parent.postMessage(\n28|         { source: \"cartridge\", v: 1, type, payload },\n29|         \"*\",\n30|       );\n31|     },\n32|   };\n33| </script>\n34| <script>\n35| (function(){\n36|   const canvas = document.getElementById('game');\n37|   const ctx = canvas.getContext('2d');\n38| \n39|   const PALETTE = {\n40|     slate: '#2f3e3a',\n41|     chalk: '#eeeae0',\n42|     accent: '#f2c14e',\n43|     second: '#8fc1e3'\n44|   };\n45| \n46|   let W = 0, H = 0, DPR = 1;\n47|   function resize() {\n48|     DPR = window.devicePixelRatio || 1;\n49|     W = window.innerWidth;\n50|     H = window.innerHeight;\n51|     canvas.width = Math.floor(W * DPR);\n52|     canvas.height = Math.floor(H * DPR);\n53|     canvas.style.width = W + 'px';\n54|     canvas.style.height = H + 'px';\n55|     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n56|     draw();\n57|   }\n58|   window.addEventListener('resize', resize);\n59| \n60|   // ---- Game state ----\n61|   let running = false;   // has play begun (after first tap)\n62|   let paused = false;\n63|   let gameOver = false;\n64|   let moves = 0;\n65|   let selected = null; // {r,c}\n66|   let boardSize = 8;\n67|   let cellPx = 0;\n68|   let originX = 0, originY = 0;\n69|   let smudges = [];\n70|   let statusText = '';\n71|   let legalTargets = [];\n72| \n73|   // Piece representation: {type: 'K'|'R'|'Q', color: 'w'|'b', r, c}\n74|   let pieces = [];\n75| \n76|   function backToTitle() {\n77|     running = false;\n78|     gameOver = false;\n79|     paused = false;\n80|     moves = 0;\n81|     selected = null;\n82|     statusText = '';\n83|     setupPuzzle();\n84|     draw();\n85|   }\n86| \n87|   // Generate a solvable mate-in-few puzzle: white Rook + Queen vs lone black king,\n88|   // or simpler: white Rook + King vs black King (basic mate pattern), player controls white.\n89|   function setupPuzzle() {\n90|     // Place lone black king somewhere not on edge corner extremes for variety\n91|     const bk = { type: 'K', color: 'b', r: 0, c: 4 };\n92|     const wk = { type: 'K', color: 'w', r: 4, c: 4 };\n93|     const wr = { type: 'R', color: 'w', r: 7, c: 0 };\n94|     const wq = { type: 'Q', color: 'w', r: 7, c: 3 };\n95|     pieces = [bk, wk, wr, wq];\n96|     // Verify not already in check/mate; if invalid arrangement, nudge\n97|     if (!validPositions()) {\n98|       wk.r = 5; wk.c = 3;\n99|     }\n100|   }\n101| \n102|   function validPositions() {\n103|     // no two pieces on same square, kings not adjacent\n104|     const set = new Set();\n105|     for (const p of pieces) {\n106|       const key = p.r + ',' + p.c;\n107|       if (set.has(key)) return false;\n108|       set.add(key);\n109|     }\n110|     const wk = pieces.find(p => p.type === 'K' && p.color === 'w');\n111|     const bk = pieces.find(p => p.type === 'K' && p.color === 'b');\n112|     if (Math.abs(wk.r - bk.r) <= 1 && Math.abs(wk.c - bk.c) <= 1) return false;\n113|     return true;\n114|   }\n115| \n116|   function pieceAt(r, c) {\n117|     return pieces.find(p => p.r === r && p.c === c);\n118|   }\n119| \n120|   function inBounds(r, c) {\n121|     return r >= 0 && r < 8 && c >= 0 && c < 8;\n122|   }\n123| \n124|   // Movement generation (simplified, ignoring castling/en-passant, includes basic check rules)\n125|   function rawMoves(piece) {\n126|     const moves = [];\n127|     const dirsRook = [[1,0],[-1,0],[0,1],[0,-1]];\n128|     const dirsKing = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];\n129|     if (piece.type === 'R' || piece.type === 'Q') {\n130|       for (const [dr,dc] of dirsRook) {\n131|         let r = piece.r + dr, c = piece.c + dc;\n132|         while (inBounds(r,c)) {\n133|           const occ = pieceAt(r,c);\n134|           if (!occ) { moves.push([r,c]); }\n135|           else { if (occ.color !== piece.color) moves.push([r,c]); break; }\n136|           r += dr; c += dc;\n137|         }\n138|       }\n139|     }\n140|     if (piece.type === 'Q') {\n141|       const dirsDiag = [[1,1],[1,-1],[-1,1],[-1,-1]];\n142|       for (const [dr,dc] of dirsDiag) {\n143|         let r = piece.r + dr, c = piece.c + dc;\n144|         while (inBounds(r,c)) {\n145|           const occ = pieceAt(r,c);\n146|           if (!occ) { moves.push([r,c]); }\n147|           else { if (occ.color !== piece.color) moves.push([r,c]); break; }\n148|           r += dr; c += dc;\n149|         }\n150|       }\n151|     }\n152|     if (piece.type === 'K') {\n153|       for (const [dr,dc] of dirsKing) {\n154|         const r = piece.r + dr, c = piece.c + dc;\n155|         if (!inBounds(r,c)) continue;\n156|         const occ = pieceAt(r,c);\n157|         if (!occ || occ.color !== piece.color) moves.push([r,c]);\n158|       }\n159|     }\n160|     return moves;\n161|   }\n162| \n163|   function squareAttackedBy(r, c, color) {\n164|     for (const p of pieces) {\n165|       if (p.color !== color) continue;\n166|       if (p.type === 'K') {\n167|         if (Math.abs(p.r - r) <= 1 && Math.abs(p.c - c) <= 1 && !(p.r===r&&p.c===c)) return true;\n168|         continue;\n169|       }\n170|       const mv = rawMoves(p);\n171|       for (const [mr,mc] of mv) {\n172|         if (mr === r && mc === c) return true;\n173|       }\n174|     }\n175|     return false;\n176|   }\n177| \n178|   function kingOf(color) {\n179|     return pieces.find(p => p.type==='K' && p.color===color);\n180|   }\n181| \n182|   function isInCheck(color) {\n183|     const k = kingOf(color);\n184|     return squareAttackedBy(k.r, k.c, color === 'w' ? 'b' : 'w');\n185|   }\n186| \n187|   // Legal moves for a white piece (player-controlled), ensuring white king not left in check\n188|   function legalMovesFor(piece) {\n189|     const candidates = rawMoves(piece);\n190|     const legal = [];\n191|     for (const [r,c] of candidates) {\n192|       const target = pieceAt(r,c);\n193|       const origR = piece.r, origC = piece.c;\n194|       const removed = target;\n195|       if (removed) pieces = pieces.filter(p => p !== removed);\n196|       piece.r = r; piece.c = c;\n197|       const check = isInCheck('w');\n198|       piece.r = origR; piece.c = origC;\n199|       if (removed) pieces.push(removed);\n200|       if (!check) legal.push([r,c]);\n201|     }\n202|     return legal;\n203|   }\n204| \n205|   function whitePieces() {\n206|     return pieces.filter(p => p.color === 'w');\n207|   }\n208| \n209|   function anyWhiteLegalMove() {\n210|     for (const p of whitePieces()) {\n211|       if (legalMovesFor(p).length > 0) return true;\n212|     }\n213|     return false;\n214|   }\n215| \n216|   // After white moves, check black king status\n217|   function blackKingLegalSquares() {\n218|     const bk = kingOf('b');\n219|     const results = [];\n220|     const candidates = rawMoves(bk);\n221|     for (const [r,c] of candidates) {\n222|       const target = pieceAt(r,c);\n223|       const removed = target;\n224|       if (removed) pieces = pieces.filter(p => p !== removed);\n225|       const origR = bk.r, origC = bk.c;\n226|       bk.r = r; bk.c = c;\n227|       const attacked = squareAttackedBy(r, c, 'w');\n228|       bk.r = origR; bk.c = origC;\n229|       if (removed) pieces.push(removed);\n230|       if (!attacked) results.push([r,c]);\n231|     }\n232|     return results;\n233|   }\n234| \n235|   function isBlackCheckmated() {\n236|     if (!isInCheck('b')) return false;\n237|     if (blackKingLegalSquares().length > 0) return false;\n238|     // could also check block/capture but with R+Q+K vs K simplification, assume no other black pieces\n239|     return true;\n240|   }\n241| \n242|   function isBlackStalemated() {\n243|     if (isInCheck('b')) return false;\n244|     return blackKingLegalSquares().length === 0;\n245|   }\n246| \n247|   // Very simple \"AI\" for black king: move to a legal square that maximizes distance from white king/pieces, or random legal\n248|   function blackKingMove() {\n249|     const bk = kingOf('b');\n250|     const opts = blackKingLegalSquares();\n251|     if (opts.length === 0) return; // stalemate/mate handled elsewhere\n252|     // pick square farthest from center attackers on average\n253|     let best = opts[0];\n254|     let bestScore = -Infinity;\n255|     for (const [r,c] of opts) {\n256|       let score = 0;\n257|       for (const p of whitePieces()) {\n258|         score += Math.abs(p.r - r) + Math.abs(p.c - c);\n259|       }\n260|       // slight randomness\n261|       score += Math.random() * 0.5;\n262|       if (score > bestScore) { bestScore = score; best = [r,c]; }\n263|     }\n264|     bk.r = best[0]; bk.c = best[1];\n265|   }\n266| \n267|   function points() {\n268|     // fewer moves is better; score increases each move but represents progress\n269|     return moves;\n270|   }\n271| \n272|   // ---- Input handling ----\n273|   function boardMetrics() {\n274|     const margin = Math.min(W, H) * 0.06;\n275|     const avail = Math.min(W, H) - margin * 2;\n276|     cellPx = avail / 8;\n277|     originX = (W - cellPx * 8) / 2;\n278|     originY = (H - cellPx * 8) / 2;\n279|   }\n280| \n281|   function screenToCell(x, y) {\n282|     const c = Math.floor((x - originX) / cellPx);\n283|     const r = Math.floor((y - originY) / cellPx);\n284|     if (r < 0 || r > 7 || c < 0 || c > 7) return null;\n285|     return { r, c };\n286|   }\n287| \n288|   function onCellTapped(cell) {\n289|     if (gameOver) return;\n290|     const { r, c } = cell;\n291|     const occ = pieceAt(r, c);\n292| \n293|     if (selected) {\n294|       const sel = pieceAt(selected.r, selected.c);\n295|       if (!sel || sel.color !== 'w') { selected = null; draw(); return; }\n296|       const legal = legalMovesFor(sel);\n297|       const isLegal = legal.some(([lr,lc]) => lr === r && lc === c);\n298|       if (isLegal) {\n299|         // capture if any\n300|         const target = pieceAt(r, c);\n301|         if (target) pieces = pieces.filter(p => p !== target);\n302|         sel.r = r; sel.c = c;\n303|         selected = null;\n304|         moves += 1;\n305|         CARTRIDGE.send('score', { value: points() });\n306| \n307|         if (isBlackCheckmated()) {\n308|           gameOver = true;\n309|           statusText = 'Checkmate! You win.';\n310|           CARTRIDGE.send('end', { reason: 'win', value: moves });\n311|           draw();\n312|           return;\n313|         }\n314|         if (isBlackStalemated()) {\n315|           gameOver = true;\n316|           statusText = 'Stalemate - no legal move.';\n317|           CARTRIDGE.send('end', { reason: 'stuck' });\n318|           draw();\n319|           return;\n320|         }\n321|         // black moves (king only)\n322|         blackKingMove();\n323|         if (isBlackCheckmated()) {\n324|           gameOver = true;\n325|           statusText = 'Checkmate! You win.';\n326|           CARTRIDGE.send('end', { reason: 'win', value: moves });\n327|           draw();\n328|           return;\n329|         }\n330|         if (isBlackStalemated()) {\n331|           gameOver = true;\n332|           statusText = 'Stalemate - no legal move.';\n333|           CARTRIDGE.send('end', { reason: 'stuck' });\n334|           draw();\n335|           return;\n336|         }\n337|         if (!anyWhiteLegalMove()) {\n338|           gameOver = true;\n339|           statusText = 'No legal move left.';\n340|           CARTRIDGE.send('end', { reason: 'stuck' });\n341|           draw();\n342|           return;\n343|         }\n344|         draw();\n345|         return;\n346|       } else {\n347|         // reselect if tapping own piece\n348|         if (occ && occ.color === 'w') {\n349|           selected = { r, c };\n350|         } else {\n351|           selected = null;\n352|         }\n353|         draw();\n354|         return;\n355|       }\n356|     } else {\n357|       if (occ && occ.color === 'w') {\n358|         selected = { r, c };\n359|         draw();\n360|       }\n361|     }\n362|   }\n363| \n364|   canvas.addEventListener('pointerdown', (event) => {\n365|     event.preventDefault();\n366|     if (paused) return;\n367|     if (!running) {\n368|       running = true;\n369|       CARTRIDGE.send('start');\n370|       draw();\n371|       return;\n372|     }\n373|     if (gameOver) return;\n374|     const x = event.clientX;\n375|     const y = event.clientY;\n376|     const cell = screenToCell(x, y);\n377|     if (cell) onCellTapped(cell);\n378|   }, { passive: false });\n379| \n380|   // ---- Drawing (chalkboard style) ----\n381|   function wobble(seedBase) {\n382|     return (Math.sin(seedBase * 12.9898) * 43758.5453 % 1) * 1.4;\n383|   }\n384| \n385|   function chalkLine(x1, y1, x2, y2, width, color, alpha) {\n386|     ctx.lineCap = 'round';\n387|     ctx.lineJoin = 'round';\n388|     for (let pass = 0; pass < 2; pass++) {\n389|       ctx.beginPath();\n390|       const offx = pass === 0 ? 0 : 1;\n391|       const offy = pass === 0 ? 0 : 1;\n392|       const wob = (Math.random() - 0.5) * 1.2;\n393|       ctx.moveTo(x1 + offx + wob, y1 + offy);\n394|       ctx.lineTo(x2 + offx - wob, y2 + offy);\n395|       ctx.strokeStyle = color;\n396|       ctx.globalAlpha = pass === 0 ? alpha : alpha * 0.4;\n397|       ctx.lineWidth = width;\n398|       ctx.stroke();\n399|     }\n400|     ctx.globalAlpha = 1;\n401|   }\n402| \n403|   function hatchRect(x, y, w, h, color, alpha, spacing) {\n404|     ctx.save();\n405|     ctx.beginPath();\n406|     ctx.rect(x, y, w, h);\n407|     ctx.clip();\n408|     const step = spacing || 6;\n409|     for (let i = -h; i < w; i += step) {\n410|       chalkLine(x + i, y, x + i + h, y + h, 2, color, alpha);\n411|     }\n412|     ctx.restore();\n413|   }\n414| \n415|   function drawSmudges() {\n416|     for (const s of smudges) {\n417|       ctx.beginPath();\n418|       ctx.ellipse(s.x, s.y, s.rx, s.ry, s.rot, 0, Math.PI * 2);\n419|       ctx.fillStyle = PALETTE.chalk;\n420|       ctx.globalAlpha = s.alpha;\n421|       ctx.fill();\n422|     }\n423|     ctx.globalAlpha = 1;\n424|   }\n425| \n426|   function initSmudges() {\n427|     smudges = [];\n428|     for (let i = 0; i < 6; i++) {\n429|       smudges.push({\n430|         x: Math.random() * W,\n431|         y: Math.random() * H,\n432|         rx: 60 + Math.random() * 120,\n433|         ry: 30 + Math.random() * 70,\n434|         rot: Math.random() * Math.PI,\n435|         alpha: 0.02 + Math.random() * 0.03\n436|       });\n437|     }\n438|   }\n439| \n440|   function drawBoard() {\n441|     boardMetrics();\n442|     for (let r = 0; r < 8; r++) {\n443|       for (let c = 0; c < 8; c++) {\n444|         const x = originX + c * cellPx;\n445|         const y = originY + r * cellPx;\n446|         const dark = (r + c) % 2 === 1;\n447|         if (dark) {\n448|           hatchRect(x, y, cellPx, cellPx, PALETTE.chalk, 0.15, 7);\n449|         }\n450|         // cell border, wobbly\n451|         chalkLine(x, y, x + cellPx, y, 2, PALETTE.chalk, 0.25);\n452|         chalkLine(x, y, x, y + cellPx, 2, PALETTE.chalk, 0.25);\n453|       }\n454|     }\n455|     // outer border thicker\n456|     const bx = originX, by = originY, bs = cellPx * 8;\n457|     chalkLine(bx, by, bx + bs, by, 4, PALETTE.chalk, 0.5);\n458|     chalkLine(bx, by + bs, bx + bs, by + bs, 4, PALETTE.chalk, 0.5);\n459|     chalkLine(bx, by, bx, by + bs, 4, PALETTE.chalk, 0.5);\n460|     chalkLine(bx + bs, by, bx + bs, by + bs, 4, PALETTE.chalk, 0.5);\n461| \n462|     // highlight selected + legal targets\n463|     if (selected) {\n464|       const sx = originX + selected.c * cellPx;\n465|       const sy = originY + selected.r * cellPx;\n466|       chalkLine(sx+2, sy+2, sx + cellPx-2, sy+2, 3, PALETTE.accent, 0.9);\n467|       chalkLine(sx+2, sy + cellPx-2, sx + cellPx-2, sy + cellPx-2, 3, PALETTE.accent, 0.9);\n468|       chalkLine(sx+2, sy+2, sx+2, sy + cellPx-2, 3, PALETTE.accent, 0.9);\n469|       chalkLine(sx + cellPx-2, sy+2, sx + cellPx-2, sy + cellPx-2, 3, PALETTE.accent, 0.9);\n470| \n471|       const sel = pieceAt(selected.r, selected.c);\n472|       if (sel) {\n473|         const legal = legalMovesFor(sel);\n474|         for (const [lr, lc] of legal) {\n475|           const lx = originX + lc * cellPx + cellPx/2;\n476|           const ly = originY + lr * cellPx + cellPx/2;\n477|           drawDot(lx, ly, cellPx * 0.1, PALETTE.second, 0.7);\n478|         }\n479|       }\n480|     }\n481|   }\n482| \n483|   function drawDot(x, y, r, color, alpha) {\n484|     ctx.beginPath();\n485|     ctx.arc(x, y, r, 0, Math.PI * 2);\n486|     ctx.strokeStyle = color;\n487|     ctx.globalAlpha = alpha;\n488|     ctx.lineWidth = 3;\n489|     ctx.stroke();\n490|     ctx.globalAlpha = 1;\n491|   }\n492| \n493|   function drawPiece(p) {\n494|     const x = originX + p.c * cellPx + cellPx / 2;\n495|     const y = originY + p.r * cellPx + cellPx / 2;\n496|     const s = cellPx * 0.32;\n497|     const color = p.color === 'w' ? PALETTE.chalk : PALETTE.second;\n498| \n499|     if (p.type === 'K') {\n500|       // simple crown-like king glyph\n501|       chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);\n502|       chalkLine(x - s, y + s, x - s*0.6, y - s*0.2, 4, color, 0.9);\n503|       chalkLine(x - s*0.6, y - s*0.2, x - s*0.2, y + s*0.3, 4, color, 0.9);\n504|       chalkLine(x - s*0.2, y + s*0.3, x, y - s*0.4, 4, color, 0.9);\n505|       chalkLine(x, y - s*0.4, x + s*0.2, y + s*0.3, 4, color, 0.9);\n506|       chalkLine(x + s*0.2, y + s*0.3, x + s*0.6, y - s*0.2, 4, color, 0.9);\n507|       chalkLine(x + s*0.6, y - s*0.2, x + s, y + s, 4, color, 0.9);\n508|       // cross on top\n509|       chalkLine(x, y - s*0.4, x, y - s*0.9, 3, color, 0.9);\n510|       chalkLine(x - s*0.2, y - s*0.7, x + s*0.2, y - s*0.7, 3, color, 0.9);\n511|     } else if (p.type === 'R') {\n512|       // rook: rectangle with crenellations\n513|       chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);\n514|       chalkLine(x - s, y + s, x - s*0.7, y - s*0.3, 4, color, 0.9);\n515|       chalkLine(x + s, y + s, x + s*0.7, y - s*0.3, 4, color, 0.9);\n516|       chalkLine(x - s*0.7, y - s*0.3, x + s*0.7, y - s*0.3, 4, color, 0.9);\n517|       // crenellations\n518|       chalkLine(x - s*0.7, y - s*0.3, x - s*0.7, y - s*0.7, 3, color, 0.9);\n519|       chalkLine(x - s*0.25, y - s*0.3, x - s*0.25, y - s*0.7, 3, color, 0.9);\n520|       chalkLine(x + s*0.25, y - s*0.3, x + s*0.25, y - s*0.7, 3, color, 0.9);\n521|       chalkLine(x + s*0.7, y - s*0.3, x + s*0.7, y - s*0.7, 3, color, 0.9);\n522|       chalkLine(x - s*0.7, y - s*0.7, x - s*0.25, y - s*0.7, 3, color, 0.9);\n523|       chalkLine(x + s*0.25, y - s*0.7, x + s*0.7, y - s*0.7, 3, color, 0.9);\n524|     } else if (p.type === 'Q') {\n525|       // queen: circle with spikes\n526|       chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);\n527|       chalkLine(x - s, y + s, x - s*0.6, y - s*0.1, 4, color, 0.9);\n528|       chalkLine(x + s, y + s, x + s*0.6, y - s*0.1, 4, color, 0.9);\n529|       chalkLine(x - s*0.6, y - s*0.1, x + s*0.6, y - s*0.1, 4, color, 0.9);\n530|       // spikes\n531|       for (let i = -2; i <= 2; i++) {\n532|         const sx = x + i * s * 0.3;\n533|         chalkLine(sx, y - s*0.1, sx + (Math.random()-0.5)*4, y - s*0.7, 3, color, 0.9);\n534|       }\n535|       drawDot(x, y - s*0.85, 3, color, 0.9);\n536|     }\n537|   }\n538| \n539|   function drawPieces() {\n540|     for (const p of pieces) drawPiece(p);\n541|   }\n542| \n543|   function drawTitleScreen() {\n544|     ctx.font = `bold ${Math.min(W,H)*0.06}px 'Trebuchet MS', sans-serif`;\n545|     ctx.textAlign = 'center';\n546|     ctx.fillStyle = PALETTE.chalk;\n547|     ctx.globalAlpha = 0.9;\n548|     ctx.fillText('Chess Puzzle', W/2, H*0.28);\n549|     ctx.globalAlpha = 1;\n550| \n551|     ctx.font = `${Math.min(W,H)*0.03}px 'Trebuchet MS', sans-serif`;\n552|     ctx.fillStyle = PALETTE.second;\n553|     ctx.globalAlpha = 0.8 + 0.2 * Math.sin(Date.now() / 300);\n554|     ctx.fillText('Tap to begin', W/2, H*0.36);\n555|     ctx.globalAlpha = 1;\n556|   }\n557| \n558|   function drawHUD() {\n559|     ctx.font = `${Math.min(W,H)*0.025}px 'Trebuchet MS', sans-serif`;\n560|     ctx.textAlign = 'left';\n561|     ctx.fillStyle = PALETTE.chalk;\n562|     ctx.globalAlpha = 0.85;\n563|     ctx.fillText('Moves: ' + moves, 14, 26);\n564|     ctx.globalAlpha = 1;\n565| \n566|     if (gameOver) {\n567|       ctx.textAlign = 'center';\n568|       ctx.font = `bold ${Math.min(W,H)*0.04}px 'Trebuchet MS', sans-serif`;\n569|       ctx.fillStyle = PALETTE.accent;\n570|       ctx.globalAlpha = 0.95;\n571|       ctx.fillText(statusText, W/2, H*0.08);\n572|       ctx.globalAlpha = 1;\n573|     } else if (running) {\n574|       ctx.textAlign = 'center';\n575|       ctx.font = `${Math.min(W,H)*0.022}px 'Trebuchet MS', sans-serif`;\n576|       ctx.fillStyle = PALETTE.chalk;\n577|       ctx.globalAlpha = 0.7;\n578|       const check = isInCheck('b') ? 'Black king in check!' : 'Checkmate the lone king';\n579|       ctx.fillText(check, W/2, H*0.06);\n580|       ctx.globalAlpha = 1;\n581|     }\n582|   }\n583| \n584|   function draw() {\n585|     ctx.clearRect(0, 0, W, H);\n586|     ctx.fillStyle = PALETTE.slate;\n587|     ctx.fillRect(0, 0, W, H);\n588|     drawSmudges();\n589| \n590|     if (!running) {\n591|       drawTitleScreen();\n592|       requestAnimationFrame(draw);\n593|       return;\n594|     }\n595| \n596|     drawBoard();\n597|     drawPieces();\n598|     drawHUD();\n599| \n600|     if (paused) {\n601|       ctx.fillStyle = PALETTE.slate;\n602|       ctx.globalAlpha = 0.6;\n603|       ctx.fillRect(0, 0, W, H);\n604|       ctx.globalAlpha = 1;\n605|       ctx.font = `bold ${Math.min(W,H)*0.05}px 'Trebuchet MS', sans-serif`;\n606|       ctx.fillStyle = PALETTE.chalk;\n607|       ctx.textAlign = 'center';\n608|       ctx.fillText('Paused', W/2, H/2);\n609|     }\n610| \n611|     if (!gameOver) requestAnimationFrame(draw);\n612|   }\n613| \n614|   // ---- Host messaging ----\n615|   window.addEventListener('message', (event) => {\n616|     const data = event.data;\n617|     if (!data || data.source !== 'cartridge-host') return;\n618|     if (data.type === 'pause') { paused = true; draw(); }\n619|     if (data.type === 'resume') { paused = false; draw(); }\n620|     if (data.type === 'reset') backToTitle();\n621|   });\n622| \n623|   // ---- Boot ----\n624|   setupPuzzle();\n625|   resize();\n626|   initSmudges();\n627|   draw();\n628|   CARTRIDGE.send('boot', { title: 'Chess Puzzle', gameType: 'puzzle-board', lang: 'en' });\n629| })();\n630| </script>\n631| </body>\n632| </html>\n633| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNryz2TpQB3xFMbmVC1T\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10750,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}   }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"partly\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"evidence\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 87\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"//\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Generate\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a s\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"olv\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"able mate\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"in-few\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" puzzle\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" white\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Rook +\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Queen\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" vs\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lone\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" black king\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 307\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"if\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (isBl\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ackChec\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"km\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ated())\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 337\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"if\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (!\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"any\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Wh\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"it\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eL\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"egalMove\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"()) {\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" chess\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pieces\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" check\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"mate detection, and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" move\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mechanics\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" but om\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"its player\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" accounts\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", server\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" persistence\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and le\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aderboard\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" features\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" entirely\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" from\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, \\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\\\": \\\"stated\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 578\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"const\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" check = isIn\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Check('b')\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ? 'Black\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" king in check!'\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" : '\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Checkmate the lone\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" king'\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 548\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText('\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Chess\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Puzzle', W\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/2, H\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"*0.28\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 563\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx.fill\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text('Moves\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": ' + moves\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", 14,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 26);\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"The game\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen text stating\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the objective\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ('\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Checkmate the lone\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" king')\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and shows\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" move\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" count, making\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" goal\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear to the\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player.\\\"},\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"immediate\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 358\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"selected\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = {\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" r\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" c\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" }\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 302\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"sel\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".r\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = r;\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sel.c =\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" c;\\\"}, {\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 359\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"draw\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"();\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"Player\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" t\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aps produce\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediate visual feedback:\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" piece\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" selection highlights\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cell\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", legal\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves show\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dots\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and piece\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" movement is drawn\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" same\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"explained\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 309\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"status\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text = '\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Check\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"mate!\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" You\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" win\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".'\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 316\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"statusText =\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 'St\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"alemate -\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" legal move\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".';\\\"}, {\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 339\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"statusText =\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 'No\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" legal move\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" left\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"';\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"When\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" status\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text is\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" set\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displayed on\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen explaining\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"checkmate,\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stalemate,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or no legal moves\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"),\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the reset\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" message\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" allows\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" repl\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aying via\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the host\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}}\"}    }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":10750,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":536}           }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      238,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      25,
+      24,
+      26,
+      174,
+      174,
+      174,
+      174,
+      174,
+      174,
+      15,
+      25,
+      25,
+      25,
+      26,
+      61,
+      53,
+      53,
+      17,
+      26,
+      26,
+      27,
+      30,
+      25,
+      27,
+      35,
+      16,
+      26,
+      27,
+      26,
+      28,
+      29,
+      23,
+      32,
+      34,
+      17,
+      22,
+      27,
+      35,
+      24,
+      31,
+      24,
+      19,
+      28,
+      23,
+      31,
+      28,
+      19,
+      27,
+      27,
+      37,
+      18,
+      26,
+      24,
+      38,
+      22,
+      17,
+      54,
+      1,
+      26,
+      27,
+      26,
+      34,
+      17,
+      29,
+      25,
+      66,
+      66,
+      18,
+      21,
+      27,
+      38,
+      26,
+      33,
+      17,
+      16,
+      39,
+      13,
+      28,
+      29,
+      25,
+      32,
+      19,
+      30,
+      23,
+      35,
+      17,
+      37,
+      19,
+      27,
+      24,
+      30,
+      22,
+      27,
+      28,
+      30,
+      20,
+      35,
+      21,
+      30,
+      20,
+      38,
+      15,
+      47,
+      6,
+      36,
+      18,
+      32,
+      19,
+      29,
+      28,
+      0,
+      52,
+      27,
+      25,
+      27,
+      28,
+      25,
+      29,
+      23,
+      27,
+      27,
+      25,
+      33,
+      20,
+      27,
+      27,
+      24,
+      27,
+      26,
+      27,
+      28,
+      25,
+      26,
+      27,
+      26,
+      26,
+      29,
+      23,
+      28,
+      30,
+      23,
+      28,
+      23,
+      26,
+      28,
+      26,
+      28,
+      24,
+      26,
+      28,
+      25,
+      27,
+      26,
+      28,
+      26,
+      25,
+      29,
+      26,
+      26,
+      25,
+      26,
+      25,
+      26,
+      27,
+      33,
+      25,
+      22,
+      29,
+      23,
+      34,
+      22,
+      29,
+      21,
+      25,
+      29,
+      27,
+      26,
+      29,
+      28,
+      22,
+      27,
+      30,
+      22,
+      29,
+      26,
+      21,
+      29,
+      24,
+      28,
+      184,
+      10,
+      11,
+      31,
+      37,
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      15,
+      28,
+      23,
+      26,
+      23,
+      36,
+      18,
+      31,
+      24,
+      28,
+      24,
+      46,
+      6,
+      69,
+      2,
+      6,
+      27,
+      26,
+      25,
+      27,
+      27,
+      26,
+      28,
+      24,
+      25,
+      28,
+      25,
+      27,
+      138,
+      1,
+      1
+    ]
+  },
+  "usage": {
+    "input": 10750,
+    "output": 536,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

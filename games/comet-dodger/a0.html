@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comet Dodger</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #2f3e3a;
+    overflow: hidden;
+    touch-action: none;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100dvh;
+    background: #2f3e3a;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  const COL_SLATE = '#2f3e3a';
+  const COL_CHALK = '#eeeae0';
+  const COL_ACCENT = '#f2c14e';
+  const COL_SECOND = '#8fc1e3';
+
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- state ----------
+  let last = 0;
+  let running = false;
+  let paused = false;
+  let started = false;
+  let score = 0;
+  let scoreSent = -1;
+  let stateName = 'title'; // title, playing, dead
+
+  let elapsed = 0;
+  let speedMult = 1;
+  let idleTimer = 0;
+  let hasMoved = false;
+
+  let ship = { x: 0, y: 0, target: 0, r: 22 };
+  let comets = [];
+  let spawnTimer = 0;
+  let spawnInterval = 1.4;
+
+  let smudges = [];
+
+  function makeSmudges() {
+    smudges = [];
+    for (let i = 0; i < 5; i++) {
+      smudges.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: 80 + Math.random() * 160,
+        a: 0.02 + Math.random() * 0.03
+      });
+    }
+  }
+
+  function resetGameState() {
+    score = 0;
+    scoreSent = -1;
+    elapsed = 0;
+    speedMult = 1;
+    comets = [];
+    spawnTimer = 0;
+    spawnInterval = 1.4;
+    ship.x = W / 2;
+    ship.y = H - 100;
+    ship.target = ship.x;
+    idleTimer = 0;
+    hasMoved = false;
+    makeSmudges();
+  }
+
+  function backToTitle() {
+    running = false;
+    paused = false;
+    started = false;
+    stateName = 'title';
+    resetGameState();
+  }
+
+  resetGameState();
+
+  // ---------- input ----------
+  let held = false;
+
+  function toCanvas(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left),
+      y: (evt.clientY - rect.top)
+    };
+  }
+
+  function startPlay() {
+    if (started) return;
+    started = true;
+    running = true;
+    paused = false;
+    stateName = 'playing';
+    resetGameState();
+    CARTRIDGE.send('start');
+  }
+
+  canvas.addEventListener('pointerdown', (evt) => {
+    if (stateName === 'title' || stateName === 'dead') {
+      startPlay();
+    }
+    const p = toCanvas(evt);
+    ship.target = p.x;
+    held = true;
+    hasMoved = true;
+    try { canvas.setPointerCapture(evt.pointerId); } catch(e) {}
+  });
+  canvas.addEventListener('pointermove', (evt) => {
+    if (held) {
+      const p = toCanvas(evt);
+      ship.target = p.x;
+      hasMoved = true;
+    }
+  });
+  function release() { held = false; }
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+
+  // ---------- host messages ----------
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.source !== 'cartridge-host') return;
+    if (data.type === 'pause') paused = true;
+    if (data.type === 'resume') paused = false;
+    if (data.type === 'reset') backToTitle();
+  });
+
+  // ---------- chalk drawing helpers ----------
+  function wobble(seed) {
+    return Math.sin(seed * 12.9898) * 0.6;
+  }
+
+  function chalkLine(x1, y1, x2, y2, color, width) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      const off = pass === 0 ? 0 : 1;
+      const alpha = pass === 0 ? 0.9 : 0.35;
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(x1 + off, y1 + off * 0.5);
+      ctx.lineTo(x2 + off, y2 + off * 0.5);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function chalkCircle(cx, cy, r, color, width, segs) {
+    segs = segs || 20;
+    for (let pass = 0; pass < 2; pass++) {
+      const off = pass === 0 ? 0 : 1;
+      const alpha = pass === 0 ? 0.9 : 0.3;
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i <= segs; i++) {
+        const t = (i / segs) * Math.PI * 2;
+        const wob = wobble(i + cx + cy) * 1.2;
+        const x = cx + Math.cos(t) * r + wob + off;
+        const y = cy + Math.sin(t) * r + wob + off * 0.5;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function hatchCircle(cx, cy, r, color, count) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < count; i++) {
+      const ang = (i / count) * Math.PI * 2 + wobble(i) * 0.1;
+      const inner = r * 0.3;
+      const outer = r * 0.85;
+      const x1 = cx + Math.cos(ang) * inner;
+      const y1 = cy + Math.sin(ang) * inner;
+      const x2 = cx + Math.cos(ang) * outer;
+      const y2 = cy + Math.sin(ang) * outer;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawSmudges() {
+    for (const s of smudges) {
+      ctx.beginPath();
+      ctx.fillStyle = COL_CHALK;
+      ctx.globalAlpha = s.a;
+      ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------- ship ----------
+  function drawShip() {
+    const x = ship.x, y = ship.y;
+    // body triangle-ish
+    chalkLine(x, y - 26, x - 18, y + 18, COL_CHALK, 4);
+    chalkLine(x - 18, y + 18, x + 18, y + 18, COL_CHALK, 4);
+    chalkLine(x + 18, y + 18, x, y - 26, COL_CHALK, 4);
+    // cockpit
+    chalkCircle(x, y - 2, 7, COL_SECOND, 3, 12);
+    // flame flicker
+    const flick = 6 + Math.sin(elapsed * 20) * 3;
+    chalkLine(x - 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);
+    chalkLine(x + 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);
+  }
+
+  // ---------- comets ----------
+  function spawnComet() {
+    const r = 16 + Math.random() * 18;
+    const x = r + Math.random() * (W - r * 2);
+    const speed = (120 + Math.random() * 80) * speedMult;
+    comets.push({ x, y: -r - 20, r, speed, rot: Math.random() * Math.PI });
+  }
+
+  function drawComet(c) {
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    chalkCircle(0, 0, c.r, COL_CHALK, 3, 14);
+    hatchCircle(0, 0, c.r, COL_SECOND, 8);
+    ctx.restore();
+    // trailing streak
+    chalkLine(c.x, c.y - c.r, c.x - c.r * 0.5, c.y - c.r - 20, COL_ACCENT, 2);
+  }
+
+  // ---------- game logic ----------
+  function advance(dt) {
+    elapsed += dt;
+    speedMult = 1 + elapsed / 25;
+
+    // ease ship toward target
+    const dx = ship.target - ship.x;
+    ship.x += dx * Math.min(1, dt * 10);
+    ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));
+
+    if (!hasMoved) {
+      idleTimer += dt;
+    }
+
+    // spawn
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      // fairness: don't spawn near player's opening lane during first 2s
+      if (elapsed > 1.8) {
+        spawnComet();
+      }
+      spawnInterval = Math.max(0.45, 1.4 - elapsed * 0.02);
+      spawnTimer = spawnInterval;
+    }
+
+    for (const c of comets) {
+      c.y += c.speed * dt;
+      c.rot += dt * 1.2;
+    }
+    comets = comets.filter(c => c.y - c.r < H + 40);
+
+    // score by survival time
+    score = Math.floor(elapsed * 10);
+    if (score !== scoreSent) {
+      scoreSent = score;
+      CARTRIDGE.send('score', { value: score });
+    }
+  }
+
+  function collide() {
+    for (const c of comets) {
+      const dx = c.x - ship.x;
+      const dy = c.y - ship.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < c.r + ship.r * 0.7) {
+        crash();
+        return;
+      }
+    }
+  }
+
+  function crash() {
+    running = false;
+    stateName = 'dead';
+    CARTRIDGE.send('end', { reason: 'lose', value: score });
+  }
+
+  // ---------- drawing ----------
+  function drawBackground() {
+    ctx.fillStyle = COL_SLATE;
+    ctx.fillRect(0, 0, W, H);
+    drawSmudges();
+    // border frame like chalk edge
+    chalkLine(10, 10, W - 10, 10, COL_CHALK, 3);
+    chalkLine(10, H - 10, W - 10, H - 10, COL_CHALK, 3);
+    chalkLine(10, 10, 10, H - 10, COL_CHALK, 3);
+    chalkLine(W - 10, 10, W - 10, H - 10, COL_CHALK, 3);
+  }
+
+  function drawTitle() {
+    ctx.fillStyle = COL_CHALK;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 42px system-ui, sans-serif';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('Comet Dodger', W / 2, H / 2 - 60);
+    ctx.globalAlpha = 1;
+    ctx.font = '20px system-ui, sans-serif';
+    ctx.fillStyle = COL_SECOND;
+    const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;
+    ctx.globalAlpha = pulse;
+    ctx.fillText('Drag anywhere to steer and start', W / 2, H / 2);
+    ctx.globalAlpha = 1;
+
+    // drifting demo comet
+    const dcx = W / 2 + Math.sin(elapsed) * 60;
+    const dcy = H / 2 + 80 + Math.cos(elapsed * 0.7) * 10;
+    chalkCircle(dcx, dcy, 14, COL_CHALK, 3, 12);
+    hatchCircle(dcx, dcy, 14, COL_SECOND, 6);
+  }
+
+  function drawDead() {
+    ctx.fillStyle = COL_CHALK;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 36px system-ui, sans-serif';
+    ctx.fillText('Crashed!', W / 2, H / 2 - 40);
+    ctx.font = '22px system-ui, sans-serif';
+    ctx.fillStyle = COL_ACCENT;
+    ctx.fillText('Score: ' + score, W / 2, H / 2);
+    ctx.fillStyle = COL_SECOND;
+    const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;
+    ctx.globalAlpha = pulse;
+    ctx.font = '18px system-ui, sans-serif';
+    ctx.fillText('Tap to try again', W / 2, H / 2 + 40);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHUD() {
+    ctx.fillStyle = COL_CHALK;
+    ctx.textAlign = 'left';
+    ctx.font = '20px system-ui, sans-serif';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('Score: ' + score, 24, 42);
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    drawBackground();
+
+    if (stateName === 'title') {
+      drawTitle();
+    } else if (stateName === 'playing') {
+      for (const c of comets) drawComet(c);
+      drawShip();
+      drawHUD();
+      if (paused) {
+        ctx.fillStyle = COL_CHALK;
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 32px system-ui, sans-serif';
+        ctx.fillText('Paused', W / 2, H / 2);
+      }
+    } else if (stateName === 'dead') {
+      for (const c of comets) drawComet(c);
+      drawShip();
+      drawDead();
+    }
+  }
+
+  // ---------- main loop ----------
+  function frame(now) {
+    if (!last) last = now;
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (running && !paused && stateName === 'playing') {
+      advance(dt);
+      collide();
+    } else if (stateName === 'title' || stateName === 'dead') {
+      elapsed += dt; // keep decorative motion alive
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame((t) => {
+    last = t;
+    draw();
+    CARTRIDGE.send('boot', { title: 'Comet Dodger', gameType: 'arcade-run', lang: 'en' });
+    requestAnimationFrame(frame);
+  });
+})();
+</script>
+</body>
+</html>

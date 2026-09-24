@@ -1,7 +1,7 @@
 {
   "artifact": {
-    "bytes": 14014,
-    "sha256": "4ebca234c14e9b1c8b24d380af6453d44ea6c614e48fc2f4f08e27564f599df6",
+    "bytes": 13138,
+    "sha256": "4946f897587c4e19618fe842f3f7193b3a37c8931a6bf48c65a9b2f6044a10d2",
     "version": "a0"
   },
   "buildAttempts": 1,
@@ -18,24 +18,24 @@
     "gameType": "arcade-run",
     "input": "tap-anywhere",
     "lang": "en",
-    "loop": "Tap to make your paper kite rise on the wind, dodge the chimneys, and collect ribbons as the breeze quickens. One crash into a chimney ends the flight.",
-    "slug": "kite-above-the-rooftops",
+    "loop": "Tap to lift the paper kite over rooftops, dodging chimneys and collecting ribbons as the wind speeds up. Hitting a chimney ends the flight and shows your ribbon tally.",
+    "slug": "kite-over-the-rooftops",
     "style": "paper-cut",
-    "title": "Kite Above the Rooftops"
+    "title": "Kite Over the Rooftops"
   },
   "status": "complete",
   "usage": {
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 16346,
-      "output": 7615
+      "input": 15503,
+      "output": 6740
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 6537,
-      "output": 234
+      "input": 4282,
+      "output": 240
     },
     "repair": {
       "cacheRead": 0,
@@ -44,5 +44,5 @@
       "output": 0
     }
   },
-  "wallMs": 65546
+  "wallMs": 56984
 }

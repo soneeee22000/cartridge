@@ -1,0 +1,165 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:b98e69ad0471307c3541879a6c8338ec2aad2f74090d2251d678cf876ec2fe29",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Colour Rows\",\n  \"slug\": \"colour-rows\",\n  \"lang\": \"en\",\n  \"gameType\": \"puzzle-board\",\n  \"loop\": \"Tap a tile to slide it into the empty slot on a small board, rearranging colours until every row is a single solid colour. The puzzle ends when you solve it or no moves remain.\",\n  \"input\": \"tap-anywhere\",\n  \"style\": \"paper-cut\"\n}\n```\n\n## Cards\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `paper-cut`\n\n# Paper cut\n\nEverything looks cut from coloured card and stacked in layers.\n\n## Palette\n\n| role       | colour    |\n| ---------- | --------- |\n| background | `#f4ecd8` |\n| layer      | `#e07a5f` |\n| accent     | `#3d405b` |\n| highlight  | `#81b29a` |\n\n## Primitives\n\n- Filled paths with slightly irregular edges: jitter each vertex by one or two pixels, seeded once so it does not flicker.\n- One soft shadow per layer: `shadowBlur` around 6 and a small downward offset.\n- Rounded rectangles and circles for pieces; stacked copies offset by a few pixels suggest depth.\n- Text in a heavy system sans-serif, drawn on a card-shaped plate.\n\n## Avoid\n\n- Gradients, glows and outlines thicker than two pixels.\n- Pure black; use the accent colour for the darkest tone.\n- Photographic textures or anything loaded from a file.\n\n### Card `puzzle-board`\n\n# Puzzle board\n\nThe board only changes when the player acts. Nothing happens while the player thinks.\n\n## Contract row\n\n| field                | value        |\n| -------------------- | ------------ |\n| score                | `required`   |\n| level                | `optional`   |\n| end                  | `required`   |\n| end reasons          | `win, stuck` |\n| reset                | `soft`       |\n| idle death gate      | `any-end`    |\n| idle motion required | `no`         |\n\n- Emit every event marked `required` above: `score` after each scoring move and `end` when the board is solved or has no legal move left. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\n- End with `win` when solved or `stuck` when no move remains. <!-- rule:E1-17 -->\n\n## No clock\n\nNever end the game on a timer. A player who waits forever must never see `end`. A still board between moves is correct.\n\n## Loop skeleton\n\n```js\nlet moves = 0;\nfunction onCellTapped(cell) {\n  if (!isLegal(cell)) return;\n  apply(cell);\n  moves += 1;\n  CARTRIDGE.send(\"score\", { value: points() });\n  if (solved()) CARTRIDGE.send(\"end\", { reason: \"win\", value: moves });\n  else if (!anyLegalMove()) CARTRIDGE.send(\"end\", { reason: \"stuck\" });\n  draw();\n}\n```\n\nRedraw on input and on resize; a continuous animation loop is optional.\n\n### Card `tap-anywhere`\n\n# Tap anywhere\n\nThe whole screen is the button. Best for jumps, flaps and single choices.\n\n- Register pointer input on the canvas: `canvas.addEventListener(\"pointerdown\", onTap)`. <!-- rule:E1-22 -->\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\n- Ignore taps while paused.\n\n```js\ncanvas.style.touchAction = \"none\";\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!running) {\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n```\n\nShow a short pulsing hint (\"Tap to begin\") until the first tap.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll build a puzzle board game where tapping tiles adjacent to an empty slot slides them, with the goal of making each row a solid colour, styled in paper-cut aesthetic."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01FFWcTwqWkqVhGZKcJo5YsQ",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Colour Rows</title>\n<style>\n  html, body {\n    margin: 0; padding: 0; width: 100%; height: 100%;\n    background: #f4ecd8;\n    overflow: hidden;\n    font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n  }\n  canvas {\n    display: block;\n    touch-action: none;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<script>\n// ---- Bridge helper (verbatim) ----\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n\n// ---- Game setup ----\nconst canvas = document.getElementById(\"game\");\nconst ctx = canvas.getContext(\"2d\");\ncanvas.style.touchAction = \"none\";\n\nlet dpr = Math.max(1, window.devicePixelRatio || 1);\nlet W = 0, H = 0;\n\nfunction resize() {\n  W = window.innerWidth;\n  H = window.innerHeight;\n  dpr = Math.max(1, window.devicePixelRatio || 1);\n  canvas.width = Math.floor(W * dpr);\n  canvas.height = Math.floor(H * dpr);\n  canvas.style.width = W + \"px\";\n  canvas.style.height = H + \"px\";\n  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n  draw();\n}\nwindow.addEventListener(\"resize\", resize);\n\n// ---- Paper-cut palette ----\nconst PAL = {\n  bg: \"#f4ecd8\",\n  layer: \"#e07a5f\",\n  accent: \"#3d405b\",\n  highlight: \"#81b29a\",\n};\n\n// A few extra colours for tiles (cut-paper feel), derived tastefully\nconst TILE_COLORS = [\"#e07a5f\", \"#81b29a\", \"#3d405b\", \"#f2cc8f\"];\n\n// seeded jitter so it doesn't flicker between draws\nfunction seededRand(seed) {\n  let s = seed % 2147483647;\n  if (s <= 0) s += 2147483646;\n  return function () {\n    s = (s * 16807) % 2147483647;\n    return (s - 1) / 2147483646;\n  };\n}\nconst rand = seededRand(918273);\nfunction jitter(px) {\n  return (rand() - 0.5) * 2 * px;\n}\n\n// ---- Puzzle state ----\nconst ROWS = 3;\nconst COLS = 3;\nconst BOARD_SIZE = ROWS * COLS; // 9 cells, one empty\nlet board = []; // array of colour index, -1 = empty\nlet emptyIndex = 0;\nlet moves = 0;\nlet running = false;\nlet paused = false;\nlet gameOver = false;\nlet winFlag = false;\nlet stuckFlag = false;\nlet tapHintPulse = 0;\n\n// Precompute jitter offsets per cell corner, stable per cell id\nconst cellJitters = {};\nfunction getCellJitter(id) {\n  if (!cellJitters[id]) {\n    const localRand = seededRand(1000 + id * 37);\n    cellJitters[id] = {\n      tl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n      tr: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n      br: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n      bl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],\n    };\n  }\n  return cellJitters[id];\n}\n\nfunction makeSolvedBoard() {\n  // Each row gets its own colour, filled fully, then remove one tile for empty slot\n  const b = [];\n  for (let r = 0; r < ROWS; r++) {\n    for (let c = 0; c < COLS; c++) {\n      b.push(r); // colour index = row index (0..ROWS-1), matches TILE_COLORS\n    }\n  }\n  return b;\n}\n\nfunction isRowSolved(r, b) {\n  const start = r * COLS;\n  let colour = -2;\n  for (let c = 0; c < COLS; c++) {\n    const idx = start + c;\n    if (b[idx] === -1) return false; // empty counts as not solved for that row unless we allow it\n    if (colour === -2) colour = b[idx];\n    else if (b[idx] !== colour) return false;\n  }\n  return true;\n}\n\nfunction solved() {\n  for (let r = 0; r < ROWS; r++) {\n    if (!isRowSolved(r, board)) return false;\n  }\n  return true;\n}\n\nfunction neighborsOf(idx) {\n  const r = Math.floor(idx / COLS);\n  const c = idx % COLS;\n  const list = [];\n  if (r > 0) list.push(idx - COLS);\n  if (r < ROWS - 1) list.push(idx + COLS);\n  if (c > 0) list.push(idx - 1);\n  if (c < COLS - 1) list.push(idx + 1);\n  return list;\n}\n\nfunction anyLegalMove() {\n  // legal move = any neighbor of empty can slide (always true unless solved is the only state and there's no move to make progress)\n  // Since a slide is always possible if empty has any neighbor, \"stuck\" happens only if no move can ever change the board's solved status.\n  // For this puzzle, a legal move exists whenever empty has neighbors AND board is not already solved.\n  if (solved()) return false;\n  return neighborsOf(emptyIndex).length > 0;\n}\n\nfunction shuffleBoard() {\n  // Start solved then perform random legal slides to scramble, guaranteeing solvability\n  board = makeSolvedBoard();\n  emptyIndex = Math.floor(BOARD_SIZE / 2);\n  board[emptyIndex] = -1;\n  // Actually need emptyIndex chosen consistently; recompute properly:\n  board = makeSolvedBoard();\n  const startEmpty = BOARD_SIZE - 1;\n  board[startEmpty] = -1;\n  emptyIndex = startEmpty;\n\n  const scrambleSteps = 60 + Math.floor(rand() * 30);\n  let lastMove = -1;\n  for (let i = 0; i < scrambleSteps; i++) {\n    const neigh = neighborsOf(emptyIndex).filter((n) => n !== lastMove);\n    const pick = neigh.length > 0 ? neigh[Math.floor(rand() * neigh.length)] : neighborsOf(emptyIndex)[0];\n    board[emptyIndex] = board[pick];\n    board[pick] = -1;\n    lastMove = emptyIndex;\n    emptyIndex = pick;\n  }\n  // Avoid accidental already-solved shuffle\n  if (solved()) {\n    // do one more swap to break it, if possible\n    const neigh = neighborsOf(emptyIndex);\n    if (neigh.length > 0) {\n      const pick = neigh[0];\n      board[emptyIndex] = board[pick];\n      board[pick] = -1;\n      emptyIndex = pick;\n    }\n  }\n}\n\nfunction resetGameState() {\n  moves = 0;\n  gameOver = false;\n  winFlag = false;\n  stuckFlag = false;\n  shuffleBoard();\n}\n\nfunction backToTitle() {\n  running = false;\n  paused = false;\n  resetGameState();\n  draw();\n}\n\n// ---- Drawing helpers (paper-cut style) ----\nfunction roundRectPath(x, y, w, h, r) {\n  ctx.beginPath();\n  ctx.moveTo(x + r, y);\n  ctx.arcTo(x + w, y, x + w, y + h, r);\n  ctx.arcTo(x + w, y + h, x, y + h, r);\n  ctx.arcTo(x, y + h, x, y, r);\n  ctx.arcTo(x, y, x + w, y, r);\n  ctx.closePath();\n}\n\nfunction drawJitteredRoundedRect(x, y, w, h, r, cellId) {\n  const j = getCellJitter(cellId);\n  ctx.beginPath();\n  ctx.moveTo(x + r + j.tl[0], y + j.tl[1]);\n  ctx.lineTo(x + w - r + j.tr[0], y + j.tr[1]);\n  ctx.quadraticCurveTo(x + w + j.tr[0], y + j.tr[1], x + w + j.tr[0], y + r + j.tr[1]);\n  ctx.lineTo(x + w + j.br[0], y + h - r + j.br[1]);\n  ctx.quadraticCurveTo(x + w + j.br[0], y + h + j.br[1], x + w - r + j.br[0], y + h + j.br[1]);\n  ctx.lineTo(x + r + j.bl[0], y + h + j.bl[1]);\n  ctx.quadraticCurveTo(x + j.bl[0], y + h + j.bl[1], x + j.bl[0], y + h - r + j.bl[1]);\n  ctx.lineTo(x + j.tl[0], y + r + j.tl[1]);\n  ctx.quadraticCurveTo(x + j.tl[0], y + j.tl[1], x + r + j.tl[0], y + j.tl[1]);\n  ctx.closePath();\n}\n\nfunction layout() {\n  const margin = Math.min(W, H) * 0.08;\n  const boardTop = H * 0.18;\n  const boardSize = Math.min(W - margin * 2, H * 0.62);\n  const cellSize = boardSize / COLS;\n  const boardLeft = (W - boardSize) / 2;\n  return { boardLeft, boardTop, boardSize, cellSize };\n}\n\nfunction drawBackground() {\n  ctx.fillStyle = PAL.bg;\n  ctx.fillRect(0, 0, W, H);\n}\n\nfunction drawTitlePlate() {\n  const plateW = Math.min(W * 0.86, 520);\n  const plateH = 90;\n  const x = (W - plateW) / 2;\n  const y = H * 0.05;\n\n  ctx.save();\n  ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n  ctx.shadowBlur = 6;\n  ctx.shadowOffsetY = 4;\n  ctx.fillStyle = PAL.accent;\n  drawJitteredRoundedRect(x, y, plateW, plateH, 16, 9001);\n  ctx.fill();\n  ctx.restore();\n\n  ctx.fillStyle = PAL.bg;\n  ctx.font = \"bold \" + Math.floor(plateH * 0.4) + \"px sans-serif\";\n  ctx.textAlign = \"center\";\n  ctx.textBaseline = \"middle\";\n  ctx.fillText(\"Colour Rows\", W / 2, y + plateH / 2);\n}\n\nfunction drawBoard() {\n  const { boardLeft, boardTop, boardSize, cellSize } = layout();\n\n  // backing board plate (layer of card)\n  ctx.save();\n  ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n  ctx.shadowBlur = 6;\n  ctx.shadowOffsetY = 4;\n  ctx.fillStyle = PAL.accent;\n  drawJitteredRoundedRect(boardLeft - 10, boardTop - 10, boardSize + 20, boardSize + 20, 20, 9002);\n  ctx.fill();\n  ctx.restore();\n\n  for (let idx = 0; idx < BOARD_SIZE; idx++) {\n    const r = Math.floor(idx / COLS);\n    const c = idx % COLS;\n    const x = boardLeft + c * cellSize;\n    const y = boardTop + r * cellSize;\n    const pad = cellSize * 0.06;\n    const cx = x + pad;\n    const cy = y + pad;\n    const cw = cellSize - pad * 2;\n    const ch = cellSize - pad * 2;\n\n    const val = board[idx];\n    if (val === -1) {\n      // empty slot: draw a subtle inset\n      ctx.save();\n      ctx.fillStyle = \"rgba(61,64,91,0.08)\";\n      drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx + 500);\n      ctx.fill();\n      ctx.restore();\n      continue;\n    }\n\n    ctx.save();\n    ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n    ctx.shadowBlur = 6;\n    ctx.shadowOffsetY = 3;\n    ctx.fillStyle = TILE_COLORS[val % TILE_COLORS.length];\n    drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx);\n    ctx.fill();\n    ctx.restore();\n\n    // highlight strip for depth\n    ctx.save();\n    ctx.globalAlpha = 0.18;\n    ctx.fillStyle = PAL.bg;\n    drawJitteredRoundedRect(cx + cw * 0.08, cy + ch * 0.08, cw * 0.5, ch * 0.25, 6, idx + 700);\n    ctx.fill();\n    ctx.restore();\n  }\n\n  // row solved indicators\n  for (let r = 0; r < ROWS; r++) {\n    if (isRowSolved(r, board)) {\n      const y = boardTop + r * cellSize;\n      ctx.save();\n      ctx.strokeStyle = PAL.highlight;\n      ctx.lineWidth = 3;\n      ctx.beginPath();\n      ctx.moveTo(boardLeft - 6, y + cellSize / 2);\n      ctx.lineTo(boardLeft - 18, y + cellSize / 2);\n      ctx.stroke();\n      ctx.restore();\n    }\n  }\n}\n\nfunction drawHud() {\n  ctx.fillStyle = PAL.accent;\n  ctx.font = \"bold 20px sans-serif\";\n  ctx.textAlign = \"left\";\n  ctx.textBaseline = \"top\";\n  ctx.fillText(\"Moves: \" + moves, 16, H - 40);\n}\n\nfunction drawEndOverlay() {\n  ctx.save();\n  ctx.fillStyle = \"rgba(61,64,91,0.55)\";\n  ctx.fillRect(0, 0, W, H);\n\n  const plateW = Math.min(W * 0.8, 460);\n  const plateH = 160;\n  const x = (W - plateW) / 2;\n  const y = (H - plateH) / 2;\n\n  ctx.shadowColor = \"rgba(0,0,0,0.3)\";\n  ctx.shadowBlur = 6;\n  ctx.shadowOffsetY = 4;\n  ctx.fillStyle = PAL.bg;\n  drawJitteredRoundedRect(x, y, plateW, plateH, 18, 9003);\n  ctx.fill();\n  ctx.shadowBlur = 0;\n  ctx.shadowOffsetY = 0;\n\n  ctx.fillStyle = PAL.accent;\n  ctx.textAlign = \"center\";\n  ctx.textBaseline = \"middle\";\n  ctx.font = \"bold 28px sans-serif\";\n  const msg = winFlag ? \"Solved!\" : \"No moves left\";\n  ctx.fillText(msg, W / 2, y + plateH * 0.4);\n\n  ctx.font = \"18px sans-serif\";\n  ctx.fillText(\"Moves: \" + moves + \" — tap to play again\", W / 2, y + plateH * 0.72);\n  ctx.restore();\n}\n\nfunction drawTitleScreen() {\n  drawTitlePlate();\n\n  // hint pulse\n  tapHintPulse += 0.05;\n  const alpha = 0.5 + 0.5 * Math.sin(tapHintPulse);\n  ctx.save();\n  ctx.globalAlpha = alpha;\n  ctx.fillStyle = PAL.accent;\n  ctx.font = \"bold 22px sans-serif\";\n  ctx.textAlign = \"center\";\n  ctx.textBaseline = \"middle\";\n  ctx.fillText(\"Tap to begin\", W / 2, H * 0.85);\n  ctx.restore();\n\n  // small preview board (static, decorative)\n  drawBoard();\n}\n\nfunction draw() {\n  drawBackground();\n\n  if (!running) {\n    drawTitleScreen();\n    return;\n  }\n\n  drawTitlePlate();\n  drawBoard();\n  drawHud();\n\n  if (gameOver) {\n    drawEndOverlay();\n  } else if (paused) {\n    ctx.save();\n    ctx.fillStyle = \"rgba(61,64,91,0.5)\";\n    ctx.fillRect(0, 0, W, H);\n    ctx.fillStyle = PAL.bg;\n    ctx.font = \"bold 26px sans-serif\";\n    ctx.textAlign = \"center\";\n    ctx.textBaseline = \"middle\";\n    ctx.fillText(\"Paused\", W / 2, H / 2);\n    ctx.restore();\n  }\n}\n\n// ---- Interaction ----\nfunction cellFromPoint(px, py) {\n  const { boardLeft, boardTop, boardSize, cellSize } = layout();\n  if (px < boardLeft || px > boardLeft + boardSize) return -1;\n  if (py < boardTop || py > boardTop + boardSize) return -1;\n  const c = Math.floor((px - boardLeft) / cellSize);\n  const r = Math.floor((py - boardTop) / cellSize);\n  if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return -1;\n  return r * COLS + c;\n}\n\nfunction isLegal(cell) {\n  if (cell < 0 || cell >= BOARD_SIZE) return false;\n  if (board[cell] === -1) return false;\n  return neighborsOf(emptyIndex).includes(cell);\n}\n\nfunction apply(cell) {\n  board[emptyIndex] = board[cell];\n  board[cell] = -1;\n  emptyIndex = cell;\n}\n\nfunction points() {\n  // simple scoring: count solved rows\n  let s = 0;\n  for (let r = 0; r < ROWS; r++) if (isRowSolved(r, board)) s++;\n  return s;\n}\n\nfunction onCellTapped(cell) {\n  if (!isLegal(cell)) return;\n  apply(cell);\n  moves += 1;\n  CARTRIDGE.send(\"score\", { value: points() });\n  if (solved()) {\n    winFlag = true;\n    gameOver = true;\n    CARTRIDGE.send(\"end\", { reason: \"win\", value: moves });\n  } else if (!anyLegalMove()) {\n    stuckFlag = true;\n    gameOver = true;\n    CARTRIDGE.send(\"end\", { reason: \"stuck\" });\n  }\n  draw();\n}\n\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n\n  if (!running) {\n    running = true;\n    resetGameState();\n    CARTRIDGE.send(\"start\");\n    draw();\n    return;\n  }\n\n  const rect = canvas.getBoundingClientRect();\n  const px = event.clientX - rect.left;\n  const py = event.clientY - rect.top;\n\n  if (gameOver) {\n    resetGameState();\n    draw();\n    return;\n  }\n\n  const cell = cellFromPoint(px, py);\n  if (cell >= 0) onCellTapped(cell);\n});\n\n// ---- Boot ----\nresetGameState();\nresize();\nCARTRIDGE.send(\"boot\", { title: \"Colour Rows\", gameType: \"puzzle-board\", lang: \"en\" });\ndraw();\n\n// light animation loop just for the title pulse (no timers with strings, RAF used)\nfunction loop() {\n  if (!running && !paused) {\n    draw();\n  }\n  requestAnimationFrame(loop);\n}\nrequestAnimationFrame(loop);\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01FFWcTwqWkqVhGZKcJo5YsQ",
+              "content": "{\"version\":\"a0\",\"bytes\":13824,\"sha256\":\"9fed0300ef895021987c8f885fa00620e608f1486734c5eb44d46e78302bd3e8\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNsYodZL7HXFYWrPET12\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11430,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null} }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete \\\"Colour Rows\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\" puzzle-\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"board game with pa\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"per-c\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ut sty\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ling, tap-to-sl\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ide m\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"echanics, and full\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge event\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" w\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"iring.\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0     }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":11430,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":54,\"output_tokens_details\":{\"thinking_tokens\":0}}       }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      275,
+      0,
+      0,
+      0,
+      0,
+      33,
+      47,
+      43,
+      49,
+      38,
+      36,
+      7,
+      1,
+      1
+    ]
+  },
+  "usage": {
+    "input": 11430,
+    "output": 54,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

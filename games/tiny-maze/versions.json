@@ -1,0 +1,14 @@
+{
+  "versions": [
+    {
+      "version": "a0",
+      "sha256": "8608d08e024cb9c32567f301ae8ca1c98db590a34333f14dc776d99e548a05b7",
+      "bytes": 14395
+    },
+    {
+      "version": "a1",
+      "sha256": "3d2ae5d1edaf6e4ad95927e816f12a05d19a97f35d9c431f771d8359d3e1cb9a",
+      "bytes": 15406
+    }
+  ]
+}

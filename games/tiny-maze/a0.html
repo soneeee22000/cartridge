@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiny Maze</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #2f3e3a;
+    overflow: hidden;
+    touch-action: none;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100dvh;
+    background: #2f3e3a;
+  }
+  #hint {
+    position: fixed;
+    left: 0; right: 0; bottom: 10px;
+    text-align: center;
+    color: #eeeae0;
+    opacity: 0.6;
+    font-size: 13px;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hint">Swipe left/right to change lanes &middot; swipe up/down or arrows to move forward/back</div>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---- Canvas setup ----
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+let W = 0, H = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---- Palette ----
+const COL = {
+  slate: "#2f3e3a",
+  chalk: "#eeeae0",
+  accent: "#f2c14e",
+  second: "#8fc1e3",
+};
+
+// ---- Chalk drawing helpers ----
+function wobble(amount) {
+  return (Math.random() - 0.5) * amount;
+}
+
+function chalkLine(x1, y1, x2, y2, color, width) {
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  for (let i = 0; i < 2; i++) {
+    ctx.beginPath();
+    const ox = wobble(1.4) + (i === 1 ? 1 : 0);
+    const oy = wobble(1.4) + (i === 1 ? 1 : 0);
+    const mx = (x1 + x2) / 2 + wobble(3);
+    const my = (y1 + y2) / 2 + wobble(3);
+    ctx.moveTo(x1 + ox, y1 + oy);
+    ctx.quadraticCurveTo(mx + ox, my + oy, x2 + ox, y2 + oy);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = i === 0 ? 0.85 : 0.35;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkHatchRect(x, y, w, h, color, spacing) {
+  spacing = spacing || 6;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  for (let i = -h; i < w + h; i += spacing) {
+    chalkLine(x + i, y, x + i - h, y + h, color, 2);
+  }
+  ctx.restore();
+}
+
+function chalkCircle(cx, cy, r, color, width) {
+  const segs = 24;
+  ctx.lineCap = "round";
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.beginPath();
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      const rr = r + wobble(1.5);
+      const x = cx + Math.cos(a) * rr + (pass === 1 ? 1 : 0);
+      const y = cy + Math.sin(a) * rr + (pass === 1 ? 1 : 0);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = pass === 0 ? 0.85 : 0.3;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawSmudges() {
+  const smudgeCount = 5;
+  ctx.save();
+  for (let i = 0; i < smudgeCount; i++) {
+    const sx = smudgeSeeds[i].x * W;
+    const sy = smudgeSeeds[i].y * H;
+    const r = smudgeSeeds[i].r * Math.min(W, H);
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+    grad.addColorStop(0, "rgba(238,234,224,0.05)");
+    grad.addColorStop(1, "rgba(238,234,224,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, r, r * 0.6, smudgeSeeds[i].rot, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+const smudgeSeeds = [];
+for (let i = 0; i < 6; i++) {
+  smudgeSeeds.push({
+    x: Math.random(),
+    y: Math.random(),
+    r: 0.15 + Math.random() * 0.2,
+    rot: Math.random() * Math.PI,
+  });
+}
+
+// ---- Maze / game state ----
+const LANES = 4; // lane count across width
+let laneCount = LANES;
+let lane = 1; // current lane index (x)
+let row = 0; // current row (progress toward exit, y)
+let ROWS = 5; // rows per maze, grows a bit with stage
+let stage = 0;
+let score = 0;
+let maze = []; // maze[row] = array of booleans: which lanes are open/walkable in that row
+let exitRow = 0;
+let started = false;
+let paused = false;
+let gameOver = false; // not used for lose, stage-clear has no lose state functionally
+let particles = [];
+let messageTimer = 0;
+let messageText = "";
+let graceTimer = 0;
+
+function backToTitle() {
+  started = false;
+  paused = false;
+  stage = 0;
+  score = 0;
+  row = 0;
+  lane = Math.floor(LANES / 2);
+}
+
+function randInt(n) {
+  return Math.floor(Math.random() * n);
+}
+
+// Build a maze: each row has a random subset of walkable lanes (at least one),
+// and consecutive rows always share at least one connected lane so it's always solvable.
+function buildStage(s) {
+  ROWS = 4 + Math.min(4, s); // grows slowly
+  maze = [];
+  // start row: all lanes open (safe start)
+  let prevOpen = [true, true, true, true].slice(0, laneCount);
+  maze.push(prevOpen.slice());
+  for (let r = 1; r < ROWS; r++) {
+    const openCount = 1 + randInt(laneCount - 1 >= 1 ? laneCount - 1 : 1);
+    const lanes = [...Array(laneCount).keys()];
+    // shuffle
+    for (let i = lanes.length - 1; i > 0; i--) {
+      const j = randInt(i + 1);
+      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+    }
+    let chosen = new Set(lanes.slice(0, Math.max(1, openCount)));
+    // guarantee connectivity: ensure at least one lane open in prevOpen intersects with chosen
+    const prevOpenLanes = [];
+    for (let i = 0; i < laneCount; i++) if (prevOpen[i]) prevOpenLanes.push(i);
+    const hasOverlap = prevOpenLanes.some((l) => chosen.has(l));
+    if (!hasOverlap && prevOpenLanes.length > 0) {
+      const forced = prevOpenLanes[randInt(prevOpenLanes.length)];
+      chosen.add(forced);
+    }
+    const rowArr = [];
+    for (let i = 0; i < laneCount; i++) rowArr.push(chosen.has(i));
+    maze.push(rowArr);
+    prevOpen = rowArr;
+  }
+  exitRow = ROWS - 1;
+  // place player at a valid lane in row 0
+  const startLanes = [];
+  for (let i = 0; i < laneCount; i++) if (maze[0][i]) startLanes.push(i);
+  lane = startLanes[randInt(startLanes.length)];
+  row = 0;
+  graceTimer = 2.5; // seconds of grace, though no threats exist
+  messageText = "Reach the glowing exit \u2014 stage " + s;
+  messageTimer = 2.2;
+}
+
+function enterStage(next) {
+  stage = next;
+  buildStage(stage);
+  CARTRIDGE.send("level", { index: stage });
+}
+
+function onGoalMet() {
+  score += 10;
+  CARTRIDGE.send("score", { value: score });
+  particles = particles.concat(makeBurst());
+  enterStage(stage + 1);
+}
+
+// try to move forward one row if current lane is open in next row
+function tryAdvance(dir) {
+  if (!started || paused) return;
+  const targetRow = row + dir;
+  if (targetRow < 0) return;
+  if (targetRow >= ROWS) return;
+  if (maze[targetRow][lane]) {
+    row = targetRow;
+    if (row === exitRow) {
+      onGoalMet();
+    }
+  } else {
+    // bump feedback
+    particles = particles.concat(makeBump());
+  }
+}
+
+function tryLaneChange(dir) {
+  if (!started || paused) return;
+  const newLane = Math.max(0, Math.min(laneCount - 1, lane + dir));
+  if (newLane === lane) return;
+  if (maze[row][newLane]) {
+    lane = newLane;
+  } else {
+    particles = particles.concat(makeBump());
+  }
+}
+
+function makeBurst() {
+  const arr = [];
+  for (let i = 0; i < 18; i++) {
+    arr.push({
+      x: 0, y: 0,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 1,
+      type: "burst",
+      color: Math.random() < 0.5 ? COL.accent : COL.second,
+    });
+  }
+  return arr;
+}
+
+function makeBump() {
+  const arr = [];
+  for (let i = 0; i < 6; i++) {
+    arr.push({
+      x: 0, y: 0,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      life: 0.5,
+      type: "bump",
+      color: COL.chalk,
+    });
+  }
+  return arr;
+}
+
+// ---- Input: swipe lanes + forward/back ----
+const SWIPE_FRACTION = 0.08;
+let pressX = 0, pressY = 0;
+canvas.addEventListener("pointerdown", (event) => {
+  pressX = event.clientX;
+  pressY = event.clientY;
+  if (!started) {
+    started = true;
+    CARTRIDGE.send("start");
+    enterStage(1);
+  }
+});
+canvas.addEventListener("pointerup", (event) => {
+  const dx = event.clientX - pressX;
+  const dy = event.clientY - pressY;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (Math.abs(dx) < w * SWIPE_FRACTION) return;
+    tryLaneChange(Math.sign(dx));
+  } else {
+    if (Math.abs(dy) < h * SWIPE_FRACTION) return;
+    tryAdvance(dy < 0 ? 1 : -1);
+  }
+});
+
+window.addEventListener("keydown", (e) => {
+  if (!started) {
+    if (e.key === "Enter" || e.key === " ") {
+      started = true;
+      CARTRIDGE.send("start");
+      enterStage(1);
+    }
+    return;
+  }
+  if (e.key === "ArrowLeft") tryLaneChange(-1);
+  if (e.key === "ArrowRight") tryLaneChange(1);
+  if (e.key === "ArrowUp") tryAdvance(1);
+  if (e.key === "ArrowDown") tryAdvance(-1);
+});
+
+// ---- Rendering ----
+let lastTime = performance.now();
+
+function drawTitleScreen() {
+  ctx.clearRect(0, 0, W, H);
+  drawSmudges();
+  const cx = W / 2, cy = H / 2;
+  ctx.font = "bold 34px system-ui, sans-serif";
+  ctx.fillStyle = COL.chalk;
+  ctx.textAlign = "center";
+  ctx.globalAlpha = 0.9;
+  ctx.fillText("Tiny Maze", cx, cy - 60);
+  ctx.globalAlpha = 1;
+  ctx.font = "16px system-ui, sans-serif";
+  ctx.fillStyle = COL.second;
+  ctx.fillText("Swipe or tap to begin", cx, cy - 20);
+
+  chalkCircle(cx, cy + 40, 26, COL.accent, 4);
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.fillStyle = COL.chalk;
+  ctx.globalAlpha = 0.7;
+  ctx.fillText("find the exit", cx, cy + 100);
+  ctx.globalAlpha = 1;
+}
+
+function layoutMetrics() {
+  const marginTop = 90;
+  const marginBottom = 60;
+  const fieldH = H - marginTop - marginBottom;
+  const rowH = fieldH / ROWS;
+  const fieldW = Math.min(W * 0.8, 420);
+  const fieldX = (W - fieldW) / 2;
+  const colW = fieldW / laneCount;
+  return { marginTop, fieldH, rowH, fieldW, fieldX, colW };
+}
+
+function drawMaze() {
+  const { marginTop, rowH, fieldW, fieldX, colW } = layoutMetrics();
+
+  // draw rows from bottom (row 0) to top (exitRow), so exit appears at top
+  for (let r = 0; r < ROWS; r++) {
+    const y = marginTop + (ROWS - 1 - r) * rowH;
+    for (let c = 0; c < laneCount; c++) {
+      const x = fieldX + c * colW;
+      const open = maze[r][c];
+      if (open) {
+        chalkHatchRect(x + 4, y + 4, colW - 8, rowH - 8, "rgba(143,193,227,0.25)", 8);
+      } else {
+        // wall X marks
+        chalkLine(x + 6, y + 6, x + colW - 6, y + rowH - 6, "rgba(238,234,224,0.25)", 2);
+        chalkLine(x + colW - 6, y + 6, x + 6, y + rowH - 6, "rgba(238,234,224,0.25)", 2);
+      }
+      // cell border
+      chalkLine(x, y, x + colW, y, COL.chalk, 2);
+      chalkLine(x, y, x, y + rowH, COL.chalk, 2);
+    }
+  }
+  // outer border
+  const totalH = rowH * ROWS;
+  chalkLine(fieldX, marginTop, fieldX + fieldW, marginTop, COL.chalk, 3);
+  chalkLine(fieldX, marginTop + totalH, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);
+  chalkLine(fieldX, marginTop, fieldX, marginTop + totalH, COL.chalk, 3);
+  chalkLine(fieldX + fieldW, marginTop, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);
+
+  // exit glow
+  const exitY = marginTop + (ROWS - 1 - exitRow) * rowH;
+  for (let c = 0; c < laneCount; c++) {
+    if (maze[exitRow][c]) {
+      const x = fieldX + c * colW + colW / 2;
+      const y = exitY + rowH / 2;
+      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+      chalkCircle(x, y, 14 + pulse * 4, COL.accent, 4);
+    }
+  }
+
+  // player token
+  const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;
+  const px = fieldX + lane * colW + colW / 2;
+  chalkCircle(px, py, 12, COL.second, 4);
+  chalkLine(px - 5, py, px + 5, py, COL.second, 2);
+  chalkLine(px, py - 5, px, py + 5, COL.second, 2);
+}
+
+function drawHUD() {
+  ctx.textAlign = "left";
+  ctx.font = "16px system-ui, sans-serif";
+  ctx.fillStyle = COL.chalk;
+  ctx.globalAlpha = 0.85;
+  ctx.fillText("Stage " + stage, 16, 30);
+  ctx.textAlign = "right";
+  ctx.fillText("Score " + score, W - 16, 30);
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center";
+
+  if (messageTimer > 0) {
+    ctx.font = "18px system-ui, sans-serif";
+    ctx.fillStyle = COL.accent;
+    ctx.globalAlpha = Math.min(1, messageTimer);
+    ctx.fillText(messageText, W / 2, 62);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function updateParticles(dt) {
+  const { fieldX, fieldW, marginTop, rowH } = layoutMetrics();
+  const px = fieldX + lane * (fieldW / laneCount) + (fieldW / laneCount) / 2;
+  const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= dt * 1.2;
+  }
+  particles = particles.filter((p) => p.life > 0);
+  ctx.save();
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, p.life);
+    chalkCircle(px + p.x * 10, py + p.y * 10, 3, p.color, 2);
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = COL.slate;
+  ctx.fillRect(0, 0, W, H);
+  drawSmudges();
+
+  if (!started) {
+    drawTitleScreen();
+  } else {
+    if (!paused) {
+      if (messageTimer > 0) messageTimer -= dt;
+      if (graceTimer > 0) graceTimer -= dt;
+    }
+    drawMaze();
+    updateParticles(paused ? 0 : dt);
+    drawHUD();
+    if (paused) {
+      ctx.font = "bold 28px system-ui, sans-serif";
+      ctx.fillStyle = COL.chalk;
+      ctx.textAlign = "center";
+      ctx.fillText("Paused", W / 2, H / 2);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ---- Boot ----
+function boot() {
+  resize();
+  ctx.fillStyle = COL.slate;
+  ctx.fillRect(0, 0, W, H);
+  requestAnimationFrame((t) => {
+    lastTime = t;
+    CARTRIDGE.send("boot", { title: "Tiny Maze", gameType: "stage-clear", lang: "en" });
+    requestAnimationFrame(frame);
+  });
+}
+boot();
+</script>
+</body>
+</html>

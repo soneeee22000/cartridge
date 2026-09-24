@@ -1,0 +1,48 @@
+{
+  "artifact": {
+    "bytes": 11637,
+    "sha256": "d01a5c636edb9f09fce18dbac4e9ff505cab4d17cf630a0b77d402863835f3ca",
+    "version": "a0"
+  },
+  "buildAttempts": 1,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "comet-dodger",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [],
+  "spec": {
+    "gameType": "arcade-run",
+    "input": "drag-follow",
+    "lang": "en",
+    "loop": "Drag your ship left and right to dodge falling comets and survive as long as possible while your score climbs. Colliding with a comet ends the run.",
+    "slug": "comet-dodger",
+    "style": "chalkboard",
+    "title": "Comet Dodger"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 14596,
+      "output": 5823
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 7901,
+      "output": 352
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 0,
+      "output": 0
+    }
+  },
+  "wallMs": 48424
+}

@@ -1,0 +1,457 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:927c759a9032a3a0d1c18959556f6e1a2c0843ac97ac4811250acee66d5e35fb",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\na tiny maze\n\nPlan:\n{\"gameType\":\"puzzle-board\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap a tile next to your position to step through the tiny maze toward the exit. Reach the goal to win, or run out of moves to a dead end and get a fresh maze.\",\"slug\":\"tiny-maze\",\"style\":\"paper-cut\",\"title\":\"Tiny Maze\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Tiny Maze</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     overflow: hidden;\n14|     background: #f4ecd8;\n15|     touch-action: none;\n16|   }\n17|   canvas {\n18|     display: block;\n19|     touch-action: none;\n20|   }\n21| </style>\n22| </head>\n23| <body>\n24| <canvas id=\"game\"></canvas>\n25| <script>\n26| // ---- Bridge helper (verbatim) ----\n27| const CARTRIDGE = {\n28|   send(type, payload = {}) {\n29|     window.parent.postMessage(\n30|       { source: \"cartridge\", v: 1, type, payload },\n31|       \"*\",\n32|     );\n33|   },\n34| };\n35| \n36| // ---- Game setup ----\n37| const canvas = document.getElementById(\"game\");\n38| const ctx = canvas.getContext(\"2d\");\n39| \n40| let W = 0, H = 0, DPR = 1;\n41| let paused = false;\n42| let running = false; // has play begun\n43| let booted = false;\n44| \n45| const PALETTE = {\n46|   bg: \"#f4ecd8\",\n47|   layer: \"#e07a5f\",\n48|   accent: \"#3d405b\",\n49|   highlight: \"#81b29a\",\n50| };\n51| \n52| function resize() {\n53|   DPR = window.devicePixelRatio || 1;\n54|   W = window.innerWidth;\n55|   H = window.innerHeight;\n56|   canvas.width = Math.floor(W * DPR);\n57|   canvas.height = Math.floor(H * DPR);\n58|   canvas.style.width = W + \"px\";\n59|   canvas.style.height = H + \"px\";\n60|   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n61|   draw();\n62| }\n63| window.addEventListener(\"resize\", resize);\n64| \n65| // ---- Seeded jitter helper for paper-cut edges ----\n66| function mulberry32(a) {\n67|   return function () {\n68|     a |= 0; a = (a + 0x6D2B79F5) | 0;\n69|     let t = Math.imul(a ^ (a >>> 15), 1 | a);\n70|     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n71|     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n72|   };\n73| }\n74| \n75| // ---- Maze generation ----\n76| const GRID = 7; // GRID x GRID maze\n77| let cells = []; // cells[y][x] = {walls:{N,S,E,W}, visited}\n78| let playerX = 0, playerY = 0;\n79| let goalX = GRID - 1, goalY = GRID - 1;\n80| let moves = 0;\n81| let score = 0;\n82| let level = 1;\n83| let mazeSeed = 1;\n84| let jitterRand = null;\n85| let cellJitter = []; // per-cell jitter offsets\n86| \n87| function genMaze(seed) {\n88|   const rand = mulberry32(seed);\n89|   cells = [];\n90|   for (let y = 0; y < GRID; y++) {\n91|     const row = [];\n92|     for (let x = 0; x < GRID; x++) {\n93|       row.push({ N: true, S: true, E: true, W: true, visited: false });\n94|     }\n95|     cells.push(row);\n96|   }\n97|   // iterative DFS backtracker\n98|   const stack = [];\n99|   let cx = 0, cy = 0;\n100|   cells[cy][cx].visited = true;\n101|   stack.push([cx, cy]);\n102|   while (stack.length) {\n103|     const [x, y] = stack[stack.length - 1];\n104|     const neighbors = [];\n105|     if (y > 0 && !cells[y - 1][x].visited) neighbors.push([\"N\", x, y - 1]);\n106|     if (y < GRID - 1 && !cells[y + 1][x].visited) neighbors.push([\"S\", x, y + 1]);\n107|     if (x > 0 && !cells[y][x - 1].visited) neighbors.push([\"W\", x - 1, y]);\n108|     if (x < GRID - 1 && !cells[y][x + 1].visited) neighbors.push([\"E\", x + 1, y]);\n109|     if (neighbors.length === 0) {\n110|       stack.pop();\n111|       continue;\n112|     }\n113|     const [dir, nx, ny] = neighbors[Math.floor(rand() * neighbors.length)];\n114|     const opp = { N: \"S\", S: \"N\", E: \"W\", W: \"E\" };\n115|     cells[y][x][dir] = false;\n116|     cells[ny][nx][opp[dir]] = false;\n117|     cells[ny][nx].visited = true;\n118|     stack.push([nx, ny]);\n119|   }\n120| }\n121| \n122| function genCellJitter(seed) {\n123|   const rand = mulberry32(seed + 999);\n124|   cellJitter = [];\n125|   for (let y = 0; y < GRID; y++) {\n126|     const row = [];\n127|     for (let x = 0; x < GRID; x++) {\n128|       const pts = [];\n129|       for (let i = 0; i < 4; i++) {\n130|         pts.push([(rand() - 0.5) * 2, (rand() - 0.5) * 2]);\n131|       }\n132|       row.push(pts);\n133|     }\n134|     cellJitter.push(row);\n135|   }\n136| }\n137| \n138| function newGame() {\n139|   mazeSeed = Math.floor(Math.random() * 1000000) + 1;\n140|   genMaze(mazeSeed);\n141|   genCellJitter(mazeSeed);\n142|   playerX = 0;\n143|   playerY = 0;\n144|   goalX = GRID - 1;\n145|   goalY = GRID - 1;\n146|   moves = 0;\n147|   score = 0;\n148| }\n149| \n150| // ---- Legal moves ----\n151| function canMove(x, y, dir) {\n152|   if (x < 0 || y < 0 || x >= GRID || y >= GRID) return false;\n153|   return !cells[y][x][dir];\n154| }\n155| \n156| function anyLegalMove() {\n157|   const dirs = [\"N\", \"S\", \"E\", \"W\"];\n158|   for (const d of dirs) {\n159|     if (canMove(playerX, playerY, d)) return true;\n160|   }\n161|   return false;\n162| }\n163| \n164| function solved() {\n165|   return playerX === goalX && playerY === goalY;\n166| }\n167| \n168| // ---- Layout math ----\n169| function boardMetrics() {\n170|   const margin = 40;\n171|   const topArea = 90;\n172|   const size = Math.min(W - margin * 2, H - topArea - margin);\n173|   const boardSize = Math.max(size, 100);\n174|   const cellSize = boardSize / GRID;\n175|   const originX = (W - boardSize) / 2;\n176|   const originY = topArea + (H - topArea - margin - boardSize) / 2;\n177|   return { originX, originY, cellSize, boardSize };\n178| }\n179| \n180| function cellCenter(x, y) {\n181|   const m = boardMetrics();\n182|   return {\n183|     cx: m.originX + x * m.cellSize + m.cellSize / 2,\n184|     cy: m.originY + y * m.cellSize + m.cellSize / 2,\n185|   };\n186| }\n187| \n188| function tileAt(px, py) {\n189|   const m = boardMetrics();\n190|   const gx = Math.floor((px - m.originX) / m.cellSize);\n191|   const gy = Math.floor((py - m.originY) / m.cellSize);\n192|   if (gx < 0 || gy < 0 || gx >= GRID || gy >= GRID) return null;\n193|   return { gx, gy };\n194| }\n195| \n196| // ---- Drawing helpers (paper-cut style) ----\n197| function jitterPoly(baseX, baseY, w, h, jitterPts) {\n198|   // returns 4 corner points with jitter applied\n199|   const pts = [\n200|     [baseX, baseY],\n201|     [baseX + w, baseY],\n202|     [baseX + w, baseY + h],\n203|     [baseX, baseY + h],\n204|   ];\n205|   return pts.map((p, i) => [p[0] + jitterPts[i][0], p[1] + jitterPts[i][1]]);\n206| }\n207| \n208| function drawJitterRect(x, y, w, h, jitterPts, fillStyle, shadow) {\n209|   const pts = jitterPoly(x, y, w, h, jitterPts);\n210|   ctx.save();\n211|   if (shadow) {\n212|     ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n213|     ctx.shadowBlur = 6;\n214|     ctx.shadowOffsetY = 3;\n215|   }\n216|   ctx.fillStyle = fillStyle;\n217|   ctx.beginPath();\n218|   ctx.moveTo(pts[0][0], pts[0][1]);\n219|   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);\n220|   ctx.closePath();\n221|   ctx.fill();\n222|   ctx.restore();\n223| }\n224| \n225| function drawRoundedPlate(x, y, w, h, r, fillStyle) {\n226|   ctx.save();\n227|   ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n228|   ctx.shadowBlur = 6;\n229|   ctx.shadowOffsetY = 3;\n230|   ctx.fillStyle = fillStyle;\n231|   ctx.beginPath();\n232|   ctx.moveTo(x + r, y);\n233|   ctx.arcTo(x + w, y, x + w, y + h, r);\n234|   ctx.arcTo(x + w, y + h, x, y + h, r);\n235|   ctx.arcTo(x, y + h, x, y, r);\n236|   ctx.arcTo(x, y, x + w, y, r);\n237|   ctx.closePath();\n238|   ctx.fill();\n239|   ctx.restore();\n240| }\n241| \n242| function drawCircleJitter(cx, cy, r, fillStyle, seedOffset) {\n243|   const rand = mulberry32(Math.floor(cx * 13 + cy * 7 + seedOffset));\n244|   ctx.save();\n245|   ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n246|   ctx.shadowBlur = 6;\n247|   ctx.shadowOffsetY = 3;\n248|   ctx.fillStyle = fillStyle;\n249|   ctx.beginPath();\n250|   const segs = 16;\n251|   for (let i = 0; i <= segs; i++) {\n252|     const a = (i / segs) * Math.PI * 2;\n253|     const jitter = (rand() - 0.5) * 1.6;\n254|     const rr = r + jitter;\n255|     const px = cx + Math.cos(a) * rr;\n256|     const py = cy + Math.sin(a) * rr;\n257|     if (i === 0) ctx.moveTo(px, py);\n258|     else ctx.lineTo(px, py);\n259|   }\n260|   ctx.closePath();\n261|   ctx.fill();\n262|   ctx.restore();\n263| }\n264| \n265| // ---- Draw ----\n266| function draw() {\n267|   ctx.fillStyle = PALETTE.bg;\n268|   ctx.fillRect(0, 0, W, H);\n269| \n270|   // Title plate\n271|   drawRoundedPlate(W / 2 - 140, 14, 280, 54, 14, PALETTE.accent);\n272|   ctx.fillStyle = PALETTE.bg;\n273|   ctx.font = \"bold 24px system-ui, sans-serif\";\n274|   ctx.textAlign = \"center\";\n275|   ctx.textBaseline = \"middle\";\n276|   ctx.fillText(\"Tiny Maze\", W / 2, 14 + 27);\n277| \n278|   if (!running) {\n279|     drawTitleScreen();\n280|     return;\n281|   }\n282| \n283|   const m = boardMetrics();\n284| \n285|   // Board background plate\n286|   drawRoundedPlate(m.originX - 12, m.originY - 12, m.boardSize + 24, m.boardSize + 24, 18, PALETTE.accent);\n287| \n288|   // Draw cells as separate layered tiles\n289|   for (let y = 0; y < GRID; y++) {\n290|     for (let x = 0; x < GRID; x++) {\n291|       const px = m.originX + x * m.cellSize;\n292|       const py = m.originY + y * m.cellSize;\n293|       const inset = 2;\n294|       let fill = PALETTE.layer;\n295|       if (x === goalX && y === goalY) fill = PALETTE.highlight;\n296|       drawJitterRect(\n297|         px + inset,\n298|         py + inset,\n299|         m.cellSize - inset * 2,\n300|         m.cellSize - inset * 2,\n301|         cellJitter[y][x],\n302|         fill,\n303|         true\n304|       );\n305|     }\n306|   }\n307| \n308|   // Draw walls as accent-colored thick lines\n309|   ctx.strokeStyle = PALETTE.accent;\n310|   ctx.lineWidth = Math.max(3, m.cellSize * 0.08);\n311|   ctx.lineCap = \"round\";\n312|   for (let y = 0; y < GRID; y++) {\n313|     for (let x = 0; x < GRID; x++) {\n314|       const px = m.originX + x * m.cellSize;\n315|       const py = m.originY + y * m.cellSize;\n316|       const c = cells[y][x];\n317|       ctx.beginPath();\n318|       if (c.N) { ctx.moveTo(px, py); ctx.lineTo(px + m.cellSize, py); }\n319|       if (c.S) { ctx.moveTo(px, py + m.cellSize); ctx.lineTo(px + m.cellSize, py + m.cellSize); }\n320|       if (c.W) { ctx.moveTo(px, py); ctx.lineTo(px, py + m.cellSize); }\n321|       if (c.E) { ctx.moveTo(px + m.cellSize, py); ctx.lineTo(px + m.cellSize, py + m.cellSize); }\n322|       ctx.stroke();\n323|     }\n324|   }\n325| \n326|   // Highlight legal moves from current position\n327|   const dirs = [\n328|     [\"N\", 0, -1], [\"S\", 0, 1], [\"E\", 1, 0], [\"W\", -1, 0],\n329|   ];\n330|   for (const [dir, dx, dy] of dirs) {\n331|     if (canMove(playerX, playerY, dir)) {\n332|       const nx = playerX + dx, ny = playerY + dy;\n333|       const c = cellCenter(nx, ny);\n334|       ctx.save();\n335|       ctx.globalAlpha = 0.35;\n336|       ctx.fillStyle = PALETTE.highlight;\n337|       ctx.beginPath();\n338|       ctx.arc(c.cx, c.cy, m.cellSize * 0.12, 0, Math.PI * 2);\n339|       ctx.fill();\n340|       ctx.restore();\n341|     }\n342|   }\n343| \n344|   // Goal marker (small flag shape) if not player there\n345|   {\n346|     const g = cellCenter(goalX, goalY);\n347|     ctx.save();\n348|     ctx.fillStyle = PALETTE.accent;\n349|     ctx.font = \"bold \" + Math.floor(m.cellSize * 0.4) + \"px system-ui, sans-serif\";\n350|     ctx.textAlign = \"center\";\n351|     ctx.textBaseline = \"middle\";\n352|     ctx.fillText(\"\\u2605\", g.cx, g.cy);\n353|     ctx.restore();\n354|   }\n355| \n356|   // Player piece\n357|   {\n358|     const p = cellCenter(playerX, playerY);\n359|     drawCircleJitter(p.cx, p.cy, m.cellSize * 0.28, PALETTE.accent, 42);\n360|     drawCircleJitter(p.cx, p.cy, m.cellSize * 0.2, PALETTE.highlight, 77);\n361|   }\n362| \n363|   // Score / moves plate\n364|   drawRoundedPlate(16, H - 60, 160, 44, 12, PALETTE.accent);\n365|   ctx.fillStyle = PALETTE.bg;\n366|   ctx.font = \"bold 18px system-ui, sans-serif\";\n367|   ctx.textAlign = \"left\";\n368|   ctx.textBaseline = \"middle\";\n369|   ctx.fillText(\"Moves: \" + moves, 30, H - 60 + 22);\n370| \n371|   drawRoundedPlate(W - 176, H - 60, 160, 44, 12, PALETTE.accent);\n372|   ctx.textAlign = \"right\";\n373|   ctx.fillText(\"Score: \" + score, W - 30, H - 60 + 22);\n374| \n375|   if (paused) {\n376|     ctx.save();\n377|     ctx.fillStyle = \"rgba(61,64,91,0.6)\";\n378|     ctx.fillRect(0, 0, W, H);\n379|     drawRoundedPlate(W / 2 - 100, H / 2 - 30, 200, 60, 14, PALETTE.bg);\n380|     ctx.fillStyle = PALETTE.accent;\n381|     ctx.font = \"bold 22px system-ui, sans-serif\";\n382|     ctx.textAlign = \"center\";\n383|     ctx.textBaseline = \"middle\";\n384|     ctx.fillText(\"Paused\", W / 2, H / 2);\n385|     ctx.restore();\n386|   }\n387| \n388|   if (gameEnded) {\n389|     ctx.save();\n390|     ctx.fillStyle = \"rgba(61,64,91,0.55)\";\n391|     ctx.fillRect(0, 0, W, H);\n392|     drawRoundedPlate(W / 2 - 150, H / 2 - 60, 300, 120, 18, PALETTE.bg);\n393|     ctx.fillStyle = PALETTE.accent;\n394|     ctx.font = \"bold 26px system-ui, sans-serif\";\n395|     ctx.textAlign = \"center\";\n396|     ctx.textBaseline = \"middle\";\n397|     ctx.fillText(endMessage, W / 2, H / 2 - 15);\n398|     ctx.font = \"18px system-ui, sans-serif\";\n399|     ctx.fillText(\"Tap to play again\", W / 2, H / 2 + 20);\n400|     ctx.restore();\n401|   }\n402| }\n403| \n404| let pulsePhase = 0;\n405| function drawTitleScreen() {\n406|   const m = boardMetrics();\n407|   drawRoundedPlate(m.originX - 12, m.originY - 12, m.boardSize + 24, m.boardSize + 24, 18, PALETTE.accent);\n408|   // draw a decorative mini pattern\n409|   ctx.save();\n410|   ctx.fillStyle = PALETTE.layer;\n411|   const cs = m.boardSize / GRID;\n412|   for (let y = 0; y < GRID; y++) {\n413|     for (let x = 0; x < GRID; x++) {\n414|       const px = m.originX + x * cs + 2;\n415|       const py = m.originY + y * cs + 2;\n416|       ctx.globalAlpha = 0.5 + 0.5 * Math.sin((x + y) * 0.6);\n417|       ctx.fillRect(px, py, cs - 4, cs - 4);\n418|     }\n419|   }\n420|   ctx.restore();\n421| \n422|   pulsePhase += 0.05;\n423|   const alpha = 0.6 + 0.4 * Math.sin(pulsePhase);\n424|   drawRoundedPlate(W / 2 - 130, H / 2 - 30, 260, 60, 16, PALETTE.accent);\n425|   ctx.save();\n426|   ctx.globalAlpha = alpha;\n427|   ctx.fillStyle = PALETTE.bg;\n428|   ctx.font = \"bold 22px system-ui, sans-serif\";\n429|   ctx.textAlign = \"center\";\n430|   ctx.textBaseline = \"middle\";\n431|   ctx.fillText(\"Tap to begin\", W / 2, H / 2);\n432|   ctx.restore();\n433| }\n434| \n435| // ---- Game state control ----\n436| let gameEnded = false;\n437| let endMessage = \"\";\n438| \n439| function backToTitle() {\n440|   running = false;\n441|   gameEnded = false;\n442|   paused = false;\n443|   draw();\n444| }\n445| \n446| function startGame() {\n447|   newGame();\n448|   gameEnded = false;\n449|   level = 1;\n450|   CARTRIDGE.send(\"level\", { index: level });\n451|   draw();\n452| }\n453| \n454| function onCellTapped(gx, gy) {\n455|   if (gameEnded) return;\n456|   const dx = gx - playerX;\n457|   const dy = gy - playerY;\n458|   if (Math.abs(dx) + Math.abs(dy) !== 1) return; // must be adjacent\n459|   let dir = null;\n460|   if (dx === 1) dir = \"E\";\n461|   else if (dx === -1) dir = \"W\";\n462|   else if (dy === 1) dir = \"S\";\n463|   else if (dy === -1) dir = \"N\";\n464|   if (!dir) return;\n465|   if (!canMove(playerX, playerY, dir)) return;\n466| \n467|   playerX = gx;\n468|   playerY = gy;\n469|   moves += 1;\n470|   score += 1;\n471|   CARTRIDGE.send(\"score\", { value: score });\n472| \n473|   if (solved()) {\n474|     gameEnded = true;\n475|     endMessage = \"You escaped!\";\n476|     CARTRIDGE.send(\"end\", { reason: \"win\", value: moves });\n477|   } else if (!anyLegalMove()) {\n478|     gameEnded = true;\n479|     endMessage = \"Dead end!\";\n480|     CARTRIDGE.send(\"end\", { reason: \"stuck\" });\n481|   }\n482|   draw();\n483| }\n484| \n485| // ---- Input ----\n486| canvas.style.touchAction = \"none\";\n487| canvas.addEventListener(\"pointerdown\", (event) => {\n488|   event.preventDefault();\n489|   if (paused) return;\n490| \n491|   if (!running) {\n492|     running = true;\n493|     startGame();\n494|     CARTRIDGE.send(\"start\");\n495|     return;\n496|   }\n497| \n498|   if (gameEnded) {\n499|     // start a fresh maze\n500|     startGame();\n501|     return;\n502|   }\n503| \n504|   const rect = canvas.getBoundingClientRect();\n505|   const px = event.clientX - rect.left;\n506|   const py = event.clientY - rect.top;\n507|   const tile = tileAt(px, py);\n508|   if (tile) onCellTapped(tile.gx, tile.gy);\n509| });\n510| \n511| // ---- Host command bridge ----\n512| window.addEventListener(\"message\", (event) => {\n513|   const data = event.data;\n514|   if (!data || data.source !== \"cartridge-host\") return;\n515|   if (data.type === \"pause\") paused = true;\n516|   if (data.type === \"resume\") paused = false;\n517|   if (data.type === \"reset\") backToTitle();\n518| });\n519| \n520| // ---- Animation loop (for title pulse) ----\n521| function loop() {\n522|   if (!paused) {\n523|     if (!running) draw();\n524|   }\n525|   requestAnimationFrame(loop);\n526| }\n527| \n528| // ---- Init ----\n529| resize();\n530| newGame();\n531| draw();\n532| if (!booted) {\n533|   booted = true;\n534|   CARTRIDGE.send(\"boot\", { title: \"Tiny Maze\", gameType: \"puzzle-board\", lang: \"en\" });\n535| }\n536| requestAnimationFrame(loop);\n537| </script>\n538| </body>\n539| </html>\n540| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNse1NP9XGskPMrTEVUf\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8580,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}         }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}      }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"label\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"covered\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":[{\\\"line\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":76\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"const\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" GRID\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 7\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" //\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" GRID x\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" GRID maze\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":454\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"function\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"CellTapped\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(gx,\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" gy) {\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":473\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"if\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (solved()) {\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"477\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"}\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" else if (!any\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"LegalMove())\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"}\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rat\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\":\\\"The code\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" key\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns and verbs\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" from\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" maze\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" structure\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"GRID-\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"based), player movement\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (tap\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"to-step\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" onCellT\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apped), goal\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reaching\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (solved function\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), and dead\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-end detection (\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"anyLegalMove\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" function).\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":{\\\"label\\\":\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"stated\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":431\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to begin\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" /\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2, H\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2);\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"369\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"Moves\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\": \\\\\\\" +\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" moves, \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"30\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H -\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 60\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+ 22\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"},{\\\"line\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":352\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"\\\\\\\\\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"u\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2605\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", g\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".cx\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", g.cy\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"rationale\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"The game\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen text stating\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the initial\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" action\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap to begin),\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" shows\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the goal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" marker\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a star\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" symbol\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and displays move\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" counter\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" making\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the objective\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" of\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reaching the goal\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear.\\\"},\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"feedback\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":{\\\"label\\\":\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"immediate\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":467\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"player\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"X = gx\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"},\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":469\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"moves\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" += 1;\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"},{\\\"line\\\":\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"482\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"draw\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"();\\\"}\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"rationale\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"Player\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" onCellT\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apped immediately\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates player\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" position and move counter\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", then\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" calls draw() in\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" produce\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" visible\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" changes\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" next\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame.\\\"},\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"fail\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\\\":{\\\"label\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"explained\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"evidence\\\":[\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":475\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"end\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Message = \\\\\\\"You\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" escaped!\\\\\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\";\\\"},{\\\"line\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":479\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"end\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Message = \\\\\\\"Dead\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" end!\\\\\\\";\\\"},\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\\\":399\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\\\"quote\\\":\\\"ctx\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"Tap\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to play\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" again\\\\\\\", W\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2,\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" H / 2\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 20\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\\\"rationale\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"When\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the game displays\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a clear\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" message explaining\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the outcome (\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"You\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" escaped or\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Dead end)\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the player how\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to restart (\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap to play\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" again).\\\"}\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0           }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8580,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":522}  }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"  }\n\n",
+    "gapsMs": [
+      0,
+      293,
+      293,
+      293,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      83,
+      230,
+      230,
+      230,
+      230,
+      230,
+      230,
+      230,
+      0,
+      0,
+      25,
+      25,
+      63,
+      132,
+      132,
+      132,
+      132,
+      0,
+      0,
+      19,
+      27,
+      113,
+      10,
+      10,
+      10,
+      77,
+      0,
+      5,
+      14,
+      18,
+      75,
+      0,
+      20,
+      16,
+      131,
+      131,
+      0,
+      0,
+      0,
+      76,
+      0,
+      0,
+      25,
+      24,
+      73,
+      0,
+      6,
+      27,
+      26,
+      65,
+      0,
+      19,
+      22,
+      81,
+      0,
+      0,
+      24,
+      26,
+      73,
+      0,
+      6,
+      27,
+      27,
+      63,
+      0,
+      17,
+      26,
+      82,
+      0,
+      0,
+      22,
+      27,
+      74,
+      0,
+      4,
+      28,
+      31,
+      21,
+      29,
+      23,
+      32,
+      138,
+      0,
+      0,
+      0,
+      0,
+      15,
+      26,
+      30,
+      22,
+      29,
+      122,
+      0,
+      0,
+      1,
+      10,
+      86,
+      0,
+      0,
+      16,
+      77,
+      0,
+      5,
+      23,
+      26,
+      70,
+      0,
+      10,
+      25,
+      0,
+      0,
+      0,
+      18,
+      23,
+      82,
+      0,
+      0,
+      23,
+      27,
+      89,
+      0,
+      0,
+      16,
+      148,
+      0,
+      0,
+      0,
+      0,
+      10,
+      72,
+      0,
+      7,
+      27,
+      69,
+      0,
+      10,
+      26,
+      98,
+      1,
+      0,
+      7,
+      26,
+      78,
+      0,
+      1,
+      27,
+      26,
+      78,
+      0,
+      5,
+      22,
+      82,
+      0,
+      0,
+      26,
+      29,
+      70,
+      0,
+      2,
+      30,
+      27,
+      76,
+      0,
+      0,
+      143,
+      0,
+      0,
+      0,
+      0,
+      15,
+      137,
+      0,
+      0,
+      0,
+      0,
+      21,
+      34,
+      18,
+      27,
+      155,
+      1,
+      0,
+      0,
+      0,
+      11,
+      58,
+      0,
+      12,
+      26,
+      64,
+      0,
+      18,
+      24,
+      83,
+      0,
+      0,
+      21,
+      27,
+      73,
+      0,
+      6,
+      27,
+      27,
+      63,
+      63,
+      63
+    ]
+  },
+  "usage": {
+    "input": 8580,
+    "output": 522,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

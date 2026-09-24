@@ -1,0 +1,48 @@
+{
+  "artifact": {
+    "bytes": 12491,
+    "sha256": "3cc6596e5c2b1eb8cbebbe006c00984fceb082086dc734774a00487b20c5a18b",
+    "version": "a0"
+  },
+  "buildAttempts": 1,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "course-escargots",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [],
+  "spec": {
+    "gameType": "arcade-run",
+    "input": "tap-anywhere",
+    "lang": "fr",
+    "loop": "L'escargot avance tout seul sur la piste, tape l'écran pour sauter les obstacles et ramasser les feuilles. Une collision termine la course et affiche le score final.",
+    "slug": "course-d-escargots",
+    "style": "risograph",
+    "title": "Course d'Escargots"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 15438,
+      "output": 6723
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 7288,
+      "output": 326
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 0,
+      "output": 0
+    }
+  },
+  "wallMs": 54265
+}

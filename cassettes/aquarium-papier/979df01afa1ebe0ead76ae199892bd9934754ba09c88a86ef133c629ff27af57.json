@@ -1,0 +1,386 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:979df01afa1ebe0ead76ae199892bd9934754ba09c88a86ef133c629ff27af57",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nUn aquarium où l'on dépose des poissons en papier d'un simple toucher. Un compteur affiche combien nagent, et un bouton vide le bocal.\n\nPlan:\n{\"gameType\":\"toy-box\",\"input\":\"tap-anywhere\",\"lang\":\"fr\",\"loop\":\"Touchez le bocal pour y déposer des poissons en papier qui se mettent à nager, un compteur affiche combien il y en a. Un bouton permet de vider le bocal et de recommencer.\",\"slug\":\"aquarium-de-papier\",\"style\":\"paper-cut\",\"title\":\"Aquarium de Papier\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"fr\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Aquarium de Papier</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     background: #f4ecd8;\n14|     overflow: hidden;\n15|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n16|   }\n17|   #wrap {\n18|     position: fixed;\n19|     inset: 0;\n20|     display: flex;\n21|     flex-direction: column;\n22|     align-items: center;\n23|   }\n24|   canvas {\n25|     touch-action: none;\n26|     display: block;\n27|   }\n28|   #hud {\n29|     position: absolute;\n30|     top: 10px;\n31|     left: 0;\n32|     right: 0;\n33|     display: flex;\n34|     justify-content: space-between;\n35|     align-items: center;\n36|     padding: 0 14px;\n37|     box-sizing: border-box;\n38|     pointer-events: none;\n39|   }\n40|   #counter {\n41|     background: #3d405b;\n42|     color: #f4ecd8;\n43|     font-weight: 700;\n44|     font-size: 18px;\n45|     padding: 10px 16px;\n46|     border-radius: 12px;\n47|     box-shadow: 2px 3px 6px rgba(0,0,0,0.25);\n48|   }\n49|   #clearBtn {\n50|     pointer-events: auto;\n51|     background: #e07a5f;\n52|     color: #f4ecd8;\n53|     border: none;\n54|     font-weight: 700;\n55|     font-size: 16px;\n56|     padding: 12px 18px;\n57|     border-radius: 12px;\n58|     box-shadow: 2px 3px 6px rgba(0,0,0,0.25);\n59|     min-height: 44px;\n60|     min-width: 44px;\n61|     cursor: pointer;\n62|   }\n63|   #clearBtn:active {\n64|     transform: translateY(1px);\n65|   }\n66| </style>\n67| </head>\n68| <body>\n69| <div id=\"wrap\">\n70|   <div id=\"hud\">\n71|     <div id=\"counter\">Poissons : 0</div>\n72|     <button id=\"clearBtn\">Vider le bocal</button>\n73|   </div>\n74|   <canvas id=\"game\"></canvas>\n75| </div>\n76| <script>\n77| const CARTRIDGE = {\n78|   send(type, payload = {}) {\n79|     window.parent.postMessage(\n80|       { source: \"cartridge\", v: 1, type, payload },\n81|       \"*\",\n82|     );\n83|   },\n84| };\n85| </script>\n86| <script>\n87| (function () {\n88|   const canvas = document.getElementById(\"game\");\n89|   const ctx = canvas.getContext(\"2d\");\n90|   const counterEl = document.getElementById(\"counter\");\n91|   const clearBtn = document.getElementById(\"clearBtn\");\n92| \n93|   let dpr = Math.max(1, window.devicePixelRatio || 1);\n94|   let W = 0, H = 0;\n95| \n96|   // paper-cut palette\n97|   const COLORS = {\n98|     bg: \"#f4ecd8\",\n99|     layer: \"#e07a5f\",\n100|     accent: \"#3d405b\",\n101|     highlight: \"#81b29a\"\n102|   };\n103| \n104|   const fishColors = [\"#e07a5f\", \"#81b29a\", \"#3d405b\", \"#f2cc8f\", \"#c98474\"];\n105| \n106|   let paused = false;\n107|   let running = false;\n108|   let started = false;\n109| \n110|   // seeded jitter helper so shapes don't flicker\n111|   function seededRandom(seed) {\n112|     let s = seed % 2147483647;\n113|     if (s <= 0) s += 2147483646;\n114|     return function () {\n115|       s = (s * 16807) % 2147483647;\n116|       return (s - 1) / 2147483646;\n117|     };\n118|   }\n119| \n120|   const fish = []; // {x,y,baseY,angle,speed,phase,color,size,jitterSeed}\n121|   let tally = 0;\n122| \n123|   function jarBounds() {\n124|     // jar occupies central area\n125|     const margin = Math.min(W, H) * 0.08;\n126|     const jarW = W - margin * 2;\n127|     const jarH = H * 0.62;\n128|     const jarX = margin;\n129|     const jarY = H * 0.18;\n130|     return { x: jarX, y: jarY, w: jarW, h: jarH };\n131|   }\n132| \n133|   function resize() {\n134|     dpr = Math.max(1, window.devicePixelRatio || 1);\n135|     W = window.innerWidth;\n136|     H = window.innerHeight;\n137|     canvas.width = Math.floor(W * dpr);\n138|     canvas.height = Math.floor(H * dpr);\n139|     canvas.style.width = W + \"px\";\n140|     canvas.style.height = H + \"px\";\n141|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n142|   }\n143|   window.addEventListener(\"resize\", resize);\n144|   resize();\n145| \n146|   function makeFish(x, y) {\n147|     const rnd = seededRandom(Math.floor(x * 1000 + y * 7 + tally * 91 + 1));\n148|     const size = 16 + rnd() * 10;\n149|     const color = fishColors[Math.floor(rnd() * fishColors.length)];\n150|     return {\n151|       x, y,\n152|       baseY: y,\n153|       angle: rnd() * Math.PI * 2,\n154|       dir: rnd() > 0.5 ? 1 : -1,\n155|       speed: 0.4 + rnd() * 0.6,\n156|       phase: rnd() * Math.PI * 2,\n157|       wobble: 6 + rnd() * 6,\n158|       color,\n159|       size,\n160|       seed: Math.floor(rnd() * 100000)\n161|     };\n162|   }\n163| \n164|   function place(x, y) {\n165|     const f = makeFish(x, y);\n166|     fish.push(f);\n167|     tally += 1;\n168|     counterEl.textContent = \"Poissons : \" + tally;\n169|     CARTRIDGE.send(\"score\", { value: tally });\n170|   }\n171| \n172|   // Single clear-the-table function: used by both the visible button\n173|   // and the host \"reset\" command.\n174|   function clearTable() {\n175|     fish.length = 0;\n176|     tally = 0;\n177|     counterEl.textContent = \"Poissons : 0\";\n178|     CARTRIDGE.send(\"score\", { value: 0 });\n179|     started = false;\n180|     running = false;\n181|     draw();\n182|   }\n183| \n184|   clearBtn.addEventListener(\"click\", function (e) {\n185|     e.stopPropagation();\n186|     clearTable();\n187|   });\n188| \n189|   function jitterPoint(x, y, seed, amt) {\n190|     const rnd = seededRandom(seed);\n191|     return [x + (rnd() - 0.5) * amt * 2, y + (rnd() - 0.5) * amt * 2];\n192|   }\n193| \n194|   function drawRoundedJitterRect(x, y, w, h, r, seed, amt) {\n195|     const pts = [\n196|       [x + r, y],\n197|       [x + w - r, y],\n198|       [x + w, y + r],\n199|       [x + w, y + h - r],\n200|       [x + w - r, y + h],\n201|       [x + r, y + h],\n202|       [x, y + h - r],\n203|       [x, y + r]\n204|     ];\n205|     ctx.beginPath();\n206|     for (let i = 0; i < pts.length; i++) {\n207|       const [jx, jy] = jitterPoint(pts[i][0], pts[i][1], seed + i, amt);\n208|       if (i === 0) ctx.moveTo(jx, jy);\n209|       else ctx.lineTo(jx, jy);\n210|     }\n211|     ctx.closePath();\n212|   }\n213| \n214|   function drawBackground() {\n215|     ctx.fillStyle = COLORS.bg;\n216|     ctx.fillRect(0, 0, W, H);\n217|   }\n218| \n219|   function drawTitle() {\n220|     ctx.save();\n221|     ctx.fillStyle = COLORS.accent;\n222|     ctx.font = \"bold \" + Math.round(Math.min(W, H) * 0.05) + \"px sans-serif\";\n223|     ctx.textAlign = \"center\";\n224|     ctx.textBaseline = \"middle\";\n225|     const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 300);\n226|     ctx.globalAlpha = pulse;\n227|     ctx.fillText(\"Touchez pour commencer\", W / 2, H * 0.12);\n228|     ctx.globalAlpha = 1;\n229|     ctx.restore();\n230|   }\n231| \n232|   function drawJar(bounds) {\n233|     const { x, y, w, h } = bounds;\n234|     // shadow layer behind jar\n235|     ctx.save();\n236|     ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n237|     ctx.shadowBlur = 6;\n238|     ctx.shadowOffsetY = 3;\n239| \n240|     // jar body - paper layer\n241|     ctx.fillStyle = \"#ffffff\";\n242|     ctx.globalAlpha = 0.55;\n243|     drawRoundedJitterRect(x, y, w, h, Math.min(w, h) * 0.08, 501, 1.5);\n244|     ctx.fill();\n245|     ctx.globalAlpha = 1;\n246|     ctx.restore();\n247| \n248|     // jar rim (paper strip)\n249|     ctx.save();\n250|     ctx.fillStyle = COLORS.layer;\n251|     ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n252|     ctx.shadowBlur = 5;\n253|     ctx.shadowOffsetY = 2;\n254|     const rimH = h * 0.06;\n255|     drawRoundedJitterRect(x - w * 0.03, y - rimH * 0.4, w * 1.06, rimH, rimH * 0.4, 502, 1.5);\n256|     ctx.fill();\n257|     ctx.restore();\n258| \n259|     // outline suggestion via slightly darker inner card edge (thin, not glow)\n260|     ctx.save();\n261|     ctx.strokeStyle = COLORS.accent;\n262|     ctx.lineWidth = 1.5;\n263|     ctx.globalAlpha = 0.5;\n264|     drawRoundedJitterRect(x, y, w, h, Math.min(w, h) * 0.08, 501, 1.5);\n265|     ctx.stroke();\n266|     ctx.restore();\n267|   }\n268| \n269|   function drawWaterLine(bounds) {\n270|     const { x, y, w, h } = bounds;\n271|     const waterY = y + h * 0.12;\n272|     ctx.save();\n273|     ctx.fillStyle = COLORS.highlight;\n274|     ctx.globalAlpha = 0.35;\n275|     drawRoundedJitterRect(x + 2, waterY, w - 4, h * 0.85, Math.min(w, h) * 0.06, 777, 1.2);\n276|     ctx.fill();\n277|     ctx.globalAlpha = 1;\n278|     ctx.restore();\n279|   }\n280| \n281|   function drawFishShape(f, t) {\n282|     const wob = Math.sin(t * 0.002 * f.speed + f.phase) * f.wobble;\n283|     const px = f.x + wob * f.dir * 0.2;\n284|     const py = f.baseY + Math.sin(t * 0.0015 * f.speed + f.phase * 1.3) * 8;\n285|     const size = f.size;\n286|     const dir = f.dir;\n287| \n288|     ctx.save();\n289|     ctx.translate(px, py);\n290|     ctx.scale(dir, 1);\n291|     ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n292|     ctx.shadowBlur = 4;\n293|     ctx.shadowOffsetY = 2;\n294| \n295|     // body\n296|     ctx.fillStyle = f.color;\n297|     ctx.beginPath();\n298|     const bodyPts = [\n299|       [-size, 0],\n300|       [-size * 0.3, -size * 0.55],\n301|       [size * 0.7, -size * 0.3],\n302|       [size, 0],\n303|       [size * 0.7, size * 0.3],\n304|       [-size * 0.3, size * 0.55]\n305|     ];\n306|     for (let i = 0; i < bodyPts.length; i++) {\n307|       const [jx, jy] = jitterPoint(bodyPts[i][0], bodyPts[i][1], f.seed + i, 1.2);\n308|       if (i === 0) ctx.moveTo(jx, jy);\n309|       else ctx.lineTo(jx, jy);\n310|     }\n311|     ctx.closePath();\n312|     ctx.fill();\n313| \n314|     // tail\n315|     ctx.beginPath();\n316|     ctx.moveTo(-size, 0);\n317|     ctx.lineTo(-size * 1.5, -size * 0.4);\n318|     ctx.lineTo(-size * 1.5, size * 0.4);\n319|     ctx.closePath();\n320|     ctx.fill();\n321| \n322|     // eye\n323|     ctx.shadowBlur = 0;\n324|     ctx.fillStyle = COLORS.accent;\n325|     ctx.beginPath();\n326|     ctx.arc(size * 0.55, -size * 0.05, size * 0.09, 0, Math.PI * 2);\n327|     ctx.fill();\n328| \n329|     ctx.restore();\n330|   }\n331| \n332|   function draw() {\n333|     const t = Date.now();\n334|     drawBackground();\n335|     const bounds = jarBounds();\n336|     drawWaterLine(bounds);\n337| \n338|     // clip fish to jar interior\n339|     ctx.save();\n340|     drawRoundedJitterRect(bounds.x + 3, bounds.y + 3, bounds.w - 6, bounds.h - 6, Math.min(bounds.w, bounds.h) * 0.07, 501, 1.5);\n341|     ctx.clip();\n342|     for (let i = 0; i < fish.length; i++) {\n343|       drawFishShape(fish[i], t + i * 37);\n344|     }\n345|     ctx.restore();\n346| \n347|     drawJar(bounds);\n348| \n349|     if (!started) {\n350|       drawTitle();\n351|     }\n352|   }\n353| \n354|   function settle() {\n355|     // fish positions animate purely by time in draw(); nothing to settle physically\n356|   }\n357| \n358|   function insideJar(x, y) {\n359|     const b = jarBounds();\n360|     return x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h;\n361|   }\n362| \n363|   function onTap(evt) {\n364|     evt.preventDefault();\n365|     if (paused) return;\n366|     const rect = canvas.getBoundingClientRect();\n367|     const x = evt.clientX - rect.left;\n368|     const y = evt.clientY - rect.top;\n369| \n370|     if (!started) {\n371|       started = true;\n372|       running = true;\n373|       CARTRIDGE.send(\"start\");\n374|       // also place a fish on first tap if inside jar\n375|       if (insideJar(x, y)) place(x, y);\n376|       return;\n377|     }\n378|     if (insideJar(x, y)) {\n379|       place(x, y);\n380|     }\n381|   }\n382| \n383|   canvas.style.touchAction = \"none\";\n384|   canvas.addEventListener(\"pointerdown\", onTap);\n385| \n386|   window.addEventListener(\"message\", function (event) {\n387|     const data = event.data;\n388|     if (!data || data.source !== \"cartridge-host\") return;\n389|     if (data.type === \"pause\") paused = true;\n390|     if (data.type === \"resume\") paused = false;\n391|     if (data.type === \"reset\") clearTable();\n392|   });\n393| \n394|   function frame() {\n395|     if (!paused) settle();\n396|     draw();\n397|     requestAnimationFrame(frame);\n398|   }\n399| \n400|   CARTRIDGE.send(\"boot\", { title: \"Aquarium de Papier\", gameType: \"toy-box\", lang: \"fr\" });\n401|   CARTRIDGE.send(\"start\");\n402|   requestAnimationFrame(frame);\n403| })();\n404| </script>\n405| </body>\n406| </html>\n407| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNqUqUqEWQDQ27mL3VFf\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":6596,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}   }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 71\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"Po\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"iss\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ons :\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 72, \\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"quote\\\": \\\"V\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ider\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" le\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boc\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"al\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 164\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" place\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(x, y)\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"}, {\\\"line\\\": 281\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" draw\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"FishShape(f\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", t) {\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" key\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns and verbs from the brief\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fish\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" are\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" created\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" placed in\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the jar via\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" touch\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", a\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" counter\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fish\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" t\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally, and a\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" button\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cl\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ears the aqu\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"arium.\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 227\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tou\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"chez\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pour comm\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"encer\\\\\\\", W\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" /\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2, H *\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0.12\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 349\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (!\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"started) \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n       \"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"draw\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Title();\\\\n     }\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"On\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen text\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicitly\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to touch to begin\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and this\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instruction\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is displayed\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" before\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" gameplay\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" starts\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 168\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"counter\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"El\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".textContent = \\\\\\\"Po\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"issons : \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally;\\\"}, {\\\"line\\\": 281\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function drawF\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ishShape(f, t) {\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 394\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"() {\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"When\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player t\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aps inside\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the jar, the counter\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the fish are\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drawn\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" next\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" animation\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame via\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the continuous\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" request\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"AnimationFrame loop.\\\"}, \\\"fail\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": null\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\"}         }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0            }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":6596,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":390}    }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"             }\n\n",
+    "gapsMs": [
+      0,
+      1,
+      1,
+      1,
+      228,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      13,
+      128,
+      128,
+      128,
+      86,
+      86,
+      86,
+      86,
+      86,
+      28,
+      22,
+      27,
+      26,
+      33,
+      20,
+      27,
+      58,
+      58,
+      22,
+      28,
+      25,
+      26,
+      26,
+      26,
+      27,
+      26,
+      26,
+      26,
+      28,
+      29,
+      22,
+      29,
+      27,
+      23,
+      26,
+      28,
+      29,
+      23,
+      27,
+      25,
+      27,
+      25,
+      29,
+      23,
+      27,
+      26,
+      26,
+      27,
+      27,
+      26,
+      25,
+      32,
+      22,
+      25,
+      28,
+      39,
+      18,
+      21,
+      26,
+      30,
+      23,
+      29,
+      46,
+      18,
+      12,
+      27,
+      26,
+      28,
+      39,
+      12,
+      39,
+      18,
+      22,
+      26,
+      29,
+      26,
+      24,
+      26,
+      27,
+      28,
+      37,
+      14,
+      27,
+      63,
+      63,
+      17,
+      24,
+      32,
+      22,
+      25,
+      28,
+      29,
+      22,
+      27,
+      27,
+      29,
+      23,
+      25,
+      27,
+      28,
+      29,
+      22,
+      26,
+      26,
+      27,
+      27,
+      26,
+      28,
+      27,
+      31,
+      0,
+      24,
+      26,
+      27,
+      26,
+      26,
+      26,
+      28,
+      25,
+      27,
+      25,
+      32,
+      21,
+      27,
+      27,
+      25,
+      26,
+      26,
+      27,
+      26,
+      26,
+      27,
+      28,
+      24,
+      133,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 6596,
+    "output": 390,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

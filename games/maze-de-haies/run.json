@@ -1,7 +1,7 @@
 {
   "artifact": {
-    "bytes": 17692,
-    "sha256": "40cb9383ce52720a33388a2da62c5fd009706751df55ce519d476da0941b8a82",
+    "bytes": 17284,
+    "sha256": "5e1b9c413d5a0629f4399428cb611456e0013dcd2950ba08293a1fccdeac89e0",
     "version": "a0"
   },
   "buildAttempts": 1,
@@ -18,7 +18,7 @@
     "gameType": "puzzle-board",
     "input": "swipe-lanes",
     "lang": "fr",
-    "loop": "Glissez le doigt pour guider le hérisson case par case dans les haies et ramasser des pommes. Atteignez la sortie avant d'épuiser vos pas, sinon la partie est bloquée.",
+    "loop": "Glissez le doigt pour guider le hérisson case par case dans les haies, ramassez des pommes pour marquer des points et atteignez la sortie avant d'épuiser vos pas.",
     "slug": "le-labyrinthe-du-herisson",
     "style": "paper-cut",
     "title": "Le Labyrinthe du Hérisson"
@@ -28,14 +28,14 @@
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 17559,
-      "output": 8713
+      "input": 17967,
+      "output": 9128
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 8323,
-      "output": 401
+      "input": 8325,
+      "output": 404
     },
     "repair": {
       "cacheRead": 0,
@@ -44,5 +44,5 @@
       "output": 0
     }
   },
-  "wallMs": 72097
+  "wallMs": 73084
 }

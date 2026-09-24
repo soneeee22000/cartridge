@@ -1,0 +1,165 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:16016d9f0c2f93825ce685b6e42b2e43f66ef06c3bff6c0ab2167de782dd036c",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Comet Dodger\",\n  \"slug\": \"comet-dodger\",\n  \"lang\": \"en\",\n  \"gameType\": \"arcade-run\",\n  \"loop\": \"Drag your ship left and right to dodge falling comets and survive as long as possible while your score climbs. Colliding with a comet ends the run.\",\n  \"input\": \"drag-follow\",\n  \"style\": \"chalkboard\"\n}\n```\n\n## Cards\n\n### Card `arcade-run`\n\n# Arcade run\n\nThe world scrolls on its own, the player dodges and gathers, and one mistake ends the run.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `required`    |\n| level                | `forbidden`   |\n| end                  | `required`    |\n| end reasons          | `lose`        |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above at least once: `score` as points change and `end` when the run is over. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden`. A run has no levels, so ramp difficulty with speed instead. <!-- rule:E1-16 -->\n- The only allowed `end` reason is `lose`. <!-- rule:E1-17 -->\n\n## Fairness\n\nA player who does nothing must survive for a few seconds after `start`. Spawn the first hazard well ahead of the player and keep the opening lane clear.\n\n## Loop skeleton\n\n```js\nlet last = 0,\n  running = false,\n  paused = false,\n  score = 0;\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 0.05);\n  last = now;\n  if (running && !paused) {\n    advance(dt);\n    collide();\n  }\n  draw();\n  requestAnimationFrame(frame);\n}\nfunction crash() {\n  running = false;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n```\n\nKeep something moving on screen while idle (clouds, a pulsing prompt) so the run never looks frozen.\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `chalkboard`\n\n# Chalkboard\n\nThe game looks sketched in chalk on a school slate.\n\n## Palette\n\n| role   | colour    |\n| ------ | --------- |\n| slate  | `#2f3e3a` |\n| chalk  | `#eeeae0` |\n| accent | `#f2c14e` |\n| second | `#8fc1e3` |\n\n## Primitives\n\n- Stroked paths with `lineCap = \"round\"` and a line width of 3 to 5 pixels.\n- Draw each stroke twice with a one-pixel offset and lower alpha for a dusty edge.\n- Hatching (parallel short lines) instead of solid fills.\n- A faint smudge layer: a few large, very transparent chalk-coloured ellipses behind the play field.\n\n## Avoid\n\n- Solid filled shapes larger than a thumb.\n- Perfectly straight machine lines; add a small wobble.\n- More than two accent colours on screen at once.\n\n### Card `drag-follow`\n\n# Drag follow\n\nThe player presses on a piece and it trails the pointer until release. Good for steering, sorting and placing.\n\n- Register `pointerdown`, `pointermove` and `pointerup` on the canvas and capture the pointer on press. <!-- rule:E1-22 -->\n- Convert client coordinates to canvas coordinates with `getBoundingClientRect()` and the device pixel ratio.\n- Ease towards the target instead of snapping, so small jitters do not shake the piece.\n\n```js\nlet held = null;\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  held = pieceAt(toCanvas(event));\n  if (held) canvas.setPointerCapture(event.pointerId);\n});\ncanvas.addEventListener(\"pointermove\", (event) => {\n  if (held) held.target = toCanvas(event);\n});\ncanvas.addEventListener(\"pointerup\", () => {\n  held = null;\n});\n```\n\nDrop the piece on `pointercancel` as well, so a system gesture never leaves it stuck to the finger.\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll build the complete game page now."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_011X7RhWhWeou3EpNm1HfA5d",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Comet Dodger</title>\n<style>\n  html, body {\n    margin: 0;\n    padding: 0;\n    width: 100%;\n    height: 100%;\n    background: #2f3e3a;\n    overflow: hidden;\n    touch-action: none;\n  }\n  canvas {\n    display: block;\n    width: 100vw;\n    height: 100dvh;\n    background: #2f3e3a;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<script>\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n</script>\n<script>\n(function(){\n  const canvas = document.getElementById('game');\n  const ctx = canvas.getContext('2d');\n\n  const COL_SLATE = '#2f3e3a';\n  const COL_CHALK = '#eeeae0';\n  const COL_ACCENT = '#f2c14e';\n  const COL_SECOND = '#8fc1e3';\n\n  let dpr = Math.max(1, window.devicePixelRatio || 1);\n  let W = 0, H = 0;\n\n  function resize() {\n    W = window.innerWidth;\n    H = window.innerHeight;\n    dpr = Math.max(1, window.devicePixelRatio || 1);\n    canvas.width = Math.floor(W * dpr);\n    canvas.height = Math.floor(H * dpr);\n    canvas.style.width = W + 'px';\n    canvas.style.height = H + 'px';\n    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n  }\n  window.addEventListener('resize', resize);\n  resize();\n\n  // ---------- state ----------\n  let last = 0;\n  let running = false;\n  let paused = false;\n  let started = false;\n  let score = 0;\n  let scoreSent = -1;\n  let stateName = 'title'; // title, playing, dead\n\n  let elapsed = 0;\n  let speedMult = 1;\n  let idleTimer = 0;\n  let hasMoved = false;\n\n  let ship = { x: 0, y: 0, target: 0, r: 22 };\n  let comets = [];\n  let spawnTimer = 0;\n  let spawnInterval = 1.4;\n\n  let smudges = [];\n\n  function makeSmudges() {\n    smudges = [];\n    for (let i = 0; i < 5; i++) {\n      smudges.push({\n        x: Math.random() * W,\n        y: Math.random() * H,\n        r: 80 + Math.random() * 160,\n        a: 0.02 + Math.random() * 0.03\n      });\n    }\n  }\n\n  function resetGameState() {\n    score = 0;\n    scoreSent = -1;\n    elapsed = 0;\n    speedMult = 1;\n    comets = [];\n    spawnTimer = 0;\n    spawnInterval = 1.4;\n    ship.x = W / 2;\n    ship.y = H - 100;\n    ship.target = ship.x;\n    idleTimer = 0;\n    hasMoved = false;\n    makeSmudges();\n  }\n\n  function backToTitle() {\n    running = false;\n    paused = false;\n    started = false;\n    stateName = 'title';\n    resetGameState();\n  }\n\n  resetGameState();\n\n  // ---------- input ----------\n  let held = false;\n\n  function toCanvas(evt) {\n    const rect = canvas.getBoundingClientRect();\n    return {\n      x: (evt.clientX - rect.left),\n      y: (evt.clientY - rect.top)\n    };\n  }\n\n  function startPlay() {\n    if (started) return;\n    started = true;\n    running = true;\n    paused = false;\n    stateName = 'playing';\n    resetGameState();\n    CARTRIDGE.send('start');\n  }\n\n  canvas.addEventListener('pointerdown', (evt) => {\n    if (stateName === 'title' || stateName === 'dead') {\n      startPlay();\n    }\n    const p = toCanvas(evt);\n    ship.target = p.x;\n    held = true;\n    hasMoved = true;\n    try { canvas.setPointerCapture(evt.pointerId); } catch(e) {}\n  });\n  canvas.addEventListener('pointermove', (evt) => {\n    if (held) {\n      const p = toCanvas(evt);\n      ship.target = p.x;\n      hasMoved = true;\n    }\n  });\n  function release() { held = false; }\n  canvas.addEventListener('pointerup', release);\n  canvas.addEventListener('pointercancel', release);\n\n  // ---------- host messages ----------\n  window.addEventListener('message', (event) => {\n    const data = event.data;\n    if (!data || data.source !== 'cartridge-host') return;\n    if (data.type === 'pause') paused = true;\n    if (data.type === 'resume') paused = false;\n    if (data.type === 'reset') backToTitle();\n  });\n\n  // ---------- chalk drawing helpers ----------\n  function wobble(seed) {\n    return Math.sin(seed * 12.9898) * 0.6;\n  }\n\n  function chalkLine(x1, y1, x2, y2, color, width) {\n    ctx.lineCap = 'round';\n    ctx.lineJoin = 'round';\n    for (let pass = 0; pass < 2; pass++) {\n      const off = pass === 0 ? 0 : 1;\n      const alpha = pass === 0 ? 0.9 : 0.35;\n      ctx.strokeStyle = color;\n      ctx.globalAlpha = alpha;\n      ctx.lineWidth = width;\n      ctx.beginPath();\n      ctx.moveTo(x1 + off, y1 + off * 0.5);\n      ctx.lineTo(x2 + off, y2 + off * 0.5);\n      ctx.stroke();\n    }\n    ctx.globalAlpha = 1;\n  }\n\n  function chalkCircle(cx, cy, r, color, width, segs) {\n    segs = segs || 20;\n    for (let pass = 0; pass < 2; pass++) {\n      const off = pass === 0 ? 0 : 1;\n      const alpha = pass === 0 ? 0.9 : 0.3;\n      ctx.strokeStyle = color;\n      ctx.globalAlpha = alpha;\n      ctx.lineWidth = width;\n      ctx.lineCap = 'round';\n      ctx.beginPath();\n      for (let i = 0; i <= segs; i++) {\n        const t = (i / segs) * Math.PI * 2;\n        const wob = wobble(i + cx + cy) * 1.2;\n        const x = cx + Math.cos(t) * r + wob + off;\n        const y = cy + Math.sin(t) * r + wob + off * 0.5;\n        if (i === 0) ctx.moveTo(x, y);\n        else ctx.lineTo(x, y);\n      }\n      ctx.stroke();\n    }\n    ctx.globalAlpha = 1;\n  }\n\n  function hatchCircle(cx, cy, r, color, count) {\n    ctx.strokeStyle = color;\n    ctx.lineWidth = 2;\n    ctx.globalAlpha = 0.5;\n    for (let i = 0; i < count; i++) {\n      const ang = (i / count) * Math.PI * 2 + wobble(i) * 0.1;\n      const inner = r * 0.3;\n      const outer = r * 0.85;\n      const x1 = cx + Math.cos(ang) * inner;\n      const y1 = cy + Math.sin(ang) * inner;\n      const x2 = cx + Math.cos(ang) * outer;\n      const y2 = cy + Math.sin(ang) * outer;\n      ctx.beginPath();\n      ctx.moveTo(x1, y1);\n      ctx.lineTo(x2, y2);\n      ctx.stroke();\n    }\n    ctx.globalAlpha = 1;\n  }\n\n  function drawSmudges() {\n    for (const s of smudges) {\n      ctx.beginPath();\n      ctx.fillStyle = COL_CHALK;\n      ctx.globalAlpha = s.a;\n      ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);\n      ctx.fill();\n      ctx.globalAlpha = 1;\n    }\n  }\n\n  // ---------- ship ----------\n  function drawShip() {\n    const x = ship.x, y = ship.y;\n    // body triangle-ish\n    chalkLine(x, y - 26, x - 18, y + 18, COL_CHALK, 4);\n    chalkLine(x - 18, y + 18, x + 18, y + 18, COL_CHALK, 4);\n    chalkLine(x + 18, y + 18, x, y - 26, COL_CHALK, 4);\n    // cockpit\n    chalkCircle(x, y - 2, 7, COL_SECOND, 3, 12);\n    // flame flicker\n    const flick = 6 + Math.sin(elapsed * 20) * 3;\n    chalkLine(x - 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);\n    chalkLine(x + 8, y + 18, x, y + 18 + flick, COL_ACCENT, 3);\n  }\n\n  // ---------- comets ----------\n  function spawnComet() {\n    const r = 16 + Math.random() * 18;\n    const x = r + Math.random() * (W - r * 2);\n    const speed = (120 + Math.random() * 80) * speedMult;\n    comets.push({ x, y: -r - 20, r, speed, rot: Math.random() * Math.PI });\n  }\n\n  function drawComet(c) {\n    ctx.save();\n    ctx.translate(c.x, c.y);\n    ctx.rotate(c.rot);\n    chalkCircle(0, 0, c.r, COL_CHALK, 3, 14);\n    hatchCircle(0, 0, c.r, COL_SECOND, 8);\n    ctx.restore();\n    // trailing streak\n    chalkLine(c.x, c.y - c.r, c.x - c.r * 0.5, c.y - c.r - 20, COL_ACCENT, 2);\n  }\n\n  // ---------- game logic ----------\n  function advance(dt) {\n    elapsed += dt;\n    speedMult = 1 + elapsed / 25;\n\n    // ease ship toward target\n    const dx = ship.target - ship.x;\n    ship.x += dx * Math.min(1, dt * 10);\n    ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));\n\n    if (!hasMoved) {\n      idleTimer += dt;\n    }\n\n    // spawn\n    spawnTimer -= dt;\n    if (spawnTimer <= 0) {\n      // fairness: don't spawn near player's opening lane during first 2s\n      if (elapsed > 1.8) {\n        spawnComet();\n      }\n      spawnInterval = Math.max(0.45, 1.4 - elapsed * 0.02);\n      spawnTimer = spawnInterval;\n    }\n\n    for (const c of comets) {\n      c.y += c.speed * dt;\n      c.rot += dt * 1.2;\n    }\n    comets = comets.filter(c => c.y - c.r < H + 40);\n\n    // score by survival time\n    score = Math.floor(elapsed * 10);\n    if (score !== scoreSent) {\n      scoreSent = score;\n      CARTRIDGE.send('score', { value: score });\n    }\n  }\n\n  function collide() {\n    for (const c of comets) {\n      const dx = c.x - ship.x;\n      const dy = c.y - ship.y;\n      const dist = Math.sqrt(dx * dx + dy * dy);\n      if (dist < c.r + ship.r * 0.7) {\n        crash();\n        return;\n      }\n    }\n  }\n\n  function crash() {\n    running = false;\n    stateName = 'dead';\n    CARTRIDGE.send('end', { reason: 'lose', value: score });\n  }\n\n  // ---------- drawing ----------\n  function drawBackground() {\n    ctx.fillStyle = COL_SLATE;\n    ctx.fillRect(0, 0, W, H);\n    drawSmudges();\n    // border frame like chalk edge\n    chalkLine(10, 10, W - 10, 10, COL_CHALK, 3);\n    chalkLine(10, H - 10, W - 10, H - 10, COL_CHALK, 3);\n    chalkLine(10, 10, 10, H - 10, COL_CHALK, 3);\n    chalkLine(W - 10, 10, W - 10, H - 10, COL_CHALK, 3);\n  }\n\n  function drawTitle() {\n    ctx.fillStyle = COL_CHALK;\n    ctx.textAlign = 'center';\n    ctx.font = 'bold 42px system-ui, sans-serif';\n    ctx.globalAlpha = 0.9;\n    ctx.fillText('Comet Dodger', W / 2, H / 2 - 60);\n    ctx.globalAlpha = 1;\n    ctx.font = '20px system-ui, sans-serif';\n    ctx.fillStyle = COL_SECOND;\n    const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;\n    ctx.globalAlpha = pulse;\n    ctx.fillText('Drag anywhere to steer and start', W / 2, H / 2);\n    ctx.globalAlpha = 1;\n\n    // drifting demo comet\n    const dcx = W / 2 + Math.sin(elapsed) * 60;\n    const dcy = H / 2 + 80 + Math.cos(elapsed * 0.7) * 10;\n    chalkCircle(dcx, dcy, 14, COL_CHALK, 3, 12);\n    hatchCircle(dcx, dcy, 14, COL_SECOND, 6);\n  }\n\n  function drawDead() {\n    ctx.fillStyle = COL_CHALK;\n    ctx.textAlign = 'center';\n    ctx.font = 'bold 36px system-ui, sans-serif';\n    ctx.fillText('Crashed!', W / 2, H / 2 - 40);\n    ctx.font = '22px system-ui, sans-serif';\n    ctx.fillStyle = COL_ACCENT;\n    ctx.fillText('Score: ' + score, W / 2, H / 2);\n    ctx.fillStyle = COL_SECOND;\n    const pulse = 0.6 + Math.sin(elapsed * 3) * 0.4;\n    ctx.globalAlpha = pulse;\n    ctx.font = '18px system-ui, sans-serif';\n    ctx.fillText('Tap to try again', W / 2, H / 2 + 40);\n    ctx.globalAlpha = 1;\n  }\n\n  function drawHUD() {\n    ctx.fillStyle = COL_CHALK;\n    ctx.textAlign = 'left';\n    ctx.font = '20px system-ui, sans-serif';\n    ctx.globalAlpha = 0.9;\n    ctx.fillText('Score: ' + score, 24, 42);\n    ctx.globalAlpha = 1;\n  }\n\n  function draw() {\n    drawBackground();\n\n    if (stateName === 'title') {\n      drawTitle();\n    } else if (stateName === 'playing') {\n      for (const c of comets) drawComet(c);\n      drawShip();\n      drawHUD();\n      if (paused) {\n        ctx.fillStyle = COL_CHALK;\n        ctx.textAlign = 'center';\n        ctx.font = 'bold 32px system-ui, sans-serif';\n        ctx.fillText('Paused', W / 2, H / 2);\n      }\n    } else if (stateName === 'dead') {\n      for (const c of comets) drawComet(c);\n      drawShip();\n      drawDead();\n    }\n  }\n\n  // ---------- main loop ----------\n  function frame(now) {\n    if (!last) last = now;\n    const dt = Math.min((now - last) / 1000, 0.05);\n    last = now;\n    if (running && !paused && stateName === 'playing') {\n      advance(dt);\n      collide();\n    } else if (stateName === 'title' || stateName === 'dead') {\n      elapsed += dt; // keep decorative motion alive\n    }\n    draw();\n    requestAnimationFrame(frame);\n  }\n\n  requestAnimationFrame((t) => {\n    last = t;\n    draw();\n    CARTRIDGE.send('boot', { title: 'Comet Dodger', gameType: 'arcade-run', lang: 'en' });\n    requestAnimationFrame(frame);\n  });\n})();\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_011X7RhWhWeou3EpNm1HfA5d",
+              "content": "{\"version\":\"a0\",\"bytes\":11637,\"sha256\":\"d01a5c636edb9f09fce18dbac4e9ff505cab4d17cf630a0b77d402863835f3ca\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNr4A9uFU4C1kZ3bazLX\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10222,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}       }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}  }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete Comet Dodger\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game page\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with chalk\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"board vis\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uals, drag-foll\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ow ste\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ering, and full\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge/\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"host\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" event hand\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ling.\"}              }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0    }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":10222,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":46,\"output_tokens_details\":{\"thinking_tokens\":0}}            }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      312,
+      0,
+      0,
+      0,
+      0,
+      0,
+      36,
+      96,
+      18,
+      16,
+      77,
+      77,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 10222,
+    "output": 46,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

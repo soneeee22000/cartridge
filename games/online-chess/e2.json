@@ -1,0 +1,20 @@
+{
+  "consoleErrors": [],
+  "detectors": {
+    "blank-frame": "pass",
+    "boot-handshake": "pass",
+    "console-error": "pass",
+    "idle-death": "pass",
+    "idle-static": "n/a",
+    "tap-unresponsive": "pass"
+  },
+  "longestPlaySeconds": 25,
+  "metrics": {
+    "bootMs": 32.19999998807907,
+    "distinctColours": 2330,
+    "firstEndSeconds": null,
+    "idleMotionRatio": 0.01839409722222222,
+    "lumaStddev": 23.60898681013573,
+    "tapMotionRatio": 0.18612847222222223
+  }
+}

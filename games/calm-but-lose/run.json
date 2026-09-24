@@ -1,0 +1,48 @@
+{
+  "artifact": {
+    "bytes": 11311,
+    "sha256": "7982bbd8d6cc38a331f802a3d5f4af3654143b2c7300eb7eb81c3f9ff4a6c51d",
+    "version": "a0"
+  },
+  "buildAttempts": 1,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "calm-but-lose",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [],
+  "spec": {
+    "gameType": "toy-box",
+    "input": "tap-anywhere",
+    "lang": "en",
+    "loop": "Tap falling stars to collect them into a glowing jar and watch the tally grow. There is no life to lose and no way to fail; press the clear button anytime to empty the jar and start fresh.",
+    "slug": "falling-stars",
+    "style": "risograph",
+    "title": "Falling Stars"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 14854,
+      "output": 5856
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 6925,
+      "output": 273
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 0,
+      "output": 0
+    }
+  },
+  "wallMs": 50071
+}

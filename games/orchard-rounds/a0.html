@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orchard Catch</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #f4ecd8;
+    overflow: hidden;
+    touch-action: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100dvh;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---- Palette ----
+  const COL_BG = '#f4ecd8';
+  const COL_LAYER = '#e07a5f';
+  const COL_ACCENT = '#3d405b';
+  const COL_HIGHLIGHT = '#81b29a';
+
+  // seeded jitter helper for paper-cut look
+  function seededRand(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return function() {
+      s = (s * 16807) % 2147483647;
+      return (s - 1) / 2147483646;
+    };
+  }
+  const jrand = seededRand(1337);
+  function jitter(v, amt) {
+    return v + (jrand() - 0.5) * amt * 2;
+  }
+
+  function roundedRectPath(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // ---- Game state ----
+  let state = 'title'; // 'title', 'playing', 'stageclear', 'gameover', 'win'
+  let paused = false;
+
+  let stage = 0;
+  let score = 0;
+  let caughtGood = 0;
+  let missed = 0;
+  let maxMissed = 5;
+  let goalCount = 5;
+  let windStrength = 0;
+  let stageTimer = 0;
+  let graceTimer = 0;
+
+  const STAGES = [
+    { goal: 5, wind: 0, maxMiss: 6, spawnRate: 1.1, fallSpeed: 140, badChance: 0.2 },
+    { goal: 7, wind: 30, maxMiss: 6, spawnRate: 1.0, fallSpeed: 160, badChance: 0.25 },
+    { goal: 9, wind: 55, maxMiss: 5, spawnRate: 0.85, fallSpeed: 185, badChance: 0.3 },
+    { goal: 11, wind: 80, maxMiss: 5, spawnRate: 0.75, fallSpeed: 210, badChance: 0.32 },
+    { goal: 13, wind: 110, maxMiss: 4, spawnRate: 0.65, fallSpeed: 235, badChance: 0.35 },
+  ];
+
+  // Basket (drag-follow piece)
+  const basket = {
+    x: 0, y: 0, targetX: 0,
+    w: 110, h: 60,
+  };
+
+  let held = false;
+
+  let fruits = []; // {x,y,vy,r,bad,wobble}
+  let spawnAccum = 0;
+  let particles = []; // simple burst effects
+
+  let messageFlashTimer = 0;
+  let messageFlashText = '';
+
+  function toCanvas(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left) * (rect.width ? 1 : 1),
+      y: (evt.clientY - rect.top)
+    };
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (state === 'title') {
+      startGame();
+      return;
+    }
+    if (state === 'gameover' || state === 'win') {
+      backToTitle();
+      return;
+    }
+    const p = toCanvas(event);
+    held = true;
+    basket.targetX = p.x;
+    try { canvas.setPointerCapture(event.pointerId); } catch(e) {}
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (held) {
+      const p = toCanvas(event);
+      basket.targetX = p.x;
+    }
+  });
+  function releasePointer() { held = false; }
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+
+  function backToTitle() {
+    state = 'title';
+    paused = false;
+    fruits = [];
+    particles = [];
+    score = 0;
+    stage = 0;
+    caughtGood = 0;
+    missed = 0;
+  }
+
+  function startGame() {
+    score = 0;
+    CARTRIDGE.send('start');
+    CARTRIDGE.send('score', { value: score });
+    enterStage(1);
+    state = 'playing';
+  }
+
+  function enterStage(next) {
+    stage = next;
+    const cfg = STAGES[Math.min(stage - 1, STAGES.length - 1)];
+    goalCount = cfg.goal;
+    windStrength = cfg.wind;
+    maxMissed = cfg.maxMiss;
+    caughtGood = 0;
+    missed = 0;
+    fruits = [];
+    spawnAccum = 0;
+    graceTimer = 2.0; // grace period before threats
+    basket.x = W / 2;
+    basket.targetX = W / 2;
+    CARTRIDGE.send('level', { index: stage });
+    flashMessage('Stage ' + stage + ': Catch ' + goalCount + ' apples');
+  }
+
+  function flashMessage(text) {
+    messageFlashText = text;
+    messageFlashTimer = 2.2;
+  }
+
+  function onGoalMet() {
+    if (stage >= STAGES.length) {
+      state = 'win';
+      CARTRIDGE.send('end', { reason: 'win', value: score });
+    } else {
+      state = 'stageclear';
+      stageTimer = 1.4;
+    }
+  }
+
+  function onStageFailed() {
+    state = 'gameover';
+    CARTRIDGE.send('end', { reason: 'lose', value: score });
+  }
+
+  function spawnFruit(cfg) {
+    const r = 20 + jrand() * 6;
+    const bad = jrand() < cfg.badChance;
+    fruits.push({
+      x: r + jrand() * (W - 2 * r),
+      y: -r - 10,
+      vy: cfg.fallSpeed * (0.85 + jrand() * 0.3),
+      r: r,
+      bad: bad,
+      wobble: jrand() * Math.PI * 2,
+      seed: jrand() * 1000
+    });
+  }
+
+  function spawnBurst(x, y, color) {
+    for (let i = 0; i < 8; i++) {
+      particles.push({
+        x, y,
+        vx: (jrand() - 0.5) * 160,
+        vy: (jrand() - 0.5) * 160 - 60,
+        life: 0.5 + jrand() * 0.3,
+        color
+      });
+    }
+  }
+
+  let lastTime = performance.now();
+  function loop(now) {
+    let dt = (now - lastTime) / 1000;
+    if (dt > 0.05) dt = 0.05;
+    lastTime = now;
+
+    if (!paused) update(dt);
+    render();
+
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt) {
+    // ease basket toward target
+    const ease = 0.18;
+    basket.x += (basket.targetX - basket.x) * Math.min(1, ease * (dt * 60));
+    basket.x = Math.max(basket.w / 2, Math.min(W - basket.w / 2, basket.x));
+
+    if (messageFlashTimer > 0) messageFlashTimer -= dt;
+
+    if (state === 'stageclear') {
+      stageTimer -= dt;
+      if (stageTimer <= 0) enterStage(stage + 1);
+      return;
+    }
+
+    if (state !== 'playing') return;
+
+    if (graceTimer > 0) graceTimer -= dt;
+
+    const cfg = STAGES[Math.min(stage - 1, STAGES.length - 1)];
+
+    spawnAccum += dt;
+    if (spawnAccum >= cfg.spawnRate) {
+      spawnAccum = 0;
+      spawnFruit(cfg);
+    }
+
+    const wind = graceTimer > 0 ? 0 : windStrength;
+
+    for (let i = fruits.length - 1; i >= 0; i--) {
+      const f = fruits[i];
+      f.y += f.vy * dt;
+      f.wobble += dt * 2;
+      f.x += Math.sin(f.wobble) * 8 * dt + wind * dt;
+      f.x = Math.max(f.r, Math.min(W - f.r, f.x));
+
+      // catch check
+      const basketTop = H - 90;
+      const basketBottom = H - 90 + basket.h * 0.6;
+      if (f.y + f.r >= basketTop && f.y - f.r <= basketBottom) {
+        if (Math.abs(f.x - basket.x) < basket.w / 2 + f.r * 0.4) {
+          if (f.bad) {
+            // empty basket: lose all progress this stage
+            spawnBurst(f.x, f.y, COL_ACCENT);
+            caughtGood = 0;
+            flashMessage('Rotten! Basket emptied');
+          } else {
+            spawnBurst(f.x, f.y, COL_HIGHLIGHT);
+            caughtGood++;
+            score += 10;
+            CARTRIDGE.send('score', { value: score });
+            if (caughtGood >= goalCount) {
+              fruits.splice(i, 1);
+              onGoalMet();
+              continue;
+            }
+          }
+          fruits.splice(i, 1);
+          continue;
+        }
+      }
+
+      if (f.y - f.r > H) {
+        fruits.splice(i, 1);
+        if (!f.bad) {
+          missed++;
+          if (missed >= maxMissed) {
+            onStageFailed();
+            return;
+          }
+        }
+      }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 300 * dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+
+  // ---- Drawing ----
+  function drawShadowLayer(drawFn) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    drawFn();
+    ctx.restore();
+  }
+
+  function drawBackground() {
+    ctx.fillStyle = COL_BG;
+    ctx.fillRect(0, 0, W, H);
+
+    // paper-cut hills as layered rounded shapes
+    drawShadowLayer(() => {
+      ctx.fillStyle = COL_HIGHLIGHT;
+      ctx.beginPath();
+      ctx.moveTo(0, H - 60);
+      for (let x = 0; x <= W; x += 40) {
+        const y = H - 60 - Math.sin(x * 0.02) * 10;
+        ctx.lineTo(jitter(x, 1.5), jitter(y, 1.5));
+      }
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
+    });
+  }
+
+  function drawBasket() {
+    const bx = basket.x - basket.w / 2;
+    const by = H - 90;
+    drawShadowLayer(() => {
+      ctx.fillStyle = COL_LAYER;
+      roundedRectPath(jitter(bx, 1.5), jitter(by, 1.5), basket.w, basket.h, 14);
+      ctx.fill();
+    });
+    // basket weave lines
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 1; i < 4; i++) {
+      const lx = bx + (basket.w / 4) * i;
+      ctx.moveTo(lx, by + 8);
+      ctx.lineTo(lx, by + basket.h - 8);
+    }
+    ctx.stroke();
+    // rim
+    drawShadowLayer(() => {
+      ctx.fillStyle = COL_ACCENT;
+      roundedRectPath(bx - 4, by - 6, basket.w + 8, 10, 5);
+      ctx.fill();
+    });
+  }
+
+  function drawFruit(f) {
+    const color = f.bad ? COL_ACCENT : COL_LAYER;
+    drawShadowLayer(() => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      const jx = jitter(f.x, 1.2), jy = jitter(f.y, 1.2);
+      ctx.arc(jx, jy, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    // leaf
+    ctx.fillStyle = COL_HIGHLIGHT;
+    ctx.beginPath();
+    ctx.ellipse(f.x + f.r * 0.3, f.y - f.r * 0.9, f.r * 0.35, f.r * 0.18, -0.6, 0, Math.PI * 2);
+    ctx.fill();
+    // stem
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(f.x, f.y - f.r);
+    ctx.lineTo(f.x, f.y - f.r * 1.3);
+    ctx.stroke();
+    if (f.bad) {
+      // rotten spots
+      ctx.fillStyle = COL_BG;
+      for (let s = 0; s < 3; s++) {
+        const ang = f.seed + s * 2;
+        const sx = f.x + Math.cos(ang) * f.r * 0.4;
+        const sy = f.y + Math.sin(ang) * f.r * 0.4;
+        ctx.beginPath();
+        ctx.arc(sx, sy, f.r * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life / 0.6);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawCardPlate(x, y, w, h, text, subtext) {
+    drawShadowLayer(() => {
+      ctx.fillStyle = COL_BG;
+      roundedRectPath(x, y, w, h, 16);
+      ctx.fill();
+    });
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 2;
+    roundedRectPath(x, y, w, h, 16);
+    ctx.stroke();
+
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillText(text, x + w / 2, y + h / 2 - (subtext ? 8 : -6));
+    if (subtext) {
+      ctx.font = '18px sans-serif';
+      ctx.fillText(subtext, x + w / 2, y + h / 2 + 24);
+    }
+  }
+
+  function drawHUD() {
+    // top card with stage info
+    const w = Math.min(360, W - 40);
+    const h = 64;
+    const x = (W - w) / 2;
+    const y = 12;
+    drawShadowLayer(() => {
+      ctx.fillStyle = COL_LAYER;
+      roundedRectPath(x, y, w, h, 14);
+      ctx.fill();
+    });
+    ctx.fillStyle = COL_BG;
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('Stage ' + stage, x + 14, y + 26);
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Apples ' + caughtGood + '/' + goalCount + '   Missed ' + missed + '/' + maxMissed, x + 14, y + 48);
+
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('Score ' + score, x + w - 14, y + 26);
+
+    if (messageFlashTimer > 0) {
+      ctx.globalAlpha = Math.min(1, messageFlashTimer);
+      const mw = Math.min(420, W - 40);
+      const mh = 56;
+      const mx = (W - mw) / 2;
+      const my = y + h + 14;
+      drawCardPlate(mx, my, mw, mh, messageFlashText, null);
+      ctx.globalAlpha = 1;
+    }
+
+    if (graceTimer > 0) {
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Get ready...', W / 2, H - 110);
+    }
+  }
+
+  function render() {
+    drawBackground();
+
+    if (state === 'title') {
+      drawCardPlate(W/2 - 180, H/2 - 90, 360, 180, 'Orchard Catch', 'Tap or drag to begin');
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = '15px sans-serif';
+      ctx.fillText('Catch good apples, dodge rotten ones!', W / 2, H / 2 + 120);
+      return;
+    }
+
+    for (const f of fruits) drawFruit(f);
+    drawBasket();
+    drawParticles();
+    drawHUD();
+
+    if (state === 'stageclear') {
+      drawCardPlate(W/2 - 170, H/2 - 60, 340, 120, 'Stage Clear!', 'Next stage incoming...');
+    }
+
+    if (state === 'gameover') {
+      drawCardPlate(W/2 - 190, H/2 - 100, 380, 200, 'Game Over', 'Score ' + score);
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Tap to retry', W / 2, H / 2 + 60);
+    }
+
+    if (state === 'win') {
+      drawCardPlate(W/2 - 190, H/2 - 100, 380, 200, 'You Win!', 'Score ' + score);
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Tap to play again', W / 2, H / 2 + 60);
+    }
+  }
+
+  // ---- Host messages ----
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.source !== 'cartridge-host') return;
+    if (data.type === 'pause') paused = true;
+    if (data.type === 'resume') paused = false;
+    if (data.type === 'reset') backToTitle();
+  });
+
+  // boot
+  requestAnimationFrame((t) => {
+    lastTime = t;
+    render();
+    CARTRIDGE.send('boot', { title: 'Orchard Catch', gameType: 'stage-clear', lang: 'en' });
+    requestAnimationFrame(loop);
+  });
+})();
+</script>
+</body>
+</html>

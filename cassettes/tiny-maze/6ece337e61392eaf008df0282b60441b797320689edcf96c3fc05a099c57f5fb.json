@@ -1,0 +1,170 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:6ece337e61392eaf008df0282b60441b797320689edcf96c3fc05a099c57f5fb",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Tiny Maze\",\n  \"slug\": \"tiny-maze\",\n  \"lang\": \"en\",\n  \"gameType\": \"stage-clear\",\n  \"loop\": \"Guide your token through a small maze toward the glowing exit using swipes to move between lanes of the grid. Reaching the exit clears the maze and opens a new one; there is no way to fail, only to keep exploring.\",\n  \"input\": \"swipe-lanes\",\n  \"style\": \"chalkboard\"\n}\n```\n\n## Cards\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `chalkboard`\n\n# Chalkboard\n\nThe game looks sketched in chalk on a school slate.\n\n## Palette\n\n| role   | colour    |\n| ------ | --------- |\n| slate  | `#2f3e3a` |\n| chalk  | `#eeeae0` |\n| accent | `#f2c14e` |\n| second | `#8fc1e3` |\n\n## Primitives\n\n- Stroked paths with `lineCap = \"round\"` and a line width of 3 to 5 pixels.\n- Draw each stroke twice with a one-pixel offset and lower alpha for a dusty edge.\n- Hatching (parallel short lines) instead of solid fills.\n- A faint smudge layer: a few large, very transparent chalk-coloured ellipses behind the play field.\n\n## Avoid\n\n- Solid filled shapes larger than a thumb.\n- Perfectly straight machine lines; add a small wobble.\n- More than two accent colours on screen at once.\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `stage-clear`\n\n# Stage clear\n\nThe player meets a stated goal to clear each stage. Clearing the last stage wins; failing a stage loses.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `optional`    |\n| level                | `required`    |\n| end                  | `required`    |\n| end reasons          | `win, lose`   |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above: a `level` on entering each stage and an `end` when the play-through finishes. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\n- Use only `win` or `lose` as the `end` reason. <!-- rule:E1-17 -->\n\n## Stages\n\nNumber stages from 1 and step by one. Show the goal on screen when each stage opens (\"Light 5 lamps\"). Make stage 1 easy enough to clear on the first try.\n\n## Loop skeleton\n\n```js\nlet stage = 0;\nfunction enterStage(next) {\n  stage = next;\n  buildStage(stage);\n  CARTRIDGE.send(\"level\", { index: stage });\n}\nfunction onGoalMet() {\n  if (stage === STAGES.length) CARTRIDGE.send(\"end\", { reason: \"win\" });\n  else enterStage(stage + 1);\n}\nfunction onStageFailed() {\n  CARTRIDGE.send(\"end\", { reason: \"lose\" });\n}\n```\n\nGive the player a few seconds of grace at the start of each stage before any threat can finish it.\n\n### Card `swipe-lanes`\n\n# Swipe lanes\n\nThe play field has three or four lanes. A swipe left or right moves one lane; a tap does nothing, or performs a secondary action.\n\n- Register `pointerdown` and `pointerup`, measure the horizontal distance and compare it with a minimum swipe length. <!-- rule:E1-22 -->\n- Choose the minimum swipe length as a fraction of the canvas width, not in fixed pixels.\n- Clamp the lane index so the player never leaves the field.\n\n```js\nconst SWIPE_FRACTION = 0.08;\nlet pressX = 0;\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  pressX = event.clientX;\n});\ncanvas.addEventListener(\"pointerup\", (event) => {\n  const dx = event.clientX - pressX;\n  if (Math.abs(dx) < canvas.clientWidth * SWIPE_FRACTION) return;\n  lane = Math.max(0, Math.min(LANES - 1, lane + Math.sign(dx)));\n});\n```\n\nAlso accept the left and right arrow keys so the game can be tried on a desktop.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll create the Tiny Maze game now."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_019mApVgQTeEg5GBMS24SFuf",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Tiny Maze</title>\n<style>\n  html, body {\n    margin: 0; padding: 0; width: 100%; height: 100%;\n    background: #2f3e3a;\n    overflow: hidden;\n    touch-action: none;\n    font-family: 'Segoe UI', system-ui, sans-serif;\n  }\n  canvas {\n    display: block;\n    width: 100vw;\n    height: 100dvh;\n    background: #2f3e3a;\n  }\n  #hint {\n    position: fixed;\n    left: 0; right: 0; bottom: 10px;\n    text-align: center;\n    color: #eeeae0;\n    opacity: 0.6;\n    font-size: 13px;\n    pointer-events: none;\n    user-select: none;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<div id=\"hint\">Swipe left/right to change lanes &middot; swipe up/down or arrows to move forward/back</div>\n<script>\n// ---- Bridge helper (verbatim) ----\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n\n// ---- Canvas setup ----\nconst canvas = document.getElementById(\"game\");\nconst ctx = canvas.getContext(\"2d\");\nlet DPR = Math.max(1, window.devicePixelRatio || 1);\nlet W = 0, H = 0;\n\nfunction resize() {\n  W = window.innerWidth;\n  H = window.innerHeight;\n  DPR = Math.max(1, window.devicePixelRatio || 1);\n  canvas.width = Math.floor(W * DPR);\n  canvas.height = Math.floor(H * DPR);\n  canvas.style.width = W + \"px\";\n  canvas.style.height = H + \"px\";\n  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n}\nwindow.addEventListener(\"resize\", resize);\nresize();\n\n// ---- Palette ----\nconst COL = {\n  slate: \"#2f3e3a\",\n  chalk: \"#eeeae0\",\n  accent: \"#f2c14e\",\n  second: \"#8fc1e3\",\n};\n\n// ---- Chalk drawing helpers ----\nfunction wobble(amount) {\n  return (Math.random() - 0.5) * amount;\n}\n\nfunction chalkLine(x1, y1, x2, y2, color, width) {\n  ctx.lineCap = \"round\";\n  ctx.lineJoin = \"round\";\n  for (let i = 0; i < 2; i++) {\n    ctx.beginPath();\n    const ox = wobble(1.4) + (i === 1 ? 1 : 0);\n    const oy = wobble(1.4) + (i === 1 ? 1 : 0);\n    const mx = (x1 + x2) / 2 + wobble(3);\n    const my = (y1 + y2) / 2 + wobble(3);\n    ctx.moveTo(x1 + ox, y1 + oy);\n    ctx.quadraticCurveTo(mx + ox, my + oy, x2 + ox, y2 + oy);\n    ctx.strokeStyle = color;\n    ctx.globalAlpha = i === 0 ? 0.85 : 0.35;\n    ctx.lineWidth = width;\n    ctx.stroke();\n  }\n  ctx.globalAlpha = 1;\n}\n\nfunction chalkHatchRect(x, y, w, h, color, spacing) {\n  spacing = spacing || 6;\n  ctx.save();\n  ctx.beginPath();\n  ctx.rect(x, y, w, h);\n  ctx.clip();\n  for (let i = -h; i < w + h; i += spacing) {\n    chalkLine(x + i, y, x + i - h, y + h, color, 2);\n  }\n  ctx.restore();\n}\n\nfunction chalkCircle(cx, cy, r, color, width) {\n  const segs = 24;\n  ctx.lineCap = \"round\";\n  for (let pass = 0; pass < 2; pass++) {\n    ctx.beginPath();\n    for (let i = 0; i <= segs; i++) {\n      const a = (i / segs) * Math.PI * 2;\n      const rr = r + wobble(1.5);\n      const x = cx + Math.cos(a) * rr + (pass === 1 ? 1 : 0);\n      const y = cy + Math.sin(a) * rr + (pass === 1 ? 1 : 0);\n      if (i === 0) ctx.moveTo(x, y);\n      else ctx.lineTo(x, y);\n    }\n    ctx.strokeStyle = color;\n    ctx.globalAlpha = pass === 0 ? 0.85 : 0.3;\n    ctx.lineWidth = width;\n    ctx.stroke();\n  }\n  ctx.globalAlpha = 1;\n}\n\nfunction drawSmudges() {\n  const smudgeCount = 5;\n  ctx.save();\n  for (let i = 0; i < smudgeCount; i++) {\n    const sx = smudgeSeeds[i].x * W;\n    const sy = smudgeSeeds[i].y * H;\n    const r = smudgeSeeds[i].r * Math.min(W, H);\n    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);\n    grad.addColorStop(0, \"rgba(238,234,224,0.05)\");\n    grad.addColorStop(1, \"rgba(238,234,224,0)\");\n    ctx.fillStyle = grad;\n    ctx.beginPath();\n    ctx.ellipse(sx, sy, r, r * 0.6, smudgeSeeds[i].rot, 0, Math.PI * 2);\n    ctx.fill();\n  }\n  ctx.restore();\n}\n\nconst smudgeSeeds = [];\nfor (let i = 0; i < 6; i++) {\n  smudgeSeeds.push({\n    x: Math.random(),\n    y: Math.random(),\n    r: 0.15 + Math.random() * 0.2,\n    rot: Math.random() * Math.PI,\n  });\n}\n\n// ---- Maze / game state ----\nconst LANES = 4; // lane count across width\nlet laneCount = LANES;\nlet lane = 1; // current lane index (x)\nlet row = 0; // current row (progress toward exit, y)\nlet ROWS = 5; // rows per maze, grows a bit with stage\nlet stage = 0;\nlet score = 0;\nlet maze = []; // maze[row] = array of booleans: which lanes are open/walkable in that row\nlet exitRow = 0;\nlet started = false;\nlet paused = false;\nlet gameOver = false; // not used for lose, stage-clear has no lose state functionally\nlet particles = [];\nlet messageTimer = 0;\nlet messageText = \"\";\nlet graceTimer = 0;\n\nfunction backToTitle() {\n  started = false;\n  paused = false;\n  stage = 0;\n  score = 0;\n  row = 0;\n  lane = Math.floor(LANES / 2);\n}\n\nfunction randInt(n) {\n  return Math.floor(Math.random() * n);\n}\n\n// Build a maze: each row has a random subset of walkable lanes (at least one),\n// and consecutive rows always share at least one connected lane so it's always solvable.\nfunction buildStage(s) {\n  ROWS = 4 + Math.min(4, s); // grows slowly\n  maze = [];\n  // start row: all lanes open (safe start)\n  let prevOpen = [true, true, true, true].slice(0, laneCount);\n  maze.push(prevOpen.slice());\n  for (let r = 1; r < ROWS; r++) {\n    const openCount = 1 + randInt(laneCount - 1 >= 1 ? laneCount - 1 : 1);\n    const lanes = [...Array(laneCount).keys()];\n    // shuffle\n    for (let i = lanes.length - 1; i > 0; i--) {\n      const j = randInt(i + 1);\n      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];\n    }\n    let chosen = new Set(lanes.slice(0, Math.max(1, openCount)));\n    // guarantee connectivity: ensure at least one lane open in prevOpen intersects with chosen\n    const prevOpenLanes = [];\n    for (let i = 0; i < laneCount; i++) if (prevOpen[i]) prevOpenLanes.push(i);\n    const hasOverlap = prevOpenLanes.some((l) => chosen.has(l));\n    if (!hasOverlap && prevOpenLanes.length > 0) {\n      const forced = prevOpenLanes[randInt(prevOpenLanes.length)];\n      chosen.add(forced);\n    }\n    const rowArr = [];\n    for (let i = 0; i < laneCount; i++) rowArr.push(chosen.has(i));\n    maze.push(rowArr);\n    prevOpen = rowArr;\n  }\n  exitRow = ROWS - 1;\n  // place player at a valid lane in row 0\n  const startLanes = [];\n  for (let i = 0; i < laneCount; i++) if (maze[0][i]) startLanes.push(i);\n  lane = startLanes[randInt(startLanes.length)];\n  row = 0;\n  graceTimer = 2.5; // seconds of grace, though no threats exist\n  messageText = \"Reach the glowing exit \\u2014 stage \" + s;\n  messageTimer = 2.2;\n}\n\nfunction enterStage(next) {\n  stage = next;\n  buildStage(stage);\n  CARTRIDGE.send(\"level\", { index: stage });\n}\n\nfunction onGoalMet() {\n  score += 10;\n  CARTRIDGE.send(\"score\", { value: score });\n  particles = particles.concat(makeBurst());\n  enterStage(stage + 1);\n}\n\n// try to move forward one row if current lane is open in next row\nfunction tryAdvance(dir) {\n  if (!started || paused) return;\n  const targetRow = row + dir;\n  if (targetRow < 0) return;\n  if (targetRow >= ROWS) return;\n  if (maze[targetRow][lane]) {\n    row = targetRow;\n    if (row === exitRow) {\n      onGoalMet();\n    }\n  } else {\n    // bump feedback\n    particles = particles.concat(makeBump());\n  }\n}\n\nfunction tryLaneChange(dir) {\n  if (!started || paused) return;\n  const newLane = Math.max(0, Math.min(laneCount - 1, lane + dir));\n  if (newLane === lane) return;\n  if (maze[row][newLane]) {\n    lane = newLane;\n  } else {\n    particles = particles.concat(makeBump());\n  }\n}\n\nfunction makeBurst() {\n  const arr = [];\n  for (let i = 0; i < 18; i++) {\n    arr.push({\n      x: 0, y: 0,\n      vx: (Math.random() - 0.5) * 4,\n      vy: (Math.random() - 0.5) * 4,\n      life: 1,\n      type: \"burst\",\n      color: Math.random() < 0.5 ? COL.accent : COL.second,\n    });\n  }\n  return arr;\n}\n\nfunction makeBump() {\n  const arr = [];\n  for (let i = 0; i < 6; i++) {\n    arr.push({\n      x: 0, y: 0,\n      vx: (Math.random() - 0.5) * 2,\n      vy: (Math.random() - 0.5) * 2,\n      life: 0.5,\n      type: \"bump\",\n      color: COL.chalk,\n    });\n  }\n  return arr;\n}\n\n// ---- Input: swipe lanes + forward/back ----\nconst SWIPE_FRACTION = 0.08;\nlet pressX = 0, pressY = 0;\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  pressX = event.clientX;\n  pressY = event.clientY;\n  if (!started) {\n    started = true;\n    CARTRIDGE.send(\"start\");\n    enterStage(1);\n  }\n});\ncanvas.addEventListener(\"pointerup\", (event) => {\n  const dx = event.clientX - pressX;\n  const dy = event.clientY - pressY;\n  const w = canvas.clientWidth;\n  const h = canvas.clientHeight;\n  if (Math.abs(dx) > Math.abs(dy)) {\n    if (Math.abs(dx) < w * SWIPE_FRACTION) return;\n    tryLaneChange(Math.sign(dx));\n  } else {\n    if (Math.abs(dy) < h * SWIPE_FRACTION) return;\n    tryAdvance(dy < 0 ? 1 : -1);\n  }\n});\n\nwindow.addEventListener(\"keydown\", (e) => {\n  if (!started) {\n    if (e.key === \"Enter\" || e.key === \" \") {\n      started = true;\n      CARTRIDGE.send(\"start\");\n      enterStage(1);\n    }\n    return;\n  }\n  if (e.key === \"ArrowLeft\") tryLaneChange(-1);\n  if (e.key === \"ArrowRight\") tryLaneChange(1);\n  if (e.key === \"ArrowUp\") tryAdvance(1);\n  if (e.key === \"ArrowDown\") tryAdvance(-1);\n});\n\n// ---- Rendering ----\nlet lastTime = performance.now();\n\nfunction drawTitleScreen() {\n  ctx.clearRect(0, 0, W, H);\n  drawSmudges();\n  const cx = W / 2, cy = H / 2;\n  ctx.font = \"bold 34px system-ui, sans-serif\";\n  ctx.fillStyle = COL.chalk;\n  ctx.textAlign = \"center\";\n  ctx.globalAlpha = 0.9;\n  ctx.fillText(\"Tiny Maze\", cx, cy - 60);\n  ctx.globalAlpha = 1;\n  ctx.font = \"16px system-ui, sans-serif\";\n  ctx.fillStyle = COL.second;\n  ctx.fillText(\"Swipe or tap to begin\", cx, cy - 20);\n\n  chalkCircle(cx, cy + 40, 26, COL.accent, 4);\n  ctx.font = \"13px system-ui, sans-serif\";\n  ctx.fillStyle = COL.chalk;\n  ctx.globalAlpha = 0.7;\n  ctx.fillText(\"find the exit\", cx, cy + 100);\n  ctx.globalAlpha = 1;\n}\n\nfunction layoutMetrics() {\n  const marginTop = 90;\n  const marginBottom = 60;\n  const fieldH = H - marginTop - marginBottom;\n  const rowH = fieldH / ROWS;\n  const fieldW = Math.min(W * 0.8, 420);\n  const fieldX = (W - fieldW) / 2;\n  const colW = fieldW / laneCount;\n  return { marginTop, fieldH, rowH, fieldW, fieldX, colW };\n}\n\nfunction drawMaze() {\n  const { marginTop, rowH, fieldW, fieldX, colW } = layoutMetrics();\n\n  // draw rows from bottom (row 0) to top (exitRow), so exit appears at top\n  for (let r = 0; r < ROWS; r++) {\n    const y = marginTop + (ROWS - 1 - r) * rowH;\n    for (let c = 0; c < laneCount; c++) {\n      const x = fieldX + c * colW;\n      const open = maze[r][c];\n      if (open) {\n        chalkHatchRect(x + 4, y + 4, colW - 8, rowH - 8, \"rgba(143,193,227,0.25)\", 8);\n      } else {\n        // wall X marks\n        chalkLine(x + 6, y + 6, x + colW - 6, y + rowH - 6, \"rgba(238,234,224,0.25)\", 2);\n        chalkLine(x + colW - 6, y + 6, x + 6, y + rowH - 6, \"rgba(238,234,224,0.25)\", 2);\n      }\n      // cell border\n      chalkLine(x, y, x + colW, y, COL.chalk, 2);\n      chalkLine(x, y, x, y + rowH, COL.chalk, 2);\n    }\n  }\n  // outer border\n  const totalH = rowH * ROWS;\n  chalkLine(fieldX, marginTop, fieldX + fieldW, marginTop, COL.chalk, 3);\n  chalkLine(fieldX, marginTop + totalH, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);\n  chalkLine(fieldX, marginTop, fieldX, marginTop + totalH, COL.chalk, 3);\n  chalkLine(fieldX + fieldW, marginTop, fieldX + fieldW, marginTop + totalH, COL.chalk, 3);\n\n  // exit glow\n  const exitY = marginTop + (ROWS - 1 - exitRow) * rowH;\n  for (let c = 0; c < laneCount; c++) {\n    if (maze[exitRow][c]) {\n      const x = fieldX + c * colW + colW / 2;\n      const y = exitY + rowH / 2;\n      const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n      chalkCircle(x, y, 14 + pulse * 4, COL.accent, 4);\n    }\n  }\n\n  // player token\n  const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;\n  const px = fieldX + lane * colW + colW / 2;\n  chalkCircle(px, py, 12, COL.second, 4);\n  chalkLine(px - 5, py, px + 5, py, COL.second, 2);\n  chalkLine(px, py - 5, px, py + 5, COL.second, 2);\n}\n\nfunction drawHUD() {\n  ctx.textAlign = \"left\";\n  ctx.font = \"16px system-ui, sans-serif\";\n  ctx.fillStyle = COL.chalk;\n  ctx.globalAlpha = 0.85;\n  ctx.fillText(\"Stage \" + stage, 16, 30);\n  ctx.textAlign = \"right\";\n  ctx.fillText(\"Score \" + score, W - 16, 30);\n  ctx.globalAlpha = 1;\n  ctx.textAlign = \"center\";\n\n  if (messageTimer > 0) {\n    ctx.font = \"18px system-ui, sans-serif\";\n    ctx.fillStyle = COL.accent;\n    ctx.globalAlpha = Math.min(1, messageTimer);\n    ctx.fillText(messageText, W / 2, 62);\n    ctx.globalAlpha = 1;\n  }\n}\n\nfunction updateParticles(dt) {\n  const { fieldX, fieldW, marginTop, rowH } = layoutMetrics();\n  const px = fieldX + lane * (fieldW / laneCount) + (fieldW / laneCount) / 2;\n  const py = marginTop + (ROWS - 1 - row) * rowH + rowH / 2;\n  for (const p of particles) {\n    p.x += p.vx;\n    p.y += p.vy;\n    p.life -= dt * 1.2;\n  }\n  particles = particles.filter((p) => p.life > 0);\n  ctx.save();\n  for (const p of particles) {\n    ctx.globalAlpha = Math.max(0, p.life);\n    chalkCircle(px + p.x * 10, py + p.y * 10, 3, p.color, 2);\n  }\n  ctx.restore();\n  ctx.globalAlpha = 1;\n}\n\nfunction frame(now) {\n  const dt = Math.min(0.05, (now - lastTime) / 1000);\n  lastTime = now;\n\n  ctx.clearRect(0, 0, W, H);\n  ctx.fillStyle = COL.slate;\n  ctx.fillRect(0, 0, W, H);\n  drawSmudges();\n\n  if (!started) {\n    drawTitleScreen();\n  } else {\n    if (!paused) {\n      if (messageTimer > 0) messageTimer -= dt;\n      if (graceTimer > 0) graceTimer -= dt;\n    }\n    drawMaze();\n    updateParticles(paused ? 0 : dt);\n    drawHUD();\n    if (paused) {\n      ctx.font = \"bold 28px system-ui, sans-serif\";\n      ctx.fillStyle = COL.chalk;\n      ctx.textAlign = \"center\";\n      ctx.fillText(\"Paused\", W / 2, H / 2);\n    }\n  }\n\n  requestAnimationFrame(frame);\n}\n\n// ---- Boot ----\nfunction boot() {\n  resize();\n  ctx.fillStyle = COL.slate;\n  ctx.fillRect(0, 0, W, H);\n  requestAnimationFrame((t) => {\n    lastTime = t;\n    CARTRIDGE.send(\"boot\", { title: \"Tiny Maze\", gameType: \"stage-clear\", lang: \"en\" });\n    requestAnimationFrame(frame);\n  });\n}\nboot();\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_019mApVgQTeEg5GBMS24SFuf",
+              "content": "{\"version\":\"a0\",\"bytes\":14395,\"sha256\":\"8608d08e024cb9c32567f301ae8ca1c98db590a34333f14dc776d99e548a05b7\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNseYf4RzwuBZvPNPUUq\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11802,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}    }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}              }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete Tiny Maze\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a single\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" HTML file with ch\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"alk\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"board-style r\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"endering, swipe-l\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ane ma\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ze navigation, st\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"age prog\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ression, and full\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge/\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"host\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" event\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handling.\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0        }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":11802,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":63,\"output_tokens_details\":{\"thinking_tokens\":0}}            }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"  }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      382,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      10,
+      91,
+      0,
+      42,
+      93,
+      0,
+      42,
+      70,
+      8,
+      8,
+      3,
+      3
+    ]
+  },
+  "usage": {
+    "input": 11802,
+    "output": 63,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

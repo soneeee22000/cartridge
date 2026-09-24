@@ -1,0 +1,514 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:773152b6e81531c68395f27ce8ce93d64fc10d03d70ea05391809402c02aa2b0",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nA space runner with three lanes. The ship stays near the bottom of the screen and the player taps the left or right half to change lane. Comets stream down and get faster over time, and small stars appear between them; each star collected adds to the score. There is one life, so the first comet that hits the ship ends the run. Show the score during play and a short summary with a replay prompt at the end.\n\nPlan:\n{\"gameType\":\"arcade-run\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap the left or right half of the screen to switch lanes, dodging comets while collecting stars for points. One comet hit ends the run, showing your score and a tap-to-replay prompt.\",\"slug\":\"comet-lane-runner\",\"style\":\"risograph\",\"title\":\"Comet Lane Runner\"}\n\nGame source (line-numbered):\n1| \n2| <!doctype html>\n3| <html lang=\"en\">\n4| <head>\n5| <meta charset=\"utf-8\">\n6| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n7| <title>Comet Lane Runner</title>\n8| <style>\n9|   html, body {\n10|     margin: 0; padding: 0; width: 100%; height: 100%;\n11|     background: #fbf7ee; overflow: hidden;\n12|     font-family: \"Arial Narrow\", Arial, sans-serif;\n13|   }\n14|   canvas {\n15|     display: block;\n16|     touch-action: none;\n17|   }\n18| </style>\n19| </head>\n20| <body>\n21| <canvas id=\"game\"></canvas>\n22| <script>\n23| // ---- Bridge helper (verbatim) ----\n24| const CARTRIDGE = {\n25|   send(type, payload = {}) {\n26|     window.parent.postMessage(\n27|       { source: \"cartridge\", v: 1, type, payload },\n28|       \"*\",\n29|     );\n30|   },\n31| };\n32| </script>\n33| <script>\n34| (function(){\n35|   const canvas = document.getElementById(\"game\");\n36|   const ctx = canvas.getContext(\"2d\");\n37| \n38|   const PAPER = \"#fbf7ee\";\n39|   const INK1 = \"#ff48b0\"; // pink\n40|   const INK2 = \"#0078bf\"; // blue\n41|   const OVERLAP = \"#5b3a8c\";\n42| \n43|   let dpr = Math.max(1, window.devicePixelRatio || 1);\n44|   let W = window.innerWidth, H = window.innerHeight;\n45| \n46|   function resize() {\n47|     W = window.innerWidth;\n48|     H = window.innerHeight;\n49|     dpr = Math.max(1, window.devicePixelRatio || 1);\n50|     canvas.width = Math.floor(W * dpr);\n51|     canvas.height = Math.floor(H * dpr);\n52|     canvas.style.width = W + \"px\";\n53|     canvas.style.height = H + \"px\";\n54|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n55|     buildGrain();\n56|   }\n57|   window.addEventListener(\"resize\", resize);\n58| \n59|   // ---- grain tile (pre-rendered once, reused) ----\n60|   let grainCanvas = null;\n61|   function buildGrain() {\n62|     const size = 128;\n63|     grainCanvas = document.createElement(\"canvas\");\n64|     grainCanvas.width = size;\n65|     grainCanvas.height = size;\n66|     const gctx = grainCanvas.getContext(\"2d\");\n67|     const imgData = gctx.createImageData(size, size);\n68|     for (let i = 0; i < imgData.data.length; i += 4) {\n69|       const v = Math.random() * 255;\n70|       imgData.data[i] = v;\n71|       imgData.data[i+1] = v;\n72|       imgData.data[i+2] = v;\n73|       imgData.data[i+3] = 255;\n74|     }\n75|     gctx.putImageData(imgData, 0, 0);\n76|   }\n77| \n78|   function drawGrain() {\n79|     if (!grainCanvas) return;\n80|     ctx.save();\n81|     ctx.globalAlpha = 0.08;\n82|     ctx.globalCompositeOperation = \"multiply\";\n83|     const pattern = ctx.createPattern(grainCanvas, \"repeat\");\n84|     ctx.fillStyle = pattern;\n85|     ctx.fillRect(0, 0, W, H);\n86|     ctx.restore();\n87|   }\n88| \n89|   // ---- game state ----\n90|   const LANES = 3;\n91|   let laneX = [];\n92|   let playerLane = 1;\n93|   let playerDrawLane = 1; // for smooth transitions\n94|   let running = false;\n95|   let paused = false;\n96|   let started = false;\n97|   let score = 0;\n98|   let scoreShown = 0;\n99|   let speed = 260; // px/sec base scroll speed\n100|   let elapsed = 0;\n101|   let last = 0;\n102|   let hazards = []; // {lane, y, type: 'comet'|'star'}\n103|   let spawnTimer = 0;\n104|   let spawnInterval = 1.4;\n105|   let laneWidth = 0;\n106|   let playerY = 0;\n107|   let playerSize = 40;\n108|   let bootSent = false;\n109|   let hintPulse = 0;\n110|   let bgOffset = 0;\n111|   let firstHazardSpawned = false;\n112|   let stageIndex = 1;\n113|   let lastStageSpeed = speed;\n114| \n115|   function computeLanes() {\n116|     laneWidth = W / LANES;\n117|     laneX = [];\n118|     for (let i = 0; i < LANES; i++) {\n119|       laneX.push(laneWidth * i + laneWidth / 2);\n120|     }\n121|     playerY = H - Math.max(H * 0.18, 90);\n122|   }\n123| \n124|   function resetState() {\n125|     playerLane = 1;\n126|     playerDrawLane = 1;\n127|     running = false;\n128|     paused = false;\n129|     started = false;\n130|     score = 0;\n131|     scoreShown = 0;\n132|     speed = 260;\n133|     elapsed = 0;\n134|     hazards = [];\n135|     spawnTimer = 0;\n136|     spawnInterval = 1.4;\n137|     firstHazardSpawned = false;\n138|     stageIndex = 1;\n139|     lastStageSpeed = speed;\n140|     computeLanes();\n141|   }\n142| \n143|   function backToTitle() {\n144|     resetState();\n145|   }\n146| \n147|   resize();\n148|   resetState();\n149| \n150|   // ---- input ----\n151|   canvas.style.touchAction = \"none\";\n152|   canvas.addEventListener(\"pointerdown\", (event) => {\n153|     event.preventDefault();\n154|     if (paused) return;\n155|     if (!running) {\n156|       running = true;\n157|       started = true;\n158|       CARTRIDGE.send(\"start\");\n159|       // spawn first hazard well ahead, keep opening lane clear\n160|       spawnFirstHazard();\n161|       return;\n162|     }\n163|     act(event);\n164|   });\n165| \n166|   function act(event) {\n167|     // tap left half = move left, right half = move right\n168|     const x = event.clientX;\n169|     if (x < W / 2) {\n170|       playerLane = Math.max(0, playerLane - 1);\n171|     } else {\n172|       playerLane = Math.min(LANES - 1, playerLane + 1);\n173|     }\n174|   }\n175| \n176|   function spawnFirstHazard() {\n177|     // spawn far away, and never in the player's current lane\n178|     let lane = Math.floor(Math.random() * LANES);\n179|     if (lane === playerLane) lane = (lane + 1) % LANES;\n180|     hazards.push({ lane: lane, y: -H * 1.2, type: \"comet\" });\n181|     firstHazardSpawned = true;\n182|   }\n183| \n184|   function spawnHazard() {\n185|     const isStar = Math.random() < 0.35;\n186|     const lane = Math.floor(Math.random() * LANES);\n187|     hazards.push({ lane: lane, y: -60, type: isStar ? \"star\" : \"comet\" });\n188|   }\n189| \n190|   function addScore(v) {\n191|     score += v;\n192|     if (score < 0) score = 0;\n193|     CARTRIDGE.send(\"score\", { value: score });\n194|   }\n195| \n196|   function crash() {\n197|     running = false;\n198|     CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n199|   }\n200| \n201|   function advance(dt) {\n202|     elapsed += dt;\n203|     bgOffset += speed * dt;\n204|     // ramp difficulty with speed over time (no levels)\n205|     speed = 260 + Math.min(340, elapsed * 9);\n206|     spawnInterval = Math.max(0.55, 1.4 - elapsed * 0.02);\n207| \n208|     // send periodic \"level\" style stage markers via speed thresholds\n209|     // (level event forbidden for arcade-run -> do not send)\n210| \n211|     spawnTimer += dt;\n212|     if (spawnTimer >= spawnInterval) {\n213|       spawnTimer = 0;\n214|       spawnHazard();\n215|     }\n216| \n217|     for (let h of hazards) {\n218|       h.y += speed * dt;\n219|     }\n220|     hazards = hazards.filter(h => h.y < H + 80);\n221| \n222|     // smooth player lane transition\n223|     const targetX = laneX[playerLane];\n224|     playerDrawLane += (playerLane - playerDrawLane) * Math.min(1, dt * 10);\n225|   }\n226| \n227|   function collide() {\n228|     const px = laneX[playerLane];\n229|     for (let h of hazards) {\n230|       const dy = h.y - playerY;\n231|       if (Math.abs(dy) < playerSize * 0.6 && h.lane === playerLane) {\n232|         if (h.type === \"star\") {\n233|           addScore(10);\n234|           h.y = H + 1000; // remove\n235|         } else {\n236|           crash();\n237|           return;\n238|         }\n239|       }\n240|     }\n241|   }\n242| \n243|   // ---- drawing ----\n244|   function drawBackground() {\n245|     ctx.fillStyle = PAPER;\n246|     ctx.fillRect(0, 0, W, H);\n247| \n248|     // lane dividers, scrolling stripes for motion feedback\n249|     ctx.save();\n250|     ctx.strokeStyle = INK2;\n251|     ctx.globalAlpha = 0.25;\n252|     ctx.lineWidth = 3;\n253|     for (let i = 1; i < LANES; i++) {\n254|       const x = laneWidth * i;\n255|       ctx.beginPath();\n256|       const dashLen = 30, gap = 24;\n257|       const offset = bgOffset % (dashLen + gap);\n258|       for (let y = -dashLen + offset; y < H; y += dashLen + gap) {\n259|         ctx.moveTo(x, y);\n260|         ctx.lineTo(x, y + dashLen);\n261|       }\n262|       ctx.stroke();\n263|     }\n264|     ctx.restore();\n265| \n266|     // drifting clouds (misregistered dots) for idle motion\n267|     ctx.save();\n268|     ctx.globalAlpha = 0.5;\n269|     for (let i = 0; i < 6; i++) {\n270|       const cx = (i * 137 + bgOffset * 0.2) % (W + 100) - 50;\n271|       const cy = (i * 97) % H;\n272|       ctx.fillStyle = INK1;\n273|       ctx.beginPath();\n274|       ctx.arc(cx, cy, 14, 0, Math.PI * 2);\n275|       ctx.fill();\n276|       ctx.fillStyle = INK2;\n277|       ctx.beginPath();\n278|       ctx.arc(cx + 2, cy + 2, 14, 0, Math.PI * 2);\n279|       ctx.globalCompositeOperation = \"multiply\";\n280|       ctx.fill();\n281|       ctx.globalCompositeOperation = \"source-over\";\n282|     }\n283|     ctx.restore();\n284|   }\n285| \n286|   function drawComet(x, y) {\n287|     ctx.save();\n288|     ctx.translate(x, y);\n289|     // tail (ink2)\n290|     ctx.fillStyle = INK2;\n291|     ctx.beginPath();\n292|     ctx.moveTo(0, -8);\n293|     ctx.lineTo(-14, -60);\n294|     ctx.lineTo(14, -60);\n295|     ctx.closePath();\n296|     ctx.fill();\n297|     // body (ink1, offset for misregistration)\n298|     ctx.fillStyle = INK1;\n299|     ctx.beginPath();\n300|     ctx.arc(1, 1, 22, 0, Math.PI * 2);\n301|     ctx.fill();\n302|     // overlap core\n303|     ctx.fillStyle = OVERLAP;\n304|     ctx.beginPath();\n305|     ctx.arc(0, 0, 10, 0, Math.PI * 2);\n306|     ctx.fill();\n307|     ctx.restore();\n308|   }\n309| \n310|   function drawStar(x, y) {\n311|     ctx.save();\n312|     ctx.translate(x, y);\n313|     ctx.fillStyle = INK2;\n314|     drawStarPath(2, 2, 18, 8);\n315|     ctx.fill();\n316|     ctx.fillStyle = INK1;\n317|     drawStarPath(0, 0, 18, 8);\n318|     ctx.fill();\n319|     ctx.restore();\n320|   }\n321| \n322|   function drawStarPath(ox, oy, outerR, innerR) {\n323|     ctx.beginPath();\n324|     const spikes = 5;\n325|     let rot = -Math.PI / 2;\n326|     const step = Math.PI / spikes;\n327|     ctx.moveTo(ox + Math.cos(rot) * outerR, oy + Math.sin(rot) * outerR);\n328|     for (let i = 0; i < spikes; i++) {\n329|       rot += step;\n330|       ctx.lineTo(ox + Math.cos(rot) * innerR, oy + Math.sin(rot) * innerR);\n331|       rot += step;\n332|       ctx.lineTo(ox + Math.cos(rot) * outerR, oy + Math.sin(rot) * outerR);\n333|     }\n334|     ctx.closePath();\n335|   }\n336| \n337|   function drawPlayer() {\n338|     const x = laneX[Math.round(playerDrawLane)] !== undefined\n339|       ? (laneX[playerLane] * 0 + interpLaneX())\n340|       : laneX[playerLane];\n341|     const px = interpLaneX();\n342|     ctx.save();\n343|     ctx.translate(px, playerY);\n344|     // ship shadow layer (ink2 offset)\n345|     ctx.fillStyle = INK2;\n346|     ctx.beginPath();\n347|     ctx.moveTo(2, -26);\n348|     ctx.lineTo(24, 22);\n349|     ctx.lineTo(-20, 22);\n350|     ctx.closePath();\n351|     ctx.fill();\n352|     // ship body ink1\n353|     ctx.fillStyle = INK1;\n354|     ctx.beginPath();\n355|     ctx.moveTo(0, -28);\n356|     ctx.lineTo(22, 20);\n357|     ctx.lineTo(-22, 20);\n358|     ctx.closePath();\n359|     ctx.fill();\n360|     // cockpit overlap\n361|     ctx.fillStyle = OVERLAP;\n362|     ctx.beginPath();\n363|     ctx.arc(0, -2, 7, 0, Math.PI * 2);\n364|     ctx.fill();\n365|     ctx.restore();\n366|   }\n367| \n368|   function interpLaneX() {\n369|     // linear interpolate between lane slots for smoothness\n370|     return laneX[playerLane];\n371|   }\n372| \n373|   function drawHUD() {\n374|     ctx.save();\n375|     ctx.fillStyle = INK2;\n376|     ctx.font = \"bold 28px 'Arial Narrow', Arial, sans-serif\";\n377|     ctx.textBaseline = \"top\";\n378|     ctx.fillText(\"SCORE \" + Math.floor(scoreShown), 18, 16);\n379|     ctx.restore();\n380|   }\n381| \n382|   function drawTitle() {\n383|     ctx.save();\n384|     ctx.fillStyle = OVERLAP;\n385|     ctx.textAlign = \"center\";\n386|     ctx.font = \"bold 46px 'Arial Narrow', Arial, sans-serif\";\n387|     ctx.fillText(\"COMET LANE\", W/2, H*0.28);\n388|     ctx.fillText(\"RUNNER\", W/2, H*0.28 + 52);\n389| \n390|     const pulse = 0.5 + 0.5 * Math.sin(hintPulse);\n391|     ctx.globalAlpha = 0.5 + pulse * 0.5;\n392|     ctx.font = \"bold 24px 'Arial Narrow', Arial, sans-serif\";\n393|     ctx.fillStyle = INK1;\n394|     ctx.fillText(\"TAP TO BEGIN\", W/2, H*0.55);\n395|     ctx.globalAlpha = 1;\n396|     ctx.font = \"18px 'Arial Narrow', Arial, sans-serif\";\n397|     ctx.fillStyle = INK2;\n398|     ctx.fillText(\"Tap left / right side to switch lanes\", W/2, H*0.62);\n399|     ctx.restore();\n400|   }\n401| \n402|   function drawEnd() {\n403|     ctx.save();\n404|     ctx.fillStyle = \"rgba(251,247,238,0.85)\";\n405|     ctx.fillRect(0,0,W,H);\n406|     ctx.fillStyle = OVERLAP;\n407|     ctx.textAlign = \"center\";\n408|     ctx.font = \"bold 40px 'Arial Narrow', Arial, sans-serif\";\n409|     ctx.fillText(\"RUN OVER\", W/2, H*0.32);\n410|     ctx.font = \"bold 30px 'Arial Narrow', Arial, sans-serif\";\n411|     ctx.fillStyle = INK1;\n412|     ctx.fillText(\"SCORE \" + Math.floor(score), W/2, H*0.42);\n413| \n414|     const pulse = 0.5 + 0.5 * Math.sin(hintPulse);\n415|     ctx.globalAlpha = 0.5 + pulse * 0.5;\n416|     ctx.font = \"22px 'Arial Narrow', Arial, sans-serif\";\n417|     ctx.fillStyle = INK2;\n418|     ctx.fillText(\"TAP TO REPLAY\", W/2, H*0.5);\n419|     ctx.restore();\n420|   }\n421| \n422|   function draw() {\n423|     drawBackground();\n424| \n425|     if (started && running) {\n426|       for (let h of hazards) {\n427|         const x = laneX[h.lane];\n428|         if (h.type === \"comet\") drawComet(x, h.y);\n429|         else drawStar(x, h.y);\n430|       }\n431|       drawPlayer();\n432|       drawHUD();\n433|     } else if (!started) {\n434|       // idle bobbing player preview + title\n435|       drawPlayer();\n436|       drawTitle();\n437|     } else if (started && !running) {\n438|       // after crash\n439|       for (let h of hazards) {\n440|         const x = laneX[h.lane];\n441|         if (h.type === \"comet\") drawComet(x, h.y);\n442|         else drawStar(x, h.y);\n443|       }\n444|       drawPlayer();\n445|       drawHUD();\n446|       drawEnd();\n447|     }\n448| \n449|     drawGrain();\n450|   }\n451| \n452|   // score smoothing toward actual score for nicer feedback\n453|   function updateScoreShown(dt) {\n454|     scoreShown += (score - scoreShown) * Math.min(1, dt * 8);\n455|     if (Math.abs(score - scoreShown) < 0.1) scoreShown = score;\n456|   }\n457| \n458|   // handle tap-to-replay after end\n459|   let wantReplayListener = false;\n460|   canvas.addEventListener(\"pointerdown\", (event) => {\n461|     if (started && !running && !paused) {\n462|       // replay\n463|       event.preventDefault();\n464|       resetState();\n465|     }\n466|   });\n467| \n468|   function frame(now) {\n469|     const dt = Math.min((now - last) / 1000, 0.05);\n470|     last = now;\n471|     hintPulse += dt * 3;\n472|     if (running && !paused) {\n473|       advance(dt);\n474|       collide();\n475|     }\n476|     updateScoreShown(dt);\n477|     draw();\n478|     if (!bootSent) {\n479|       CARTRIDGE.send(\"boot\", { title: \"Comet Lane Runner\", gameType: \"arcade-run\", lang: \"en\" });\n480|       bootSent = true;\n481|     }\n482|     requestAnimationFrame(frame);\n483|   }\n484|   requestAnimationFrame(frame);\n485| \n486|   // ---- host commands ----\n487|   window.addEventListener(\"message\", (event) => {\n488|     const data = event.data;\n489|     if (!data || data.source !== \"cartridge-host\") return;\n490|     if (data.type === \"pause\") paused = true;\n491|     if (data.type === \"resume\") paused = false;\n492|     if (data.type === \"reset\") backToTitle();\n493|   });\n494| \n495| })();\n496| </script>\n497| </body>\n498| </html>\n499| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNrDSXQPJSA77G9qeCE5\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":7622,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}           }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}      }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 90\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LANES\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"3\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 167\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"//\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tap\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" left\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" half\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" move\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" left,\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" right\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" half = move right\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}, {\\\"line\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 185\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"const\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" i\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"sS\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tar\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = Math\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".random() \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"< 0.35\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 196\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"function\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" crash\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"()\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"}, {\\\"line\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 232\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"if\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (h\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".type === \\\\\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"star\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\") {\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code implements\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" major\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" verbs from\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" three\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lanes, left\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"right t\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apping for\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lane\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" changes, com\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ets streaming\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" down\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", stars appearing\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collect\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ible for\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" points, one\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-life\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mech\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"anic with\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" crash on\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" co\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"met collision\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and speed\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" increasing\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" over\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" time.\\\"\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"stated\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 398\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap left\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" /\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" right side\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to switch\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lanes\\\\\\\", W\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/2, H\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"*0.62\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 394\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx.fill\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"TA\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"P TO BEGIN\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W/\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2, H*\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.55\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 378\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx.fill\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"SCORE \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + Math.\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"floor(score\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Shown), \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"18\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"16\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicitly\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player to tap left\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" right to switch lanes\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the H\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"UD displays\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the score during\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" making the objective\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" feedback\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" mechanism\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear.\\\"}, \\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"feedback\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"immediate\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 166\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"function\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" act\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(event\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\\\"}, {\\\"\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 170\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"player\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"L\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ane = Math\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".max\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(0, player\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Lane - \"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1);\\\"},\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"224\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"playerDraw\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"L\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ane +=\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"playerLane -\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"DrawLane)\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * Math\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".min(1\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", dt * \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"10\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"Player\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Lane, and\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the next\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" renders\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the player\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" at\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the new lane position\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" smooth\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" interpol\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ation,\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" providing\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediate visual feedback.\\\"\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, \\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"fail\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"explained\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [{\\\"line\\\":\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 409\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText(\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"R\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"UN OVER\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", W/2\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H*0\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".32\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 412\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx.fill\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"SCORE \\\\\\\" +\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Math.floor(\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"score), W/\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2, H*\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.42)\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 418\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\":\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"ctx.fill\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"TA\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"P TO REPLAY\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W/\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2, H*\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.5);\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rat\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"When\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the game\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the screen\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays \\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"RUN OVER\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" with\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the final\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score and\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"TAP TO\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" REPLAY\\\\\\\" prompt\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", explaining\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" both\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ended and how to\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" continue\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}}\"}              }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0       }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":7622,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":664}   }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"     }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      226,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      13,
+      28,
+      24,
+      24,
+      150,
+      150,
+      150,
+      150,
+      150,
+      12,
+      25,
+      28,
+      25,
+      26,
+      26,
+      26,
+      56,
+      56,
+      21,
+      27,
+      28,
+      26,
+      30,
+      168,
+      6,
+      8,
+      8,
+      0,
+      0,
+      0,
+      80,
+      10,
+      0,
+      17,
+      25,
+      27,
+      24,
+      27,
+      29,
+      24,
+      27,
+      25,
+      27,
+      27,
+      30,
+      24,
+      24,
+      26,
+      28,
+      26,
+      25,
+      27,
+      27,
+      26,
+      27,
+      24,
+      27,
+      32,
+      20,
+      27,
+      28,
+      26,
+      29,
+      22,
+      26,
+      27,
+      27,
+      25,
+      27,
+      26,
+      25,
+      30,
+      24,
+      28,
+      36,
+      16,
+      28,
+      23,
+      28,
+      25,
+      26,
+      31,
+      23,
+      25,
+      26,
+      26,
+      28,
+      28,
+      24,
+      27,
+      25,
+      26,
+      27,
+      26,
+      27,
+      26,
+      27,
+      29,
+      23,
+      27,
+      27,
+      26,
+      26,
+      27,
+      28,
+      24,
+      35,
+      18,
+      26,
+      26,
+      27,
+      0,
+      27,
+      25,
+      28,
+      28,
+      35,
+      14,
+      27,
+      26,
+      27,
+      25,
+      27,
+      26,
+      27,
+      26,
+      25,
+      28,
+      28,
+      24,
+      29,
+      26,
+      25,
+      27,
+      25,
+      26,
+      27,
+      27,
+      27,
+      24,
+      27,
+      33,
+      19,
+      29,
+      36,
+      23,
+      29,
+      18,
+      26,
+      23,
+      27,
+      33,
+      19,
+      30,
+      23,
+      27,
+      29,
+      23,
+      30,
+      23,
+      44,
+      11,
+      34,
+      28,
+      14,
+      33,
+      22,
+      24,
+      29,
+      26,
+      29,
+      21,
+      30,
+      27,
+      22,
+      27,
+      26,
+      27,
+      26,
+      30,
+      24,
+      47,
+      4,
+      27,
+      27,
+      26,
+      29,
+      22,
+      32,
+      23,
+      26,
+      28,
+      25,
+      24,
+      27,
+      29,
+      24,
+      27,
+      24,
+      28,
+      26,
+      26,
+      30,
+      24,
+      25,
+      30,
+      22,
+      27,
+      32,
+      21,
+      26,
+      29,
+      25,
+      25,
+      29,
+      24,
+      26,
+      27,
+      26,
+      26,
+      29,
+      42,
+      17,
+      21,
+      32,
+      16,
+      28,
+      25,
+      31,
+      23,
+      25,
+      27,
+      28,
+      25,
+      30,
+      26,
+      25,
+      24,
+      26,
+      29,
+      28,
+      23,
+      25,
+      28,
+      26,
+      31,
+      22,
+      25,
+      30,
+      23,
+      26,
+      30,
+      22,
+      28,
+      26,
+      27,
+      26,
+      29,
+      25,
+      50,
+      4,
+      67,
+      40,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 7622,
+    "output": 664,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

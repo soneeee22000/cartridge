@@ -1,0 +1,281 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:4f9d9335d4c07711ab2c743837fc6ca82fa67c02e8453c99677a8ffaccbdcb7e",
+  "occurrence": 0,
+  "role": "planner",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 4000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "title": {
+                "description": "constraints: minimum length 1, maximum length 48",
+                "type": "string"
+              },
+              "slug": {
+                "description": "constraints: maximum length 40\npattern: ^[a-z0-9]+(-[a-z0-9]+)*$.",
+                "type": "string"
+              },
+              "lang": {
+                "enum": [
+                  "en",
+                  "fr"
+                ],
+                "type": "string"
+              },
+              "gameType": {
+                "enum": [
+                  "arcade-run",
+                  "stage-clear",
+                  "puzzle-board",
+                  "toy-box"
+                ],
+                "type": "string"
+              },
+              "loop": {
+                "description": "constraints: minimum length 1, maximum length 280",
+                "type": "string"
+              },
+              "input": {
+                "enum": [
+                  "tap-anywhere",
+                  "drag-follow",
+                  "swipe-lanes"
+                ],
+                "type": "string"
+              },
+              "style": {
+                "enum": [
+                  "paper-cut",
+                  "chalkboard",
+                  "risograph"
+                ],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "slug",
+              "lang",
+              "gameType",
+              "loop",
+              "input",
+              "style"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You plan one single-file HTML5 mini-game from a short brief.\n\nRead the brief, then decide:\n\n- `gameType`: one of `arcade-run`, `stage-clear`, `puzzle-board`, `toy-box`. Call `list_cards` with kind `type` and read the card that fits before you choose. Pick `toy-box` when the brief has no way to lose.\n- `input`: one of `tap-anywhere`, `drag-follow`, `swipe-lanes`. Prefer `tap-anywhere` unless the brief asks for dragging or lanes.\n- `style`: one of `paper-cut`, `chalkboard`, `risograph`.\n- `title`: a short, playable name in the brief's language, at most 48 characters.\n- `slug`: the title in lowercase ASCII words joined by single hyphens.\n- `lang`: `en` or `fr`, the language the brief is written in.\n- `loop`: one or two sentences, at most 280 characters, saying what the player does, what they are trying to reach and what ends a play-through.\n\nKeep the game small enough to fit in one page with no external files. When the brief asks for something the contract forbids (sound files, network calls, saved progress), plan the closest version that fits and say nothing about the rest.\n\nAnswer only with the structured plan."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\n\npop the bubbles"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_01BqjpwrjQKUVqjxZrtX7WAF",
+              "name": "list_cards",
+              "input": {
+                "kind": "type"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01BqjpwrjQKUVqjxZrtX7WAF",
+              "content": "{\"cards\":[{\"id\":\"arcade-run\",\"kind\":\"type\",\"title\":\"Arcade run\",\"summary\":\"A continuous run with one life where the player survives and collects.\"},{\"id\":\"puzzle-board\",\"kind\":\"type\",\"title\":\"Puzzle board\",\"summary\":\"A turn-based board with no clock pressure, won by solving it.\"},{\"id\":\"stage-clear\",\"kind\":\"type\",\"title\":\"Stage clear\",\"summary\":\"Discrete stages, each with one goal to meet before moving on.\"},{\"id\":\"toy-box\",\"kind\":\"type\",\"title\":\"Toy box\",\"summary\":\"Open play with a visible tally and a clear-the-table replay; nobody loses.\"}]}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_01HFn9hBymSrrRftxGnUSdFj",
+              "name": "get_card",
+              "input": {
+                "id": "toy-box"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_013VjifRx8bc8xUzoKKvAUtz",
+              "name": "get_card",
+              "input": {
+                "id": "tap-anywhere"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01HFn9hBymSrrRftxGnUSdFj",
+              "content": "{\"id\":\"toy-box\",\"body\":\"# Toy box\\n\\nA toy, not a contest. The player places, pops or arranges things and watches a tally grow. There is no losing and no final screen.\\n\\n## Contract row\\n\\n| field                | value       |\\n| -------------------- | ----------- |\\n| score                | `optional`  |\\n| level                | `forbidden` |\\n| end                  | `forbidden` |\\n| end reasons          | `none`      |\\n| reset                | `hard`      |\\n| idle death gate      | `any-end`   |\\n| idle motion required | `no`        |\\n\\n- Emit every event marked `required` above. A toy box has none beyond `boot` and `start`, and it sends `start` straight away. <!-- rule:E1-15 -->\\n- Never emit `level` or `end`. <!-- rule:E1-16 -->\\n- No `end` reason is allowed, because `end` is never sent. <!-- rule:E1-17 -->\\n\\n## Clear-the-table replay\\n\\nReplay means clearing the table. Write one function that empties the table and zeroes the tally, call it from the host `reset` command, and call the same function from a visible in-game control. <!-- rule:E1-24 -->\\n\\n```js\\nfunction clearTable() {\\n  pieces.length = 0;\\n  tally = 0;\\n  CARTRIDGE.send(\\\"score\\\", { value: 0 });\\n  draw();\\n}\\nclearButton.addEventListener(\\\"click\\\", clearTable);\\nwindow.addEventListener(\\\"message\\\", (event) => {\\n  const data = event.data;\\n  if (!data || data.source !== \\\"cartridge-host\\\") return;\\n  if (data.type === \\\"reset\\\") clearTable();\\n});\\n```\\n\\nKeep the clear control visible at all times and at least 44 CSS pixels tall.\\n\\n## Loop skeleton\\n\\n```js\\nconst pieces = [];\\nlet tally = 0,\\n  paused = false;\\nfunction place(x, y) {\\n  pieces.push({ x, y });\\n  tally += 1;\\n  CARTRIDGE.send(\\\"score\\\", { value: tally });\\n}\\nfunction frame() {\\n  if (!paused) settle(pieces);\\n  draw();\\n  requestAnimationFrame(frame);\\n}\\nCARTRIDGE.send(\\\"start\\\");\\nrequestAnimationFrame(frame);\\n```\"}"
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_013VjifRx8bc8xUzoKKvAUtz",
+              "content": "{\"id\":\"tap-anywhere\",\"body\":\"# Tap anywhere\\n\\nThe whole screen is the button. Best for jumps, flaps and single choices.\\n\\n- Register pointer input on the canvas: `canvas.addEventListener(\\\"pointerdown\\\", onTap)`. <!-- rule:E1-22 -->\\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\\n- Ignore taps while paused.\\n\\n```js\\ncanvas.style.touchAction = \\\"none\\\";\\ncanvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n  event.preventDefault();\\n  if (paused) return;\\n  if (!running) {\\n    running = true;\\n    CARTRIDGE.send(\\\"start\\\");\\n    return;\\n  }\\n  act();\\n});\\n```\\n\\nShow a short pulsing hint (\\\"Tap to begin\\\") until the first tap.\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "list_cards",
+          "description": "List the knowledge cards (id, kind, title, summary), sorted by id. Pass a kind to filter.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "contract",
+                  "type",
+                  "input",
+                  "style"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNqVa6A4jUuvXSYYRN9F\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3320,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"title\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"P\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"op\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Bubbles\\\",\\\"sl\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ug\\\":\\\"pop-the-\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bubbles\\\",\\\"l\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ang\\\":\\\"en\\\",\\\"g\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ameType\\\":\\\"to\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"y-box\\\",\\\"lo\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"op\\\":\\\"Tap flo\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ating bubbles to pop\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" them\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" watch your\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" p\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"op tally clim\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"b,\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with new bubbles dr\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ifting up\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to repl\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ace them\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\". Use the clear button an\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ytime to emp\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ty the scre\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"en and start a\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fresh bat\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ch.\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"input\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"tap-\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"anywhere\\\",\\\"style\\\":\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pa\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"per-c\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ut\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0          }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":3320,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":136,\"output_tokens_details\":{\"thinking_tokens\":0}} }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"     }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      407,
+      2,
+      2,
+      2,
+      8,
+      8,
+      8,
+      8,
+      7,
+      48,
+      45,
+      46,
+      330,
+      330,
+      330,
+      330,
+      330,
+      330,
+      330,
+      45,
+      39,
+      39,
+      46,
+      51,
+      178,
+      178,
+      178,
+      9,
+      33,
+      46,
+      48,
+      42,
+      48,
+      50,
+      0,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 3320,
+    "output": 136,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

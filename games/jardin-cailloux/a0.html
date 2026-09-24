@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jardin de Cailloux</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #fbf7ee;
+    overflow: hidden;
+    font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  }
+  #wrap {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+  #clearBtn {
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 10;
+    min-width: 200px;
+    min-height: 48px;
+    padding: 8px 22px;
+    background: #fbf7ee;
+    border: 3px solid #0078bf;
+    color: #0078bf;
+    font-weight: 900;
+    font-size: 17px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 2px 2px 0 #ff48b0;
+  }
+  #clearBtn:active {
+    transform: translateX(-50%) translateY(2px);
+    box-shadow: 1px 1px 0 #ff48b0;
+  }
+  #tally {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    color: #0078bf;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0 #ff48b0;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+</div>
+<div id="tally">Cailloux : 0</div>
+<button id="clearBtn">Ratisser le sable</button>
+
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+</script>
+
+<script>
+(function () {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const clearBtn = document.getElementById("clearBtn");
+  const tallyEl = document.getElementById("tally");
+
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+
+  let paused = false;
+  let running = false; // becomes true after first tap (start)
+
+  const pieces = []; // {x,y,r,rot,shade,ripple}
+  let tally = 0;
+
+  // ---------- grain tile ----------
+  let grainCanvas = null;
+  function buildGrain() {
+    const size = 128;
+    grainCanvas = document.createElement("canvas");
+    grainCanvas.width = size;
+    grainCanvas.height = size;
+    const gctx = grainCanvas.getContext("2d");
+    const imgData = gctx.createImageData(size, size);
+    for (let i = 0; i < imgData.data.length; i += 4) {
+      const v = Math.random() * 255;
+      imgData.data[i] = v;
+      imgData.data[i + 1] = v;
+      imgData.data[i + 2] = v;
+      imgData.data[i + 3] = 255;
+    }
+    gctx.putImageData(imgData, 0, 0);
+  }
+  buildGrain();
+
+  function resize() {
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", resize);
+
+  // ---------- sand raked lines (drawn as background pattern each frame, cheap) ----------
+  function drawSand() {
+    ctx.fillStyle = "#fbf7ee";
+    ctx.fillRect(0, 0, W, H);
+
+    // raked lines, ink two, subtle
+    ctx.save();
+    ctx.strokeStyle = "#0078bf";
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = 1.5;
+    const spacing = 22;
+    for (let y = -H; y < H * 2; y += spacing) {
+      ctx.beginPath();
+      for (let x = -20; x <= W + 20; x += 14) {
+        const wob = Math.sin((x + y) * 0.04) * 5;
+        if (x === -20) ctx.moveTo(x, y + wob);
+        else ctx.lineTo(x, y + wob);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawStone(p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+
+    // ripple rings around stone, ink two, offset
+    ctx.save();
+    ctx.strokeStyle = "#0078bf";
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(1, 1, p.r + i * 9, p.r * 0.55 + i * 5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // stone shadow offset (misregistration) - ink two layer
+    ctx.save();
+    ctx.fillStyle = "#0078bf";
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.ellipse(2, 3, p.r, p.r * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // stone body - ink one (pink) with slight offset -> overlap where they cross
+    ctx.save();
+    ctx.fillStyle = p.shade ? "#ff48b0" : "#5b3a8c";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.r * 0.96, p.r * 0.68, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // a couple of halftone dots for texture/shading
+    ctx.save();
+    ctx.fillStyle = "#5b3a8c";
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      const dx = Math.cos(ang) * p.r * 0.5;
+      const dy = Math.sin(ang) * p.r * 0.32;
+      ctx.beginPath();
+      ctx.arc(dx, dy, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function drawGrain() {
+    if (!grainCanvas) return;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const pattern = ctx.createPattern(grainCanvas, "repeat");
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  function drawTitleHint() {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 350);
+
+    // title text, offset ink layers
+    ctx.font = "900 34px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = "#0078bf";
+    ctx.globalAlpha = 0.9;
+    ctx.fillText("JARDIN DE CAILLOUX", W / 2 + 2, H / 2 - 40 + 2);
+    ctx.fillStyle = "#ff48b0";
+    ctx.fillText("JARDIN DE CAILLOUX", W / 2, H / 2 - 40);
+
+    ctx.globalAlpha = pulse;
+    ctx.font = "700 18px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = "#5b3a8c";
+    ctx.fillText("Touchez l'écran pour commencer", W / 2, H / 2 + 10);
+    ctx.restore();
+  }
+
+  function draw() {
+    drawSand();
+    for (const p of pieces) drawStone(p);
+    if (!running) drawTitleHint();
+    drawGrain();
+  }
+
+  function updateTally() {
+    tallyEl.textContent = "Cailloux : " + tally;
+  }
+
+  function place(x, y) {
+    const r = 16 + Math.random() * 14;
+    pieces.push({
+      x, y, r,
+      rot: (Math.random() - 0.5) * 1.2,
+      shade: Math.random() > 0.4,
+    });
+    tally += 1;
+    updateTally();
+    CARTRIDGE.send("score", { value: tally });
+  }
+
+  function clearTable() {
+    pieces.length = 0;
+    tally = 0;
+    updateTally();
+    CARTRIDGE.send("score", { value: 0 });
+    draw();
+  }
+
+  clearBtn.addEventListener("click", clearTable);
+
+  function backToTitle() {
+    running = false;
+    clearTable();
+  }
+
+  // ---------- input ----------
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (paused) return;
+    if (!running) {
+      running = true;
+      CARTRIDGE.send("start");
+      draw();
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    place(x, y);
+    draw();
+  });
+
+  // ---------- host messages ----------
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") backToTitle();
+  });
+
+  // ---------- loop ----------
+  function frame() {
+    if (!paused) draw();
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  updateTally();
+  CARTRIDGE.send("boot", { title: "Jardin de Cailloux", gameType: "toy-box", lang: "fr" });
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

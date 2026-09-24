@@ -3,12 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kite Above the Rooftops</title>
+<title>Kite Over the Rooftops</title>
 <style>
   html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #f4ecd8;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
+    background: #f4ecd8;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
   canvas {
@@ -29,558 +32,514 @@ const CARTRIDGE = {
     );
   },
 };
+</script>
+<script>
+(function () {
+  "use strict";
 
-// ---- Setup ----
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-canvas.style.touchAction = "none";
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
 
-let DPR = Math.max(1, window.devicePixelRatio || 1);
-let W = 0, H = 0;
-
-function resize() {
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = Math.floor(W * DPR);
-  canvas.height = Math.floor(H * DPR);
-  canvas.style.width = W + "px";
-  canvas.style.height = H + "px";
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-}
-window.addEventListener("resize", resize);
-resize();
-
-// ---- Palette ----
-const COLORS = {
-  bg: "#f4ecd8",
-  layer: "#e07a5f",
-  accent: "#3d405b",
-  highlight: "#81b29a",
-};
-
-// ---- Seeded jitter helper ----
-function makeJitterSeed(n) {
-  const arr = [];
-  let s = n * 9301 + 49297;
-  for (let i = 0; i < 40; i++) {
-    s = (s * 9301 + 49297) % 233280;
-    arr.push((s / 233280) * 2 - 1);
+  // ---- Sizing ----
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-  return arr;
-}
-const jitterTable = makeJitterSeed(777);
-function jit(i, amt) {
-  return jitterTable[i % jitterTable.length] * amt;
-}
+  window.addEventListener("resize", resize);
+  resize();
 
-// ---- Rounded rect path with jitter ----
-function jitterRoundRect(x, y, w, h, r, seedBase) {
-  ctx.beginPath();
-  const pts = [
-    [x + r, y],
-    [x + w - r, y],
-    [x + w, y + r],
-    [x + w, y + h - r],
-    [x + w - r, y + h],
-    [x + r, y + h],
-    [x, y + h - r],
-    [x, y + r],
-  ];
-  // simple jittered rounded rect approximation using arcs at corners
-  ctx.beginPath();
-  ctx.moveTo(x + r + jit(seedBase, 1.2), y + jit(seedBase + 1, 1.2));
-  ctx.lineTo(x + w - r + jit(seedBase + 2, 1.2), y + jit(seedBase + 3, 1.2));
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w + jit(seedBase + 4, 1.2), y + h - r + jit(seedBase + 5, 1.2));
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r + jit(seedBase + 6, 1.2), y + h + jit(seedBase + 7, 1.2));
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x + jit(seedBase + 8, 1.2), y + r + jit(seedBase + 9, 1.2));
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
+  // ---- Palette ----
+  const COL_BG = "#f4ecd8";
+  const COL_LAYER = "#e07a5f";
+  const COL_ACCENT = "#3d405b";
+  const COL_HILITE = "#81b29a";
 
-function drawShadowLayer(drawFn) {
-  ctx.save();
-  ctx.shadowColor = "rgba(61,64,91,0.35)";
-  ctx.shadowBlur = 6;
-  ctx.shadowOffsetY = 3;
-  drawFn();
-  ctx.restore();
-}
-
-// ---- Game state ----
-let last = 0;
-let running = false;
-let paused = false;
-let started = false; // has boot happened
-let score = 0;
-let ribbons = 0;
-let elapsed = 0;
-let speed = 140; // px/s base scroll speed
-let level = 1;
-
-const kite = {
-  x: 0,
-  y: 0,
-  vy: 0,
-  radius: 18,
-  angle: 0,
-};
-
-let chimneys = []; // {x, gapY, gapH, w, passed}
-let ribbonsList = []; // {x, y, r, taken}
-let clouds = [];
-
-const GRAVITY = 480;
-const LIFT = -320;
-const CHIMNEY_GAP_MIN = 170;
-const CHIMNEY_GAP_MAX = 230;
-const CHIMNEY_W = 70;
-let spawnTimer = 0;
-let spawnInterval = 1.7;
-
-function resetState() {
-  score = 0;
-  ribbons = 0;
-  elapsed = 0;
-  speed = 140;
-  level = 1;
-  kite.x = Math.max(90, W * 0.22);
-  kite.y = H * 0.4;
-  kite.vy = 0;
-  kite.angle = 0;
-  chimneys = [];
-  ribbonsList = [];
-  spawnTimer = 0;
-  spawnInterval = 1.7;
-  // fairness: clear opening lane, first hazard well ahead
-  spawnTimer = -2.0;
-  initClouds();
-}
-
-function initClouds() {
-  clouds = [];
-  for (let i = 0; i < 6; i++) {
-    clouds.push({
-      x: Math.random() * (W || 400),
-      y: 40 + Math.random() * ((H || 600) * 0.4),
-      r: 20 + Math.random() * 30,
-      speed: 10 + Math.random() * 15,
-    });
+  // ---- Seeded jitter helper ----
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
   }
-}
-
-let booted = false;
-let gameOver = false;
-
-function backToTitle() {
-  running = false;
-  paused = false;
-  gameOver = false;
-  resetState();
-}
-
-resetState();
-
-// ---- Input ----
-canvas.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
-  if (paused) return;
-  if (!started) {
-    started = true;
+  const rng = makeRng(20240521);
+  function jitter(n) {
+    return (rng() - 0.5) * n;
   }
-  if (!running) {
-    if (gameOver) {
-      resetState();
-      gameOver = false;
+
+  // Precompute a jittered polygon for reuse (seeded once, cached per shape id)
+  const jitterCache = {};
+  function jitteredPoints(id, pts, amt) {
+    if (jitterCache[id]) return jitterCache[id];
+    const out = pts.map(([x, y]) => [x + jitter(amt), y + jitter(amt)]);
+    jitterCache[id] = out;
+    return out;
+  }
+
+  function drawPaperPath(id, pts, amt, fillStyle, shadow) {
+    const jp = jitteredPoints(id, pts, amt);
+    ctx.save();
+    if (shadow) {
+      ctx.shadowColor = "rgba(61,64,91,0.35)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 3;
     }
-    running = true;
-    CARTRIDGE.send("start");
-    return;
+    ctx.beginPath();
+    ctx.moveTo(jp[0][0], jp[0][1]);
+    for (let i = 1; i < jp.length; i++) ctx.lineTo(jp[i][0], jp[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+    ctx.restore();
   }
-  act();
-});
 
-function act() {
-  kite.vy = LIFT;
-}
-
-// ---- Host messages ----
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.source !== "cartridge-host") return;
-  if (data.type === "pause") paused = true;
-  if (data.type === "resume") paused = false;
-  if (data.type === "reset") backToTitle();
-});
-
-// ---- Spawning ----
-function spawnChimney() {
-  const gapH = CHIMNEY_GAP_MAX - Math.min(60, elapsed * 1.5) ;
-  const gap = Math.max(CHIMNEY_GAP_MIN, gapH);
-  const margin = 60;
-  const gapY = margin + Math.random() * (H - margin * 2 - gap);
-  chimneys.push({
-    x: W + CHIMNEY_W,
-    gapY: gapY,
-    gapH: gap,
-    w: CHIMNEY_W,
-    passed: false,
-    seed: Math.floor(Math.random() * 1000),
-  });
-  // maybe spawn a ribbon in the gap
-  if (Math.random() < 0.8) {
-    ribbonsList.push({
-      x: W + CHIMNEY_W + 40,
-      y: gapY + gap / 2,
-      r: 12,
-      taken: false,
-    });
+  function roundRectPath(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   }
-}
 
-// ---- Update ----
-function advance(dt) {
-  elapsed += dt;
-  // difficulty ramp
-  speed = 140 + Math.min(180, elapsed * 6);
-  spawnInterval = Math.max(1.0, 1.7 - elapsed * 0.01);
+  // ---- Game state ----
+  let last = 0;
+  let running = false;
+  let paused = false;
+  let started = false; // has boot been sent / has first frame drawn
+  let score = 0;
+  let ribbons = 0;
+  let speed = 160; // px/sec base scroll speed
+  let elapsed = 0;
+  let bootSent = false;
+  let firstTapDone = false;
 
-  // level tracking (speed based, but we cannot emit 'level' per arcade-run - forbidden)
-  // NOTE: arcade-run forbids level events, so we do not send them.
+  // Kite (player)
+  const kite = {
+    x: 0,
+    y: 0,
+    vy: 0,
+    r: 18,
+  };
 
-  kite.vy += GRAVITY * dt;
-  kite.y += kite.vy * dt;
-  kite.angle = Math.max(-0.5, Math.min(0.9, kite.vy / 500));
-
-  if (kite.y < kite.radius) {
-    kite.y = kite.radius;
+  function resetKite() {
+    kite.x = W * 0.28;
+    kite.y = H * 0.4;
     kite.vy = 0;
   }
-  if (kite.y > H - kite.radius) {
-    kite.y = H - kite.radius;
-    crash();
-    return;
-  }
 
-  spawnTimer += dt;
-  if (spawnTimer >= spawnInterval) {
+  // Rooftop chimneys (hazards) and ribbons (collectibles)
+  let chimneys = [];
+  let ribbonsList = [];
+  let spawnTimer = 0;
+  let ribbonSpawnTimer = 0;
+  let rooftopY = 0;
+
+  function backToTitle() {
+    running = false;
+    paused = false;
+    started = false;
+    score = 0;
+    ribbons = 0;
+    speed = 160;
+    elapsed = 0;
+    chimneys = [];
+    ribbonsList = [];
     spawnTimer = 0;
-    spawnChimney();
+    ribbonSpawnTimer = 0;
+    resetKite();
   }
 
-  for (let c of chimneys) {
-    c.x -= speed * dt;
-    if (!c.passed && c.x + c.w < kite.x) {
-      c.passed = true;
-      score += 1;
-      CARTRIDGE.send("score", { value: score });
+  function computeRooftop() {
+    rooftopY = H * 0.82;
+  }
+
+  resetKite();
+  computeRooftop();
+
+  function spawnChimney(xOverride) {
+    const w = 30 + rng() * 18;
+    const h = 40 + rng() * 60;
+    const x = xOverride !== undefined ? xOverride : W + 40;
+    chimneys.push({ x, w, h, id: Math.floor(rng() * 1e9) });
+  }
+
+  function spawnRibbon() {
+    const y = H * 0.15 + rng() * (H * 0.5);
+    ribbonsList.push({ x: W + 30, y, id: Math.floor(rng() * 1e9), taken: false });
+  }
+
+  // Fairness: keep opening lane clear, spawn first hazard well ahead
+  let openingGraceDistance = 0;
+
+  function startPlay() {
+    chimneys = [];
+    ribbonsList = [];
+    spawnTimer = 0;
+    ribbonSpawnTimer = 0;
+    score = 0;
+    ribbons = 0;
+    speed = 160;
+    elapsed = 0;
+    resetKite();
+    // first hazard spawns well off to the right, giving a few seconds of clear flight
+    spawnChimney(W + W * 0.9);
+    CARTRIDGE.send("score", { value: score });
+  }
+
+  function crash() {
+    if (!running) return;
+    running = false;
+    CARTRIDGE.send("end", { reason: "lose", value: score });
+  }
+
+  // ---- Input ----
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (paused) return;
+    if (!running) {
+      running = true;
+      firstTapDone = true;
+      startPlay();
+      CARTRIDGE.send("start");
+      return;
     }
-  }
-  chimneys = chimneys.filter((c) => c.x > -c.w - 10);
+    act();
+  });
 
-  for (let r of ribbonsList) {
-    r.x -= speed * dt;
+  function act() {
+    kite.vy = -260;
   }
-  ribbonsList = ribbonsList.filter((r) => r.x > -30 && !r.taken);
 
-  for (let cl of clouds) {
-    cl.x -= cl.speed * dt;
-    if (cl.x < -60) {
-      cl.x = W + 60;
-      cl.y = 30 + Math.random() * (H * 0.4);
+  // ---- Host messages ----
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") backToTitle();
+  });
+
+  // ---- Update ----
+  function advance(dt) {
+    elapsed += dt;
+    speed += dt * 4; // ramp difficulty via speed
+
+    // gravity + lift
+    kite.vy += 420 * dt;
+    kite.y += kite.vy * dt;
+
+    const ceiling = H * 0.06;
+    const floor = rooftopY - kite.r;
+    if (kite.y < ceiling) {
+      kite.y = ceiling;
+      kite.vy = 0;
     }
-  }
-}
+    if (kite.y > floor) {
+      kite.y = floor;
+      kite.vy = 0;
+      crash();
+      return;
+    }
 
-function collide() {
-  // chimneys
-  for (let c of chimneys) {
-    const kx = kite.x, ky = kite.y, kr = kite.radius * 0.75;
-    const withinX = kx + kr > c.x && kx - kr < c.x + c.w;
-    if (withinX) {
-      const topH = c.gapY;
-      const bottomY = c.gapY + c.gapH;
-      if (ky - kr < topH || ky + kr > bottomY) {
+    // spawn chimneys
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawnChimney();
+      spawnTimer = 1.4 + rng() * 0.9 - Math.min(elapsed * 0.01, 0.6);
+      if (spawnTimer < 0.7) spawnTimer = 0.7;
+    }
+
+    // spawn ribbons
+    ribbonSpawnTimer -= dt;
+    if (ribbonSpawnTimer <= 0) {
+      spawnRibbon();
+      ribbonSpawnTimer = 1.6 + rng() * 1.2;
+    }
+
+    // move chimneys
+    for (const c of chimneys) {
+      c.x -= speed * dt;
+    }
+    chimneys = chimneys.filter((c) => c.x + c.w > -20);
+
+    // move ribbons
+    for (const r of ribbonsList) {
+      r.x -= speed * dt;
+    }
+    ribbonsList = ribbonsList.filter((r) => r.x > -20 && !r.taken);
+  }
+
+  function collide() {
+    // chimney collision (rects rising from rooftop)
+    for (const c of chimneys) {
+      const top = rooftopY - c.h;
+      const left = c.x;
+      const right = c.x + c.w;
+      if (
+        kite.x + kite.r * 0.7 > left &&
+        kite.x - kite.r * 0.7 < right &&
+        kite.y + kite.r * 0.7 > top
+      ) {
         crash();
         return;
       }
     }
-  }
-  // ribbons
-  for (let r of ribbonsList) {
-    if (r.taken) continue;
-    const dx = kite.x - r.x;
-    const dy = kite.y - r.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < kite.radius + r.r) {
-      r.taken = true;
-      ribbons += 1;
-      score += 3;
-      CARTRIDGE.send("score", { value: score });
-    }
-  }
-}
-
-function crash() {
-  if (!running) return;
-  running = false;
-  gameOver = true;
-  CARTRIDGE.send("end", { reason: "lose", value: score });
-}
-
-// ---- Drawing ----
-function drawBackground() {
-  ctx.fillStyle = COLORS.bg;
-  ctx.fillRect(0, 0, W, H);
-
-  // clouds - simple paper puffs, always moving for idle liveliness
-  for (let cl of clouds) {
-    drawShadowLayer(() => {
-      ctx.fillStyle = "#ffffff";
-      ctx.globalAlpha = 0.7;
-      ctx.beginPath();
-      ctx.ellipse(cl.x, cl.y, cl.r, cl.r * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    });
-  }
-
-  // ground strip of rooftops silhouette
-  drawShadowLayer(() => {
-    ctx.fillStyle = COLORS.accent;
-    ctx.globalAlpha = 0.15;
-    ctx.fillRect(0, H - 14, W, 14);
-    ctx.globalAlpha = 1;
-  });
-}
-
-function drawChimney(c) {
-  const topH = c.gapY;
-  const bottomY = c.gapY + c.gapH;
-  const bottomH = H - bottomY;
-
-  drawShadowLayer(() => {
-    ctx.fillStyle = COLORS.layer;
-    jitterRoundRect(c.x, 0, c.w, topH, 6, c.seed);
-    ctx.fill();
-  });
-  drawShadowLayer(() => {
-    ctx.fillStyle = COLORS.layer;
-    jitterRoundRect(c.x, bottomY, c.w, bottomH, 6, c.seed + 10);
-    ctx.fill();
-  });
-
-  // accent cap bands
-  ctx.fillStyle = COLORS.accent;
-  ctx.globalAlpha = 0.85;
-  ctx.fillRect(c.x - 2, Math.max(0, topH - 10), c.w + 4, 8);
-  ctx.fillRect(c.x - 2, bottomY + 2, c.w + 4, 8);
-  ctx.globalAlpha = 1;
-}
-
-function drawRibbon(r) {
-  drawShadowLayer(() => {
-    ctx.fillStyle = COLORS.highlight;
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const ang = (i / 8) * Math.PI * 2;
-      const rad = r.r + jit(i + Math.floor(r.x), 1.5);
-      const px = r.x + Math.cos(ang) * rad;
-      const py = r.y + Math.sin(ang) * rad;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill();
-  });
-  // little tail
-  ctx.strokeStyle = COLORS.highlight;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(r.x - r.r, r.y);
-  ctx.lineTo(r.x - r.r - 14, r.y + 8);
-  ctx.stroke();
-}
-
-function drawKite() {
-  ctx.save();
-  ctx.translate(kite.x, kite.y);
-  ctx.rotate(kite.angle * 0.3);
-
-  // tail
-  ctx.strokeStyle = COLORS.accent;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(-kite.radius * 0.6, kite.radius * 0.3);
-  let px = -kite.radius * 0.6, py = kite.radius * 0.3;
-  for (let i = 1; i <= 4; i++) {
-    const nx = px - 10;
-    const ny = py + (i % 2 === 0 ? -6 : 6);
-    ctx.lineTo(nx, ny);
-    px = nx; py = ny;
-  }
-  ctx.stroke();
-
-  // kite body: diamond shape, paper-cut layered
-  drawShadowLayer(() => {
-    ctx.fillStyle = COLORS.layer;
-    ctx.beginPath();
-    const s = kite.radius * 1.4;
-    ctx.moveTo(0 + jit(1, 1), -s + jit(2, 1));
-    ctx.lineTo(s * 0.75 + jit(3, 1), 0 + jit(4, 1));
-    ctx.lineTo(0 + jit(5, 1), s + jit(6, 1));
-    ctx.lineTo(-s * 0.75 + jit(7, 1), 0 + jit(8, 1));
-    ctx.closePath();
-    ctx.fill();
-  });
-
-  // inner accent diamond
-  ctx.fillStyle = COLORS.accent;
-  ctx.globalAlpha = 0.5;
-  ctx.beginPath();
-  const s2 = kite.radius * 0.6;
-  ctx.moveTo(0, -s2);
-  ctx.lineTo(s2 * 0.75, 0);
-  ctx.lineTo(0, s2);
-  ctx.lineTo(-s2 * 0.75, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  ctx.restore();
-}
-
-function drawHUD() {
-  // score plate
-  drawShadowLayer(() => {
-    ctx.fillStyle = "#ffffff";
-    jitterRoundRect(14, 14, 130, 46, 10, 500);
-    ctx.fill();
-  });
-  ctx.fillStyle = COLORS.accent;
-  ctx.font = "bold 22px sans-serif";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Score " + score, 28, 37);
-}
-
-function drawTitleScreen() {
-  drawBackground();
-  drawKite();
-
-  drawShadowLayer(() => {
-    ctx.fillStyle = "#ffffff";
-    const w = Math.min(360, W - 40);
-    jitterRoundRect(W / 2 - w / 2, H / 2 - 90, w, 150, 14, 200);
-    ctx.fill();
-  });
-
-  ctx.fillStyle = COLORS.accent;
-  ctx.textAlign = "center";
-  ctx.font = "bold 26px sans-serif";
-  ctx.fillText("Kite Above the Rooftops", W / 2, H / 2 - 40);
-
-  const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);
-  ctx.globalAlpha = pulse;
-  ctx.font = "bold 20px sans-serif";
-  ctx.fillStyle = COLORS.layer;
-  ctx.fillText("Tap to begin", W / 2, H / 2 + 10);
-  ctx.globalAlpha = 1;
-
-  ctx.font = "16px sans-serif";
-  ctx.fillStyle = COLORS.accent;
-  ctx.fillText("Tap to rise, dodge chimneys, catch ribbons", W / 2, H / 2 + 45);
-  ctx.textAlign = "left";
-}
-
-function drawGameOverScreen() {
-  drawShadowLayer(() => {
-    ctx.fillStyle = "#ffffff";
-    const w = Math.min(320, W - 40);
-    jitterRoundRect(W / 2 - w / 2, H / 2 - 80, w, 160, 14, 300);
-    ctx.fill();
-  });
-  ctx.fillStyle = COLORS.accent;
-  ctx.textAlign = "center";
-  ctx.font = "bold 26px sans-serif";
-  ctx.fillText("Crashed!", W / 2, H / 2 - 30);
-  ctx.font = "bold 20px sans-serif";
-  ctx.fillText("Score: " + score, W / 2, H / 2 + 6);
-  const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);
-  ctx.globalAlpha = pulse;
-  ctx.font = "18px sans-serif";
-  ctx.fillStyle = COLORS.layer;
-  ctx.fillText("Tap to fly again", W / 2, H / 2 + 44);
-  ctx.globalAlpha = 1;
-  ctx.textAlign = "left";
-}
-
-function drawPauseOverlay() {
-  ctx.fillStyle = "rgba(61,64,91,0.4)";
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.font = "bold 24px sans-serif";
-  ctx.fillText("Paused", W / 2, H / 2);
-  ctx.textAlign = "left";
-}
-
-function draw() {
-  drawBackground();
-
-  if (!started || (!running && !gameOver)) {
-    drawTitleScreen();
-  } else if (running) {
-    for (let c of chimneys) drawChimney(c);
-    for (let r of ribbonsList) if (!r.taken) drawRibbon(r);
-    drawKite();
-    drawHUD();
-  } else if (gameOver) {
-    for (let c of chimneys) drawChimney(c);
-    for (let r of ribbonsList) if (!r.taken) drawRibbon(r);
-    drawKite();
-    drawHUD();
-    drawGameOverScreen();
-  }
-
-  if (paused) {
-    drawPauseOverlay();
-  }
-}
-
-// ---- Main loop ----
-function frame(now) {
-  const dt = Math.min((now - last) / 1000, 0.05);
-  last = now;
-
-  if (running && !paused) {
-    advance(dt || 0.016);
-    collide();
-  } else if (!running && !gameOver) {
-    // idle clouds keep moving for liveliness
-    elapsed += dt || 0.016;
-    for (let cl of clouds) {
-      cl.x -= cl.speed * (dt || 0.016);
-      if (cl.x < -60) {
-        cl.x = W + 60;
-        cl.y = 30 + Math.random() * (H * 0.4);
+    // ribbon collection
+    for (const r of ribbonsList) {
+      if (r.taken) continue;
+      const dx = kite.x - r.x;
+      const dy = kite.y - r.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < kite.r + 12) {
+        r.taken = true;
+        ribbons += 1;
+        score += 10;
+        CARTRIDGE.send("score", { value: score });
       }
     }
-  } else if (gameOver && !paused) {
-    elapsed += dt || 0.016;
   }
 
-  draw();
-  requestAnimationFrame(frame);
-}
+  // ---- Drawing ----
+  let cloudPhase = 0;
 
-requestAnimationFrame((t) => {
-  last = t;
-  draw();
-  CARTRIDGE.send("boot", { title: "Kite Above the Rooftops", gameType: "arcade-run", lang: "en" });
+  function drawBackground(dt) {
+    ctx.fillStyle = COL_BG;
+    ctx.fillRect(0, 0, W, H);
+
+    // drifting clouds (keep motion visible while idle)
+    cloudPhase += dt * 12;
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    for (let i = 0; i < 4; i++) {
+      const cx = ((i * 220 + cloudPhase) % (W + 200)) - 100;
+      const cy = H * 0.15 + i * 40;
+      drawCloud(`cloud${i}`, cx, cy, 40 + i * 6);
+    }
+    ctx.restore();
+  }
+
+  function drawCloud(id, x, y, r) {
+    const pts = [
+      [x - r, y],
+      [x - r * 0.5, y - r * 0.6],
+      [x, y - r * 0.7],
+      [x + r * 0.5, y - r * 0.5],
+      [x + r, y],
+      [x + r * 0.6, y + r * 0.4],
+      [x - r * 0.6, y + r * 0.4],
+    ];
+    drawPaperPath(id + "_" + Math.round(x / 50), pts, 3, "#ffffff", false);
+  }
+
+  function drawRooftops() {
+    // rooftop base layer
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.3)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = COL_LAYER;
+    ctx.fillRect(0, rooftopY, W, H - rooftopY);
+    ctx.restore();
+
+    // roof ridge line (accent strip)
+    ctx.fillStyle = COL_ACCENT;
+    ctx.fillRect(0, rooftopY, W, 4);
+  }
+
+  function drawChimney(c) {
+    const top = rooftopY - c.h;
+    const id = "chim" + c.id;
+    const pts = [
+      [c.x, rooftopY],
+      [c.x, top],
+      [c.x + c.w, top],
+      [c.x + c.w, rooftopY],
+    ];
+    drawPaperPath(id, pts, 2, COL_ACCENT, true);
+    // little cap
+    ctx.fillStyle = COL_LAYER;
+    ctx.fillRect(c.x - 3, top - 6, c.w + 6, 8);
+  }
+
+  function drawRibbon(r) {
+    if (r.taken) return;
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.shadowColor = "rgba(61,64,91,0.25)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = COL_HILITE;
+    // simple ribbon shape: two triangles + circle knot
+    ctx.beginPath();
+    ctx.moveTo(-10, -4);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(-10, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(10, -4);
+    ctx.lineTo(2, 0);
+    ctx.lineTo(10, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, -2, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKite() {
+    ctx.save();
+    ctx.translate(kite.x, kite.y);
+    const angle = Math.max(-0.3, Math.min(0.5, kite.vy * 0.0006));
+    ctx.rotate(angle);
+
+    // tail
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, kite.r * 0.8);
+    ctx.quadraticCurveTo(-6, kite.r * 1.6, 4, kite.r * 2.2);
+    ctx.stroke();
+
+    // kite diamond body (paper-cut style, jittered once per shape)
+    const r = kite.r;
+    const pts = [
+      [0, -r * 1.3],
+      [r, 0],
+      [0, r * 1.3],
+      [-r, 0],
+    ];
+    drawPaperPath("kitebody", pts, 2, COL_LAYER, true);
+
+    // cross spar accent
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.3);
+    ctx.lineTo(0, r * 1.3);
+    ctx.moveTo(-r, 0);
+    ctx.lineTo(r, 0);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawCard(text, x, y, w, h, fontSize) {
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.3)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = COL_BG;
+    roundRectPath(x, y, w, h, 10);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = COL_ACCENT;
+    ctx.font = `700 ${fontSize}px -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x + w / 2, y + h / 2 + 1);
+  }
+
+  function drawHUD() {
+    const text = `Ribbons: ${ribbons}`;
+    const w = Math.max(140, text.length * 12);
+    drawCard(text, 12, 12, w, 40, 18);
+  }
+
+  function drawTitleScreen() {
+    const pulse = 0.6 + 0.4 * Math.sin(elapsed * 3);
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    const w = Math.min(320, W * 0.8);
+    drawCard("Tap to begin", W / 2 - w / 2, H / 2 - 30, w, 60, 22);
+    ctx.restore();
+
+    const w2 = Math.min(360, W * 0.85);
+    drawCard("Kite Over the Rooftops", W / 2 - w2 / 2, H * 0.28 - 30, w2, 60, 20);
+  }
+
+  function drawEndScreen() {
+    const w = Math.min(340, W * 0.85);
+    drawCard(`Flight over! Ribbons: ${ribbons}`, W / 2 - w / 2, H / 2 - 30, w, 60, 20);
+    const w2 = Math.min(260, W * 0.7);
+    drawCard("Tap to fly again", W / 2 - w2 / 2, H / 2 + 45, w2, 44, 16);
+  }
+
+  function draw(dt) {
+    drawBackground(dt);
+    drawRooftops();
+    for (const c of chimneys) drawChimney(c);
+    for (const r of ribbonsList) drawRibbon(r);
+    drawKite();
+
+    if (running) {
+      drawHUD();
+    } else if (!firstTapDone) {
+      drawTitleScreen();
+    } else {
+      drawEndScreen();
+    }
+
+    if (paused) {
+      ctx.save();
+      ctx.fillStyle = "rgba(61,64,91,0.35)";
+      ctx.fillRect(0, 0, W, H);
+      const w = Math.min(220, W * 0.6);
+      drawCard("Paused", W / 2 - w / 2, H / 2 - 25, w, 50, 20);
+      ctx.restore();
+    }
+  }
+
+  // reposition kite/rooftop after resize while idle/paused too
+  window.addEventListener("resize", () => {
+    computeRooftop();
+    if (!running) resetKite();
+  });
+
+  // ---- Main loop ----
+  function frame(now) {
+    if (!last) last = now;
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+
+    if (running && !paused) {
+      advance(dt);
+      if (running) collide();
+    }
+
+    draw(dt);
+
+    if (!bootSent) {
+      bootSent = true;
+      CARTRIDGE.send("boot", {
+        title: "Kite Over the Rooftops",
+        gameType: "arcade-run",
+        lang: "en",
+      });
+    }
+
+    requestAnimationFrame(frame);
+  }
+
   requestAnimationFrame(frame);
-});
+})();
 </script>
 </body>
 </html>

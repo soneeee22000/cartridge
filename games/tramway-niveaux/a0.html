@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tram en Ville</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #2f3e3a;
+    overflow: hidden;
+    font-family: "Comic Sans MS", "Segoe Print", cursive, sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.style.touchAction = "none";
+
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---------- palette ----------
+const SLATE = "#2f3e3a";
+const CHALK = "#eeeae0";
+const ACCENT = "#f2c14e";
+const SECOND = "#8fc1e3";
+
+// ---------- chalk drawing helpers ----------
+function wob(v, amt) {
+  return v + (Math.random() - 0.5) * amt;
+}
+
+function chalkLine(x1, y1, x2, y2, color, width) {
+  ctx.lineCap = "round";
+  ctx.lineWidth = width;
+  for (let i = 0; i < 2; i++) {
+    ctx.beginPath();
+    ctx.globalAlpha = i === 0 ? 0.85 : 0.35;
+    const ox = (Math.random() - 0.5) * 1.4;
+    const oy = (Math.random() - 0.5) * 1.4;
+    ctx.strokeStyle = color;
+    ctx.moveTo(wob(x1, 1.5) + ox, wob(y1, 1.5) + oy);
+    ctx.lineTo(wob(x2, 1.5) + ox, wob(y2, 1.5) + oy);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkRect(x, y, w, h, color, width) {
+  chalkLine(x, y, x + w, y, color, width);
+  chalkLine(x + w, y, x + w, y + h, color, width);
+  chalkLine(x + w, y + h, x, y + h, color, width);
+  chalkLine(x, y + h, x, y, color, width);
+}
+
+function chalkCircle(cx, cy, r, color, width) {
+  ctx.lineCap = "round";
+  ctx.lineWidth = width;
+  const segs = 20;
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.globalAlpha = pass === 0 ? 0.85 : 0.35;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      const px = cx + Math.cos(a) * wob(r, 1.5);
+      const py = cy + Math.sin(a) * wob(r, 1.5);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function hatch(x, y, w, h, color, count) {
+  ctx.lineWidth = 2;
+  for (let i = 0; i < count; i++) {
+    const t = Math.random();
+    const hx = x + t * w;
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(wob(hx, 1), wob(y, 1));
+    ctx.lineTo(wob(hx + w * 0.08, 1), wob(y + h, 1));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkText(text, x, y, size, color, align) {
+  ctx.font = `${size}px "Comic Sans MS", cursive`;
+  ctx.textAlign = align || "center";
+  ctx.textBaseline = "middle";
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = color;
+  ctx.fillText(text, wob(x, 0.8), wob(y, 0.8));
+  ctx.globalAlpha = 0.35;
+  ctx.fillText(text, wob(x + 1, 0.8), wob(y + 1, 0.8));
+  ctx.globalAlpha = 1;
+}
+
+// smudges (background)
+let smudges = [];
+function makeSmudges() {
+  smudges = [];
+  for (let i = 0; i < 5; i++) {
+    smudges.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 60 + Math.random() * 120,
+    });
+  }
+}
+
+function drawSmudges() {
+  for (const s of smudges) {
+    ctx.beginPath();
+    ctx.fillStyle = CHALK;
+    ctx.globalAlpha = 0.03;
+    ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---------- game state ----------
+let paused = false;
+let running = false; // play started
+let gameOver = false;
+let stage = 0;
+let score = 0;
+let misses = 0;
+const MAX_MISSES = 3;
+
+const STAGES = [
+  { goal: 3, speed: 1.0 },
+  { goal: 5, speed: 1.15 },
+  { goal: 7, speed: 1.3 },
+  { goal: 9, speed: 1.45 },
+  { goal: 12, speed: 1.6 },
+];
+
+let boarded = 0;
+let goal = 0;
+let speed = 1;
+
+// tram
+let tramX = 0;
+let tramDir = 1;
+let doorOpen = false;
+let doorTimer = 0;
+
+// platform (quai)
+let platformLitTimer = 0;
+let platformIsLit = false;
+let platformCycle = 0;
+let stageStartTime = 0;
+let graceTime = 2.2; // seconds of grace
+
+let lastTime = 0;
+
+function backToTitle() {
+  running = false;
+  gameOver = false;
+  stage = 0;
+  score = 0;
+  misses = 0;
+  boarded = 0;
+  doorOpen = false;
+  tramX = -200;
+  bootSent = bootSent; // no-op
+}
+
+function enterStage(next) {
+  stage = next;
+  const cfg = STAGES[stage - 1];
+  goal = cfg.goal;
+  speed = cfg.speed;
+  boarded = 0;
+  tramX = -220;
+  tramDir = 1;
+  doorOpen = false;
+  doorTimer = 0;
+  platformIsLit = false;
+  platformCycle = Math.random() * Math.PI * 2;
+  stageStartTime = performance.now();
+  CARTRIDGE.send("level", { index: stage });
+}
+
+function onGoalMet() {
+  if (stage === STAGES.length) {
+    CARTRIDGE.send("end", { reason: "win", value: score });
+    gameOver = true;
+    winFlag = true;
+  } else {
+    enterStage(stage + 1);
+  }
+}
+
+function onStageFailed() {
+  CARTRIDGE.send("end", { reason: "lose", value: score });
+  gameOver = true;
+  winFlag = false;
+}
+
+let winFlag = false;
+
+// passengers waiting on platform, little chalk stick figures
+let passengers = [];
+function spawnPassengers() {
+  passengers = [];
+  const n = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    passengers.push({ ox: (Math.random() - 0.5) * 40 });
+  }
+}
+
+// ---------- input ----------
+let bootSent = false;
+
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  if (paused) return;
+  if (!running) {
+    running = true;
+    gameOver = false;
+    score = 0;
+    misses = 0;
+    spawnPassengers();
+    enterStage(1);
+    CARTRIDGE.send("start");
+    return;
+  }
+  if (gameOver) {
+    // restart soft
+    running = false;
+    return;
+  }
+  act();
+});
+
+function act() {
+  // try to open doors: only succeeds if tram is centered AND platform lit
+  const centerX = W / 2;
+  const nearCenter = Math.abs(tramX - centerX) < 55;
+  if (nearCenter && platformIsLit && !doorOpen) {
+    doorOpen = true;
+    doorTimer = 0.9;
+    const boardCount = Math.min(passengers.length, 2 + Math.floor(Math.random() * 2));
+    boarded += boardCount;
+    score += boardCount;
+    CARTRIDGE.send("score", { value: score });
+    spawnPassengers();
+    if (boarded >= goal) {
+      setTimeoutSafe(() => onGoalMet(), 500);
+    }
+  } else if (nearCenter && !platformIsLit) {
+    // missed attempt: tapped when platform not lit -> counts as fail attempt only if door already passed
+    misses += 1;
+    if (misses >= MAX_MISSES) {
+      setTimeoutSafe(() => onStageFailed(), 200);
+    }
+  }
+}
+
+// safe setTimeout wrapper using function refs (already fine, but centralize)
+function setTimeoutSafe(fn, ms) {
+  window.setTimeout(fn, ms);
+}
+
+// ---------- update ----------
+function update(dt) {
+  if (!running || paused || gameOver) return;
+
+  const elapsed = (performance.now() - stageStartTime) / 1000;
+  const inGrace = elapsed < graceTime;
+
+  // tram movement: goes across screen, slows near center, then continues
+  const centerX = W / 2;
+  const speedPx = speed * 90;
+  tramX += tramDir * speedPx * dt;
+
+  if (tramX > W + 250) {
+    tramX = -220;
+    // missed a full pass without boarding attempt while lit -> minor consequence not counted separately
+  }
+
+  // door auto closes
+  if (doorOpen) {
+    doorTimer -= dt;
+    if (doorTimer <= 0) {
+      doorOpen = false;
+    }
+  }
+
+  // platform lighting cycles, but not during grace period at stage very start (give a lit window early)
+  platformCycle += dt * (1.1 + speed * 0.3);
+  const litWindow = Math.sin(platformCycle) > 0.55;
+  platformIsLit = inGrace ? true : litWindow;
+
+  // detect tram passing center while NOT lit and NOT boarded this pass -> could fail;
+  // simplified: handled at tap. Also add slow drift failure if too many stage-loops without goal.
+}
+
+// ---------- draw ----------
+function drawTitle() {
+  ctx.fillStyle = SLATE;
+  ctx.fillRect(0, 0, W, H);
+  drawSmudges();
+  chalkText("Tram en Ville", W / 2, H * 0.32, Math.min(48, W * 0.09), CHALK);
+  chalkText("Touchez l'écran pour ouvrir les portes", W / 2, H * 0.44, Math.min(20, W * 0.045), SECOND);
+  chalkText("quand le quai s'éclaire, pour faire monter", W / 2, H * 0.44 + 26, Math.min(20, W * 0.045), SECOND);
+  chalkText("les voyageurs visés par le niveau.", W / 2, H * 0.44 + 52, Math.min(20, W * 0.045), SECOND);
+
+  const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
+  ctx.globalAlpha = pulse;
+  chalkText("Touchez pour commencer", W / 2, H * 0.7, Math.min(26, W * 0.06), ACCENT);
+  ctx.globalAlpha = 1;
+
+  drawTramSprite(W / 2, H * 0.85, false, 1);
+}
+
+function drawTramSprite(cx, cy, lit, scale) {
+  const w = 160 * scale, h = 60 * scale;
+  const x = cx - w / 2, y = cy - h / 2;
+  chalkRect(x, y, w, h, CHALK, 4);
+  // windows
+  for (let i = 0; i < 3; i++) {
+    chalkRect(x + 12 + i * (w / 3), y + 10, w / 3 - 24, h * 0.4, SECOND, 3);
+  }
+  // wheels
+  chalkCircle(x + 25, y + h + 4, 10, CHALK, 3);
+  chalkCircle(x + w - 25, y + h + 4, 10, CHALK, 3);
+  // pantograph line
+  chalkLine(cx, y, cx, y - 20, CHALK, 3);
+  if (lit) {
+    chalkCircle(x + w / 2, y - 4, 6, ACCENT, 3);
+  }
+}
+
+function drawPlatform() {
+  const py = H * 0.62;
+  const glow = platformIsLit;
+  // platform slab
+  chalkLine(W * 0.1, py, W * 0.9, py, CHALK, 5);
+  chalkLine(W * 0.1, py + 14, W * 0.9, py + 14, CHALK, 4);
+  hatch(W * 0.1, py, W * 0.8, 14, CHALK, 18);
+
+  // lamp post
+  const lampX = W * 0.5;
+  chalkLine(lampX, py - 90, lampX, py, CHALK, 4);
+  chalkCircle(lampX, py - 96, 14, glow ? ACCENT : CHALK, 4);
+  if (glow) {
+    ctx.beginPath();
+    ctx.fillStyle = ACCENT;
+    ctx.globalAlpha = 0.15;
+    ctx.arc(lampX, py - 96, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // waiting passengers - stick figures
+  passengers.forEach((p, i) => {
+    const px = W * 0.5 + p.ox + (i - passengers.length / 2) * 22;
+    const pyFeet = py - 2;
+    chalkCircle(px, pyFeet - 34, 7, CHALK, 3);
+    chalkLine(px, pyFeet - 27, px, pyFeet - 8, CHALK, 3);
+    chalkLine(px, pyFeet - 8, px - 6, pyFeet, CHALK, 3);
+    chalkLine(px, pyFeet - 8, px + 6, pyFeet, CHALK, 3);
+    chalkLine(px, pyFeet - 20, px - 8, pyFeet - 10, CHALK, 3);
+    chalkLine(px, pyFeet - 20, px + 8, pyFeet - 10, CHALK, 3);
+  });
+}
+
+function drawHUD() {
+  chalkText(`Niveau ${stage}`, 70, 30, 20, CHALK, "left");
+  chalkText(`Objectif: ${boarded}/${goal}`, 70, 56, 18, ACCENT, "left");
+  chalkText(`Score: ${score}`, W - 70, 30, 20, CHALK, "right");
+  // misses as chalk marks
+  for (let i = 0; i < MAX_MISSES; i++) {
+    const mx = W - 40 - i * 26;
+    const my = 56;
+    const active = i < misses;
+    chalkCircle(mx, my, 8, active ? SECOND : CHALK, 3);
+  }
+  const elapsed = (performance.now() - stageStartTime) / 1000;
+  if (elapsed < graceTime) {
+    chalkText("Préparez-vous...", W / 2, 90, 18, SECOND);
+  }
+}
+
+function drawGame() {
+  ctx.fillStyle = SLATE;
+  ctx.fillRect(0, 0, W, H);
+  drawSmudges();
+
+  drawPlatform();
+
+  const tramY = H * 0.62 - 40;
+  drawTramSprite(tramX, tramY, doorOpen, 1.1);
+
+  if (doorOpen) {
+    chalkText("Portes ouvertes !", tramX, tramY - 60, 16, ACCENT);
+  }
+
+  drawHUD();
+
+  if (paused) {
+    ctx.fillStyle = SLATE;
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    chalkText("Pause", W / 2, H / 2, 40, CHALK);
+  }
+}
+
+function drawGameOver() {
+  ctx.fillStyle = SLATE;
+  ctx.fillRect(0, 0, W, H);
+  drawSmudges();
+
+  if (winFlag) {
+    chalkText("Terminus atteint !", W / 2, H * 0.35, 34, ACCENT);
+    chalkText("Bravo, tous les quais sont desservis.", W / 2, H * 0.45, 18, CHALK);
+  } else {
+    chalkText("Trois quais ratés...", W / 2, H * 0.35, 32, SECOND);
+    chalkText("Le tram repart sans vous.", W / 2, H * 0.45, 18, CHALK);
+  }
+  chalkText(`Score final: ${score}`, W / 2, H * 0.53, 20, CHALK);
+
+  // draw a simple button
+  const bw = 220, bh = 60;
+  const bx = W / 2 - bw / 2, by = H * 0.65;
+  chalkRect(bx, by, bw, bh, ACCENT, 4);
+  chalkText("Rejouer", W / 2, by + bh / 2, 22, CHALK);
+
+  if (!restartHooked) {
+    restartHooked = true;
+  }
+}
+
+let restartHooked = false;
+
+canvas.addEventListener("pointerdown", (event) => {
+  if (!gameOver) return;
+  const bw = 220, bh = 60;
+  const bx = W / 2 - bw / 2, by = H * 0.65;
+  const x = event.clientX, y = event.clientY;
+  if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
+    backToTitle();
+  }
+});
+
+// ---------- main loop ----------
+function frame(t) {
+  if (!lastTime) lastTime = t;
+  const dt = Math.min(0.05, (t - lastTime) / 1000);
+  lastTime = t;
+
+  if (!smudges.length) makeSmudges();
+
+  if (!paused) {
+    update(dt);
+  }
+
+  if (!running) {
+    drawTitle();
+  } else if (gameOver) {
+    drawGameOver();
+  } else {
+    drawGame();
+  }
+
+  if (!bootSent) {
+    bootSent = true;
+    CARTRIDGE.send("boot", { title: "Tram en Ville", gameType: "stage-clear", lang: "fr" });
+  }
+
+  requestAnimationFrame(frame);
+}
+
+tramX = -220;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

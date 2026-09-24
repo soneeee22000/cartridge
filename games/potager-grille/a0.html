@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Potager Malin</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #f4ecd8;
+    overflow: hidden;
+    touch-action: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  #wrap {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="game"></canvas>
+</div>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  const PALETTE = {
+    bg: '#f4ecd8',
+    layer: '#e07a5f',
+    accent: '#3d405b',
+    highlight: '#81b29a'
+  };
+
+  // Vegetable colours (paper-cut style, distinct hues)
+  const VEG_TYPES = [
+    { name: 'carotte', color: '#e07a5f' },
+    { name: 'chou', color: '#81b29a' },
+    { name: 'aubergine', color: '#3d405b' },
+    { name: 'radis', color: '#c44536' },
+    { name: 'mais', color: '#f2cc8f' }
+  ];
+  const CARROT_INDEX = 0;
+
+  let paused = false;
+  let state = 'title'; // 'title', 'play', 'end'
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  const GRID = 8;
+  let cellSize = 0;
+  let boardX = 0, boardY = 0, boardSize = 0;
+
+  let grid = []; // grid[row][col] = {type, jitter}
+  let score = 0;
+  let moves = 0;
+  let endReason = null;
+
+  // animation state for swap/fall
+  let animating = false;
+  let animQueue = [];
+
+  // jitter seed table for paper-cut look, stable per cell position
+  function jitterFor(seedBase) {
+    // deterministic pseudo-random jitter from seed
+    function rnd(s) {
+      const x = Math.sin(s) * 10000;
+      return x - Math.floor(x);
+    }
+    const pts = [];
+    for (let i = 0; i < 4; i++) {
+      const jx = (rnd(seedBase * 13 + i * 7) - 0.5) * 3;
+      const jy = (rnd(seedBase * 29 + i * 11) - 0.5) * 3;
+      pts.push([jx, jy]);
+    }
+    return pts;
+  }
+
+  function resize() {
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    boardSize = Math.min(w, h) * 0.9;
+    cellSize = boardSize / GRID;
+    boardX = (w - boardSize) / 2;
+    boardY = (h - boardSize) / 2;
+
+    draw();
+  }
+
+  function randType(excludeMatch, r, c) {
+    // avoid creating immediate 3-match on init
+    let tries = 0;
+    while (true) {
+      const t = Math.floor(Math.random() * VEG_TYPES.length);
+      if (tries > 30) return t;
+      tries++;
+      // check left two
+      if (c >= 2 && grid[r][c-1] && grid[r][c-2] &&
+          grid[r][c-1].type === t && grid[r][c-2].type === t) continue;
+      if (r >= 2 && grid[r-1] && grid[r-2] &&
+          grid[r-1][c] && grid[r-2][c] &&
+          grid[r-1][c].type === t && grid[r-2][c].type === t) continue;
+      return t;
+    }
+  }
+
+  function makeCell(r, c) {
+    return {
+      type: randType(null, r, c),
+      seed: (r * 97 + c * 131) + Math.random()*1000,
+      offX: 0, offY: 0, // animation offsets in px
+      scale: 1,
+      alpha: 1
+    };
+  }
+
+  function initGrid() {
+    grid = [];
+    for (let r = 0; r < GRID; r++) {
+      grid.push([]);
+      for (let c = 0; c < GRID; c++) {
+        grid[r].push(makeCell(r, c));
+      }
+    }
+    score = 0;
+    moves = 0;
+    animating = false;
+    animQueue = [];
+  }
+
+  function cellCenter(r, c) {
+    return {
+      x: boardX + c * cellSize + cellSize / 2,
+      y: boardY + r * cellSize + cellSize / 2
+    };
+  }
+
+  function toCanvas(evt) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+  }
+
+  function cellAt(pos) {
+    const c = Math.floor((pos.x - boardX) / cellSize);
+    const r = Math.floor((pos.y - boardY) / cellSize);
+    if (r < 0 || r >= GRID || c < 0 || c >= GRID) return null;
+    return { r, c };
+  }
+
+  // ---- Match detection ----
+  function findMatches() {
+    const matched = [];
+    for (let r = 0; r < GRID; r++) matched.push(new Array(GRID).fill(false));
+
+    // horizontal
+    for (let r = 0; r < GRID; r++) {
+      let runStart = 0;
+      for (let c = 1; c <= GRID; c++) {
+        const same = c < GRID && grid[r][c] && grid[r][runStart] &&
+          grid[r][c].type === grid[r][runStart].type;
+        if (!same) {
+          if (c - runStart >= 3) {
+            for (let k = runStart; k < c; k++) matched[r][k] = true;
+          }
+          runStart = c;
+        }
+      }
+    }
+    // vertical
+    for (let c = 0; c < GRID; c++) {
+      let runStart = 0;
+      for (let r = 1; r <= GRID; r++) {
+        const same = r < GRID && grid[r][c] && grid[runStart][c] &&
+          grid[r][c].type === grid[runStart][c].type;
+        if (!same) {
+          if (r - runStart >= 3) {
+            for (let k = runStart; k < r; k++) matched[k][c] = true;
+          }
+          runStart = r;
+        }
+      }
+    }
+    return matched;
+  }
+
+  function hasAnyMatch(matched) {
+    for (let r = 0; r < GRID; r++)
+      for (let c = 0; c < GRID; c++)
+        if (matched[r][c]) return true;
+    return false;
+  }
+
+  function countMatchScore(matched) {
+    let count = 0;
+    let carrotBonus = 0;
+    for (let r = 0; r < GRID; r++)
+      for (let c = 0; c < GRID; c++)
+        if (matched[r][c]) {
+          count++;
+          if (grid[r][c].type === CARROT_INDEX) carrotBonus++;
+        }
+    return count * 10 + carrotBonus * 5;
+  }
+
+  function clearAndDrop(matched) {
+    // remove matched
+    for (let c = 0; c < GRID; c++) {
+      let writeRow = GRID - 1;
+      for (let r = GRID - 1; r >= 0; r--) {
+        if (!matched[r][c]) {
+          grid[writeRow][c] = grid[r][c];
+          writeRow--;
+        }
+      }
+      for (let r = writeRow; r >= 0; r--) {
+        grid[r][c] = makeCell(r, c);
+      }
+    }
+  }
+
+  function swap(a, b) {
+    const tmp = grid[a.r][a.c];
+    grid[a.r][a.c] = grid[b.r][b.c];
+    grid[b.r][b.c] = tmp;
+  }
+
+  function isAdjacent(a, b) {
+    const dr = Math.abs(a.r - b.r);
+    const dc = Math.abs(a.c - b.c);
+    return (dr + dc) === 1;
+  }
+
+  function anyLegalMove() {
+    for (let r = 0; r < GRID; r++) {
+      for (let c = 0; c < GRID; c++) {
+        // try right
+        if (c + 1 < GRID) {
+          swap({r,c}, {r, c: c+1});
+          const m = findMatches();
+          swap({r,c}, {r, c: c+1});
+          if (hasAnyMatch(m)) return true;
+        }
+        // try down
+        if (r + 1 < GRID) {
+          swap({r,c}, {r: r+1, c});
+          const m = findMatches();
+          swap({r,c}, {r: r+1, c});
+          if (hasAnyMatch(m)) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function resolveMatchesCascade() {
+    // resolve chain of matches, accumulate score, then check end conditions
+    let matched = findMatches();
+    if (!hasAnyMatch(matched)) return false;
+    let gained = 0;
+    while (hasAnyMatch(matched)) {
+      gained += countMatchScore(matched);
+      clearAndDrop(matched);
+      matched = findMatches();
+    }
+    score += gained;
+    CARTRIDGE.send('score', { value: score });
+    return true;
+  }
+
+  // ---- Input handling (drag-follow style) ----
+  let dragStart = null; // {r,c}
+  let dragCurrent = null; // canvas pos
+  let dragOffset = { x: 0, y: 0 };
+  let pointerId = null;
+  let inputLocked = false;
+
+  canvas.addEventListener('pointerdown', (event) => {
+    if (state !== 'play' || paused || inputLocked) {
+      if (state === 'title') {
+        startGame();
+      } else if (state === 'end') {
+        // no restart via tap here; handled by reset command
+      }
+      return;
+    }
+    const pos = toCanvas(event);
+    const cell = cellAt(pos);
+    if (cell) {
+      dragStart = cell;
+      dragCurrent = pos;
+      pointerId = event.pointerId;
+      canvas.setPointerCapture(event.pointerId);
+    }
+  });
+
+  canvas.addEventListener('pointermove', (event) => {
+    if (dragStart && event.pointerId === pointerId) {
+      dragCurrent = toCanvas(event);
+      draw();
+    }
+  });
+
+  function endDrag() {
+    if (!dragStart || !dragCurrent) {
+      dragStart = null; dragCurrent = null; pointerId = null;
+      return;
+    }
+    const targetCell = cellAt(dragCurrent);
+    if (targetCell && isAdjacent(dragStart, targetCell)) {
+      attemptSwap(dragStart, targetCell);
+    }
+    dragStart = null;
+    dragCurrent = null;
+    pointerId = null;
+    draw();
+  }
+
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  function attemptSwap(a, b) {
+    swap(a, b);
+    const matched = findMatches();
+    if (!hasAnyMatch(matched)) {
+      // illegal move, revert
+      swap(a, b);
+      return;
+    }
+    inputLocked = true;
+    moves += 1;
+    resolveMatchesCascade();
+    inputLocked = false;
+
+    // check end conditions after resolving
+    if (!anyLegalMove()) {
+      state = 'end';
+      endReason = 'stuck';
+      CARTRIDGE.send('end', { reason: 'stuck', value: score });
+    }
+    draw();
+  }
+
+  // ---- Drawing ----
+  function roundedPolyJitter(cx, cy, size, seed, color, shadow) {
+    const half = size / 2;
+    const r = size * 0.18;
+    const pts = jitterFor(seed);
+    ctx.save();
+    if (shadow) {
+      ctx.shadowColor = 'rgba(61,64,91,0.35)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    const corners = [
+      [cx - half, cy - half],
+      [cx + half, cy - half],
+      [cx + half, cy + half],
+      [cx - half, cy + half]
+    ];
+    for (let i = 0; i < 4; i++) {
+      const [px, py] = corners[i];
+      const [jx, jy] = pts[i];
+      const x = px + jx, y = py + jy;
+      if (i === 0) ctx.moveTo(x + r, y);
+      ctx.arcTo(x, y, corners[(i+1)%4][0], corners[(i+1)%4][1], r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawVeg(cx, cy, size, type, seed) {
+    const veg = VEG_TYPES[type];
+    // base plate (paper layer)
+    roundedPolyJitter(cx, cy + 2, size * 0.92, seed, 'rgba(61,64,91,0.12)', false);
+    roundedPolyJitter(cx, cy, size * 0.86, seed + 1, veg.color, true);
+
+    // simple face/shape detail per veg to distinguish
+    ctx.save();
+    ctx.fillStyle = PALETTE.bg;
+    ctx.globalAlpha = 0.85;
+    const r = size * 0.09;
+    if (type === CARROT_INDEX) {
+      // carrot: triangle-ish highlight lines
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - size*0.2);
+      ctx.lineTo(cx - size*0.12, cy + size*0.18);
+      ctx.lineTo(cx + size*0.12, cy + size*0.18);
+      ctx.closePath();
+      ctx.fillStyle = '#f4ecd8';
+      ctx.globalAlpha = 0.5;
+      ctx.fill();
+    } else if (type === 1) {
+      // chou: circles
+      ctx.beginPath();
+      ctx.arc(cx, cy, size*0.18, 0, Math.PI*2);
+      ctx.fill();
+    } else if (type === 2) {
+      // aubergine: oval
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size*0.22, size*0.13, 0, 0, Math.PI*2);
+      ctx.fill();
+    } else if (type === 3) {
+      // radis: small dot pair
+      ctx.beginPath();
+      ctx.arc(cx - size*0.1, cy, r*0.8, 0, Math.PI*2);
+      ctx.arc(cx + size*0.1, cy, r*0.8, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      // mais: grid dots
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j += 2) {
+          ctx.beginPath();
+          ctx.arc(cx + i*size*0.12, cy + j*size*0.1, r*0.5, 0, Math.PI*2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawBoardBackground() {
+    // background card
+    ctx.save();
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+    ctx.restore();
+
+    // board plate
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = PALETTE.layer;
+    const pad = cellSize * 0.15;
+    roundRect(ctx, boardX - pad, boardY - pad, boardSize + pad*2, boardSize + pad*2, 16);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = '#fffaf0';
+    roundRect(ctx, boardX, boardY, boardSize, boardSize, 10);
+    ctx.globalAlpha = 0.5;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawHUD() {
+    const w = canvas.width / dpr;
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = PALETTE.highlight;
+    roundRect(ctx, 12, 12, 160, 50, 12);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = PALETTE.accent;
+    ctx.font = 'bold 22px -apple-system, Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText('Score: ' + score, 24, 37);
+  }
+
+  function drawTitle() {
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, w, h);
+
+    // title plate
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = PALETTE.layer;
+    const pw = Math.min(w * 0.85, 480);
+    const ph = 220;
+    const px = (w - pw) / 2;
+    const py = (h - ph) / 2 - 40;
+    roundRect(ctx, px, py, pw, ph, 20);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = PALETTE.bg;
+    ctx.font = 'bold 32px -apple-system, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Potager Malin', w/2, py + 60);
+
+    ctx.font = '18px -apple-system, Arial, sans-serif';
+    ctx.fillText('Échangez les légumes voisins', w/2, py + 110);
+    ctx.fillText('pour aligner 3 carottes ou plus.', w/2, py + 135);
+
+    // play button
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.3)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = PALETTE.highlight;
+    const bw = 180, bh = 56;
+    const bx = w/2 - bw/2, by = py + ph + 30;
+    roundRect(ctx, bx, by, bw, bh, 14);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = PALETTE.accent;
+    ctx.font = 'bold 22px -apple-system, Arial, sans-serif';
+    ctx.fillText('Jouer', w/2, by + bh/2 + 2);
+
+    titleButton = { x: bx, y: by, w: bw, h: bh };
+  }
+
+  let titleButton = null;
+
+  function drawEnd() {
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    drawBoard();
+    drawHUD();
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(61,64,91,0.55)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = PALETTE.layer;
+    const pw = Math.min(w * 0.8, 420);
+    const ph = 180;
+    const px = (w - pw) / 2;
+    const py = (h - ph) / 2;
+    roundRect(ctx, px, py, pw, ph, 18);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.fillStyle = PALETTE.bg;
+    ctx.font = 'bold 26px -apple-system, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const msg = endReason === 'win' ? 'Potager parfait !' : 'Plus aucun coup possible';
+    ctx.fillText(msg, w/2, py + 55);
+
+    ctx.font = '20px -apple-system, Arial, sans-serif';
+    ctx.fillText('Score final : ' + score, w/2, py + 100);
+
+    ctx.font = '15px -apple-system, Arial, sans-serif';
+    ctx.fillText('(réinitialisation via l\'hôte)', w/2, py + 140);
+  }
+
+  function drawBoard() {
+    drawBoardBackground();
+    for (let r = 0; r < GRID; r++) {
+      for (let c = 0; c < GRID; c++) {
+        const cell = grid[r][c];
+        if (!cell) continue;
+        let center = cellCenter(r, c);
+        let cx = center.x, cy = center.y;
+        // if this cell is being dragged, offset toward pointer
+        if (dragStart && dragStart.r === r && dragStart.c === c && dragCurrent) {
+          const dx = dragCurrent.x - center.x;
+          const dy = dragCurrent.y - center.y;
+          const maxOff = cellSize * 0.9;
+          const len = Math.sqrt(dx*dx + dy*dy);
+          const clamp = Math.min(len, maxOff);
+          const angle = Math.atan2(dy, dx);
+          cx = center.x + Math.cos(angle) * clamp;
+          cy = center.y + Math.sin(angle) * clamp;
+        }
+        drawVeg(cx, cy, cellSize * 0.92, cell.type, cell.seed);
+      }
+    }
+  }
+
+  function draw() {
+    if (state === 'title') {
+      drawTitle();
+      return;
+    }
+    if (state === 'end') {
+      drawEnd();
+      return;
+    }
+    drawBoard();
+    drawHUD();
+  }
+
+  // handle title tap for play button precisely
+  canvas.addEventListener('pointerdown', function(event) {
+    if (state === 'title' && titleButton) {
+      const pos = toCanvas(event);
+      if (pos.x >= titleButton.x && pos.x <= titleButton.x + titleButton.w &&
+          pos.y >= titleButton.y && pos.y <= titleButton.y + titleButton.h) {
+        // handled by startGame below (also covers general tap)
+      }
+    }
+  });
+
+  function startGame() {
+    initGrid();
+    state = 'play';
+    endReason = null;
+    CARTRIDGE.send('start');
+    CARTRIDGE.send('level', { index: 1 });
+    CARTRIDGE.send('score', { value: 0 });
+    draw();
+  }
+
+  function backToTitle() {
+    state = 'title';
+    dragStart = null;
+    dragCurrent = null;
+    pointerId = null;
+    inputLocked = false;
+    draw();
+  }
+
+  window.addEventListener('resize', resize);
+
+  // boot
+  resize();
+  CARTRIDGE.send('boot', { title: 'Potager Malin', gameType: 'puzzle-board', lang: 'fr' });
+
+  // simple render loop for input feedback while dragging (no continuous game logic advance)
+  function loop() {
+    if (!paused) {
+      // no timers affect game state; just repaint if dragging for smooth follow
+      if (dragStart) draw();
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

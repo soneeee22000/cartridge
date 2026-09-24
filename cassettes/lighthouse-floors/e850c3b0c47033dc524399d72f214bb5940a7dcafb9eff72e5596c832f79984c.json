@@ -1,0 +1,167 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:e850c3b0c47033dc524399d72f214bb5940a7dcafb9eff72e5596c832f79984c",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Lighthouse Tide\",\n  \"slug\": \"lighthouse-tide\",\n  \"lang\": \"en\",\n  \"gameType\": \"stage-clear\",\n  \"loop\": \"Tap each lamp on the floor to light it before the rising tide reaches you, then climb the stairs to the next floor. Losing all floors before lighting every lamp ends the run; clearing the top floor wins.\",\n  \"input\": \"tap-anywhere\",\n  \"style\": \"chalkboard\"\n}\n```\n\n## Cards\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `chalkboard`\n\n# Chalkboard\n\nThe game looks sketched in chalk on a school slate.\n\n## Palette\n\n| role   | colour    |\n| ------ | --------- |\n| slate  | `#2f3e3a` |\n| chalk  | `#eeeae0` |\n| accent | `#f2c14e` |\n| second | `#8fc1e3` |\n\n## Primitives\n\n- Stroked paths with `lineCap = \"round\"` and a line width of 3 to 5 pixels.\n- Draw each stroke twice with a one-pixel offset and lower alpha for a dusty edge.\n- Hatching (parallel short lines) instead of solid fills.\n- A faint smudge layer: a few large, very transparent chalk-coloured ellipses behind the play field.\n\n## Avoid\n\n- Solid filled shapes larger than a thumb.\n- Perfectly straight machine lines; add a small wobble.\n- More than two accent colours on screen at once.\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `stage-clear`\n\n# Stage clear\n\nThe player meets a stated goal to clear each stage. Clearing the last stage wins; failing a stage loses.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `optional`    |\n| level                | `required`    |\n| end                  | `required`    |\n| end reasons          | `win, lose`   |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above: a `level` on entering each stage and an `end` when the play-through finishes. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\n- Use only `win` or `lose` as the `end` reason. <!-- rule:E1-17 -->\n\n## Stages\n\nNumber stages from 1 and step by one. Show the goal on screen when each stage opens (\"Light 5 lamps\"). Make stage 1 easy enough to clear on the first try.\n\n## Loop skeleton\n\n```js\nlet stage = 0;\nfunction enterStage(next) {\n  stage = next;\n  buildStage(stage);\n  CARTRIDGE.send(\"level\", { index: stage });\n}\nfunction onGoalMet() {\n  if (stage === STAGES.length) CARTRIDGE.send(\"end\", { reason: \"win\" });\n  else enterStage(stage + 1);\n}\nfunction onStageFailed() {\n  CARTRIDGE.send(\"end\", { reason: \"lose\" });\n}\n```\n\nGive the player a few seconds of grace at the start of each stage before any threat can finish it.\n\n### Card `tap-anywhere`\n\n# Tap anywhere\n\nThe whole screen is the button. Best for jumps, flaps and single choices.\n\n- Register pointer input on the canvas: `canvas.addEventListener(\"pointerdown\", onTap)`. <!-- rule:E1-22 -->\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\n- Ignore taps while paused.\n\n```js\ncanvas.style.touchAction = \"none\";\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!running) {\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n```\n\nShow a short pulsing hint (\"Tap to begin\") until the first tap.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll build the game now, incorporating the bridge helper, chalkboard style, tap-anywhere input, and stage-clear mechanics."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01AMHXcK1ipjLxKAhYqbmCi8",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Lighthouse Tide</title>\n<style>\n  html, body {\n    margin: 0; padding: 0; width: 100%; height: 100%;\n    background: #2f3e3a; overflow: hidden;\n    font-family: Georgia, 'Comic Sans MS', cursive, sans-serif;\n  }\n  canvas {\n    display: block;\n    touch-action: none;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<script>\n// ---- Bridge helper (verbatim) ----\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n\n// ---- Setup canvas ----\nconst canvas = document.getElementById(\"game\");\nconst ctx = canvas.getContext(\"2d\");\ncanvas.style.touchAction = \"none\";\n\nlet dpr = Math.max(1, window.devicePixelRatio || 1);\nlet W = 0, H = 0;\n\nfunction resize() {\n  W = window.innerWidth;\n  H = window.innerHeight;\n  dpr = Math.max(1, window.devicePixelRatio || 1);\n  canvas.width = Math.floor(W * dpr);\n  canvas.height = Math.floor(H * dpr);\n  canvas.style.width = W + \"px\";\n  canvas.style.height = H + \"px\";\n  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n}\nwindow.addEventListener(\"resize\", resize);\nresize();\n\n// ---- Palette ----\nconst COL = {\n  slate: \"#2f3e3a\",\n  chalk: \"#eeeae0\",\n  accent: \"#f2c14e\",\n  second: \"#8fc1e3\",\n};\n\n// ---- Chalk drawing helpers ----\nfunction chalkLine(x1, y1, x2, y2, width, color, alpha) {\n  ctx.lineCap = \"round\";\n  ctx.lineJoin = \"round\";\n  const wob = 1.2;\n  for (let pass = 0; pass < 2; pass++) {\n    ctx.beginPath();\n    const ox = (Math.random() - 0.5) * wob;\n    const oy = (Math.random() - 0.5) * wob;\n    ctx.moveTo(x1 + ox, y1 + oy);\n    // slight midpoint wobble\n    const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * wob * 2;\n    const my = (y1 + y2) / 2 + (Math.random() - 0.5) * wob * 2;\n    ctx.quadraticCurveTo(mx, my, x2 + ox, y2 + oy);\n    ctx.lineWidth = width;\n    ctx.strokeStyle = color;\n    ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);\n    ctx.stroke();\n  }\n  ctx.globalAlpha = 1;\n}\n\nfunction chalkCircle(cx, cy, r, width, color, alpha) {\n  ctx.lineCap = \"round\";\n  for (let pass = 0; pass < 2; pass++) {\n    ctx.beginPath();\n    const segs = 24;\n    for (let i = 0; i <= segs; i++) {\n      const a = (i / segs) * Math.PI * 2;\n      const wob = (Math.random() - 0.5) * 1.5;\n      const px = cx + Math.cos(a) * (r + wob);\n      const py = cy + Math.sin(a) * (r + wob);\n      if (i === 0) ctx.moveTo(px, py);\n      else ctx.lineTo(px, py);\n    }\n    ctx.lineWidth = width;\n    ctx.strokeStyle = color;\n    ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);\n    ctx.stroke();\n  }\n  ctx.globalAlpha = 1;\n}\n\nfunction hatchRect(x, y, w, h, color, alpha, spacing) {\n  ctx.strokeStyle = color;\n  ctx.lineWidth = 2;\n  ctx.globalAlpha = alpha;\n  spacing = spacing || 8;\n  for (let i = -h; i < w; i += spacing) {\n    const x1 = x + i;\n    const y1 = y;\n    const x2 = x + i + h;\n    const y2 = y + h;\n    ctx.beginPath();\n    ctx.moveTo(Math.max(x, x1), y1 + Math.max(0, x - x1));\n    ctx.lineTo(Math.min(x + w, x2), y2 - Math.max(0, x2 - (x + w)));\n    ctx.stroke();\n  }\n  ctx.globalAlpha = 1;\n}\n\nfunction chalkText(text, x, y, size, color, alpha, align) {\n  ctx.font = `${size}px Georgia, serif`;\n  ctx.textAlign = align || \"center\";\n  ctx.textBaseline = \"middle\";\n  ctx.fillStyle = color;\n  ctx.globalAlpha = alpha === undefined ? 1 : alpha;\n  ctx.fillText(text, x, y);\n  ctx.globalAlpha = 1;\n}\n\n// ---- Smudge background layer ----\nlet smudges = [];\nfunction initSmudges() {\n  smudges = [];\n  for (let i = 0; i < 5; i++) {\n    smudges.push({\n      x: Math.random() * W,\n      y: Math.random() * H,\n      r: 60 + Math.random() * 120,\n    });\n  }\n}\n\nfunction drawSmudges() {\n  for (const s of smudges) {\n    ctx.beginPath();\n    ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);\n    ctx.fillStyle = COL.chalk;\n    ctx.globalAlpha = 0.03;\n    ctx.fill();\n    ctx.globalAlpha = 1;\n  }\n}\n\n// ---- Game state ----\nlet paused = false;\nlet running = false; // true after first tap (play begins)\nlet gameOver = false;\nlet gameWon = false;\n\nconst STAGE_COUNT = 5;\nlet stage = 0;\nlet lamps = [];\nlet lampsLit = 0;\nlet tideY = 0;\nlet tideSpeed = 0;\nlet floorY = 0;\nlet stageStartTime = 0;\nlet graceMs = 2500;\nlet stairsReady = false;\nlet stairsX = 0, stairsY = 0, stairsW = 60, stairsH = 80;\nlet message = \"\";\nlet messageTimer = 0;\nlet score = 0;\n\nfunction stageGoalCount(s) {\n  return Math.min(3 + s, 8);\n}\n\nfunction buildStage(s) {\n  lamps = [];\n  lampsLit = 0;\n  stairsReady = false;\n  const count = stageGoalCount(s);\n  const margin = 60;\n  const usableW = W - margin * 2;\n  for (let i = 0; i < count; i++) {\n    lamps.push({\n      x: margin + Math.random() * usableW,\n      y: H * 0.25 + Math.random() * (H * 0.4),\n      lit: false,\n      r: 22,\n      flicker: Math.random() * Math.PI * 2,\n    });\n  }\n  floorY = H * 0.85;\n  tideY = H + 40;\n  tideSpeed = (0.12 + s * 0.05) * (H / 700);\n  stageStartTime = performance.now();\n  stairsX = W - 90;\n  stairsY = H * 0.15;\n  message = `Stage ${s}: Light ${count} lamps!`;\n  messageTimer = 3000;\n}\n\nfunction enterStage(next) {\n  stage = next;\n  buildStage(stage);\n  CARTRIDGE.send(\"level\", { index: stage });\n}\n\nfunction onGoalMet() {\n  if (stage === STAGE_COUNT) {\n    gameWon = true;\n    gameOver = true;\n    CARTRIDGE.send(\"end\", { reason: \"win\", value: score });\n  } else {\n    score += 100;\n    CARTRIDGE.send(\"score\", { value: score });\n    enterStage(stage + 1);\n  }\n}\n\nfunction onStageFailed() {\n  gameOver = true;\n  gameWon = false;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n\nfunction backToTitle() {\n  running = false;\n  gameOver = false;\n  gameWon = false;\n  paused = false;\n  stage = 0;\n  score = 0;\n  lamps = [];\n  message = \"\";\n}\n\n// ---- Input ----\nlet lastTapTime = 0;\n\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n\n  if (!running) {\n    running = true;\n    gameOver = false;\n    gameWon = false;\n    score = 0;\n    CARTRIDGE.send(\"start\");\n    enterStage(1);\n    return;\n  }\n\n  if (gameOver) {\n    // tap to restart from title\n    backToTitle();\n    return;\n  }\n\n  const rect = canvas.getBoundingClientRect();\n  const x = event.clientX - rect.left;\n  const y = event.clientY - rect.top;\n\n  // check stairs tap if all lamps lit\n  if (stairsReady) {\n    if (\n      x > stairsX - 10 &&\n      x < stairsX + stairsW + 10 &&\n      y > stairsY - 10 &&\n      y < stairsY + stairsH + 10\n    ) {\n      onGoalMet();\n      return;\n    }\n  }\n\n  // check lamp taps\n  for (const lamp of lamps) {\n    if (lamp.lit) continue;\n    const dx = x - lamp.x;\n    const dy = y - lamp.y;\n    if (Math.sqrt(dx * dx + dy * dy) < Math.max(lamp.r, 22)) {\n      lamp.lit = true;\n      lampsLit++;\n      score += 10;\n      CARTRIDGE.send(\"score\", { value: score });\n      if (lampsLit >= lamps.length) {\n        stairsReady = true;\n        message = \"All lit! Climb the stairs!\";\n        messageTimer = 2500;\n      }\n      break;\n    }\n  }\n});\n\n// ---- Draw functions ----\nfunction drawTitle() {\n  ctx.clearRect(0, 0, W, H);\n  drawSmudges();\n  drawLighthouseIcon(W / 2, H * 0.35, 70);\n\n  chalkText(\"Lighthouse Tide\", W / 2, H * 0.55, Math.min(42, W * 0.08), COL.chalk, 1);\n  chalkText(\n    \"Light every lamp before the tide rises,\",\n    W / 2,\n    H * 0.62,\n    Math.min(20, W * 0.045),\n    COL.chalk,\n    0.85\n  );\n  chalkText(\n    \"then climb the stairs to the next floor.\",\n    W / 2,\n    H * 0.67,\n    Math.min(20, W * 0.045),\n    COL.chalk,\n    0.85\n  );\n\n  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n  chalkText(\n    \"Tap to begin\",\n    W / 2,\n    H * 0.8,\n    Math.min(26, W * 0.06),\n    COL.accent,\n    0.6 + pulse * 0.4\n  );\n}\n\nfunction drawLighthouseIcon(cx, cy, size) {\n  // simple tower with hatching\n  const w = size * 0.5;\n  const h = size * 1.4;\n  chalkLine(cx - w / 2, cy + h / 2, cx - w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n  chalkLine(cx + w / 2, cy + h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n  chalkLine(cx - w / 3, cy - h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n  chalkLine(cx - w / 2, cy + h / 2, cx + w / 2, cy + h / 2, 4, COL.chalk, 0.8);\n  // lamp room\n  chalkCircle(cx, cy - h / 2 - 14, 16, 3, COL.accent, 0.9);\n  // rays\n  for (let i = -2; i <= 2; i++) {\n    chalkLine(\n      cx,\n      cy - h / 2 - 14,\n      cx + i * 30,\n      cy - h / 2 - 14 - 40,\n      2,\n      COL.accent,\n      0.3\n    );\n  }\n}\n\nfunction drawLamp(lamp) {\n  lamp.flicker += 0.08;\n  const glow = lamp.lit ? 0.9 : 0.35 + Math.sin(lamp.flicker) * 0.15;\n  const color = lamp.lit ? COL.accent : COL.second;\n  chalkCircle(lamp.x, lamp.y, lamp.r, 3, color, glow);\n  chalkCircle(lamp.x, lamp.y, lamp.r * 0.5, 2, color, glow * 0.7);\n  if (lamp.lit) {\n    for (let i = 0; i < 6; i++) {\n      const a = (i / 6) * Math.PI * 2 + lamp.flicker * 0.3;\n      const rr = lamp.r + 10;\n      chalkLine(\n        lamp.x + Math.cos(a) * lamp.r,\n        lamp.y + Math.sin(a) * lamp.r,\n        lamp.x + Math.cos(a) * rr,\n        lamp.y + Math.sin(a) * rr,\n        2,\n        COL.accent,\n        0.4\n      );\n    }\n  }\n}\n\nfunction drawStairs() {\n  const color = stairsReady ? COL.accent : COL.chalk;\n  const alpha = stairsReady ? 0.9 : 0.35;\n  for (let i = 0; i < 5; i++) {\n    const sy = stairsY + (i * stairsH) / 5;\n    chalkLine(\n      stairsX,\n      sy,\n      stairsX + stairsW,\n      sy,\n      3,\n      color,\n      alpha\n    );\n  }\n  chalkLine(stairsX, stairsY, stairsX, stairsY + stairsH, 3, color, alpha);\n  chalkLine(\n    stairsX + stairsW,\n    stairsY,\n    stairsX + stairsW,\n    stairsY + stairsH,\n    3,\n    color,\n    alpha\n  );\n  chalkText(\n    stairsReady ? \"GO!\" : \"\",\n    stairsX + stairsW / 2,\n    stairsY - 20,\n    18,\n    COL.accent,\n    0.9\n  );\n}\n\nfunction drawTide() {\n  const waveH = 10;\n  ctx.beginPath();\n  ctx.moveTo(0, tideY);\n  for (let x = 0; x <= W; x += 20) {\n    const y = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;\n    ctx.lineTo(x, y);\n  }\n  ctx.lineTo(W, H);\n  ctx.lineTo(0, H);\n  ctx.closePath();\n  ctx.fillStyle = COL.second;\n  ctx.globalAlpha = 0.15;\n  ctx.fill();\n  ctx.globalAlpha = 1;\n\n  // wave line chalk stroke\n  for (let x = 0; x < W; x += 40) {\n    const y1 = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;\n    const y2 =\n      tideY + Math.sin((x + 40) * 0.02 + performance.now() / 300) * waveH;\n    chalkLine(x, y1, x + 40, y2, 3, COL.second, 0.6);\n  }\n}\n\nfunction drawFloorLine() {\n  for (let x = 0; x < W; x += 50) {\n    chalkLine(x, floorY, x + 50, floorY, 3, COL.chalk, 0.3);\n  }\n}\n\nfunction drawHUD() {\n  chalkText(\n    `Stage ${stage} / ${STAGE_COUNT}`,\n    70,\n    30,\n    18,\n    COL.chalk,\n    0.8,\n    \"left\"\n  );\n  chalkText(\n    `Lamps: ${lampsLit}/${lamps.length}`,\n    70,\n    56,\n    16,\n    COL.accent,\n    0.8,\n    \"left\"\n  );\n  chalkText(`Score: ${score}`, W - 70, 30, 16, COL.chalk, 0.8, \"right\");\n\n  if (messageTimer > 0) {\n    chalkText(\n      message,\n      W / 2,\n      H * 0.12,\n      Math.min(24, W * 0.05),\n      COL.accent,\n      Math.min(1, messageTimer / 500)\n    );\n  }\n}\n\nfunction drawPauseOverlay() {\n  ctx.fillStyle = COL.slate;\n  ctx.globalAlpha = 0.6;\n  ctx.fillRect(0, 0, W, H);\n  ctx.globalAlpha = 1;\n  chalkText(\"Paused\", W / 2, H / 2, 32, COL.chalk, 1);\n}\n\nfunction drawGameOver() {\n  ctx.clearRect(0, 0, W, H);\n  drawSmudges();\n  if (gameWon) {\n    drawLighthouseIcon(W / 2, H * 0.3, 80);\n    chalkText(\n      \"You lit every floor!\",\n      W / 2,\n      H * 0.55,\n      Math.min(36, W * 0.08),\n      COL.accent,\n      1\n    );\n  } else {\n    chalkText(\n      \"The tide took the tower...\",\n      W / 2,\n      H * 0.45,\n      Math.min(30, W * 0.06),\n      COL.chalk,\n      0.9\n    );\n  }\n  chalkText(\n    `Final Score: ${score}`,\n    W / 2,\n    H * 0.6,\n    Math.min(22, W * 0.05),\n    COL.chalk,\n    0.8\n  );\n  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n  chalkText(\n    \"Tap to return to title\",\n    W / 2,\n    H * 0.75,\n    Math.min(22, W * 0.05),\n    COL.second,\n    0.5 + pulse * 0.4\n  );\n}\n\n// ---- Main loop ----\nlet lastTime = performance.now();\n\nfunction update(dt) {\n  if (!running || paused || gameOver) return;\n\n  const elapsed = performance.now() - stageStartTime;\n  if (elapsed > graceMs) {\n    tideY -= tideSpeed * dt;\n  }\n\n  if (messageTimer > 0) messageTimer -= dt;\n\n  if (tideY <= floorY) {\n    onStageFailed();\n  }\n}\n\nfunction draw() {\n  ctx.clearRect(0, 0, W, H);\n  drawSmudges();\n\n  if (!running) {\n    drawTitle();\n    requestAnimationFrame(loop);\n    return;\n  }\n\n  if (gameOver) {\n    drawGameOver();\n    requestAnimationFrame(loop);\n    return;\n  }\n\n  // background lighthouse silhouette\n  drawLighthouseIcon(W / 2, H * 0.12, 40);\n\n  drawFloorLine();\n  for (const lamp of lamps) drawLamp(lamp);\n  drawStairs();\n  drawTide();\n  drawHUD();\n\n  if (paused) drawPauseOverlay();\n\n  requestAnimationFrame(loop);\n}\n\nfunction loop(now) {\n  const dt = Math.min(50, now - lastTime);\n  lastTime = now;\n  update(dt);\n  draw();\n}\n\n// ---- Boot ----\ninitSmudges();\nwindow.addEventListener(\"resize\", initSmudges);\n\nCARTRIDGE.send(\"boot\", { title: \"Lighthouse Tide\", gameType: \"stage-clear\", lang: \"en\" });\n\nrequestAnimationFrame((t) => {\n  lastTime = t;\n  requestAnimationFrame(loop);\n});\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01AMHXcK1ipjLxKAhYqbmCi8",
+              "content": "{\"version\":\"a0\",\"bytes\":13539,\"sha256\":\"f4ea983d06b7a7a8c32c02e3a9f4a5cae27a032ea7aebbb4eaa7168e77183596\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNrmHQ7Ywpv1NN2Jz5Lo\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11505,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete \\\"Lighthouse\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Tide\\\" stage-cl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ear game with chalk\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"board vis\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uals, tap-an\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ywhere l\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amp-\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lighting m\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"echanics, r\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ising tide thre\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"at, and full bridge event\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" integ\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ration.\"}              }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0    }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":11505,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":70,\"output_tokens_details\":{\"thinking_tokens\":0}}            }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"    }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      274,
+      274,
+      274,
+      3,
+      3,
+      6,
+      4,
+      34,
+      44,
+      51,
+      41,
+      43,
+      43,
+      2,
+      2
+    ]
+  },
+  "usage": {
+    "input": 11505,
+    "output": 70,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

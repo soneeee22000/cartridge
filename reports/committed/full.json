@@ -1,0 +1,2114 @@
+{
+  "bands": [
+    {
+      "band": "terse",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "idle-death": 1,
+          "idle-static": 1
+        },
+        "passed": 3,
+        "probed": 5
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 3,
+          "n/a": 2
+        },
+        "feedback-on-input": {
+          "immediate": 5
+        },
+        "goal-legibility": {
+          "stated": 5
+        },
+        "prompt-coverage": {
+          "covered": 5
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 5,
+        "mismatch": 0
+      },
+      "games": 5,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 2,
+      "n": 5,
+      "refusals": 0
+    },
+    {
+      "band": "short-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "console-error": 1,
+          "idle-death": 2,
+          "tap-unresponsive": 1
+        },
+        "passed": 2,
+        "probed": 5
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 3,
+          "n/a": 1,
+          "null": 1
+        },
+        "feedback-on-input": {
+          "immediate": 4,
+          "null": 1
+        },
+        "goal-legibility": {
+          "null": 1,
+          "stated": 4
+        },
+        "prompt-coverage": {
+          "covered": 3,
+          "null": 2
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 5,
+        "mismatch": 0
+      },
+      "games": 5,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 5,
+      "refusals": 0
+    },
+    {
+      "band": "full-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "console-error": 1,
+          "tap-unresponsive": 1
+        },
+        "passed": 4,
+        "probed": 5
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 2,
+          "n/a": 1,
+          "null": 2
+        },
+        "feedback-on-input": {
+          "immediate": 2,
+          "null": 3
+        },
+        "goal-legibility": {
+          "stated": 5
+        },
+        "prompt-coverage": {
+          "covered": 2,
+          "null": 3
+        }
+      },
+      "e4": {
+        "abstain": 1,
+        "match": 4,
+        "mismatch": 0
+      },
+      "games": 5,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 5,
+      "refusals": 0
+    },
+    {
+      "band": "edge",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "console-error": 1,
+          "idle-death": 1,
+          "idle-static": 1,
+          "tap-unresponsive": 1
+        },
+        "passed": 2,
+        "probed": 5
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 3,
+          "n/a": 1,
+          "null": 1
+        },
+        "feedback-on-input": {
+          "immediate": 4,
+          "null": 1
+        },
+        "goal-legibility": {
+          "stated": 5
+        },
+        "prompt-coverage": {
+          "covered": 2,
+          "null": 1,
+          "partly": 2
+        }
+      },
+      "e4": {
+        "abstain": 1,
+        "match": 4,
+        "mismatch": 0
+      },
+      "games": 5,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 5,
+      "refusals": 0
+    }
+  ],
+  "cost": {
+    "estUsd": 3.15,
+    "repairCacheRead": 0,
+    "repairTokens": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 155572,
+      "output": 27396
+    },
+    "tokens": {
+      "generator": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 614025,
+        "output": 169362
+      },
+      "judge": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 162326,
+        "output": 13129
+      }
+    },
+    "usdLabel": "estimate from list prices; not an invoice",
+    "wallMsMedian": 62075,
+    "wallMsTotal": 1341408
+  },
+  "e4Labelled": {
+    "abstentionRate": 0,
+    "accuracy": 1,
+    "bundles": 40,
+    "expectedAbstentionsHit": 1,
+    "note": "measured on 40 authored bundles; the thresholds were set on the same bundles",
+    "wrongLanguage": 0
+  },
+  "failures": {},
+  "format": "cartridge-report/1",
+  "header": {
+    "datasetVersion": "v1",
+    "label": "latest",
+    "models": {
+      "builder": "claude-sonnet-5",
+      "judge": "claude-haiku-4-5",
+      "planner": "claude-sonnet-5"
+    },
+    "priceTableVersion": "2026-09-24",
+    "tier": "full"
+  },
+  "items": [
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 31.7,
+          "distinctColours": 1122,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.005,
+          "lumaStddev": 31.801,
+          "tapMotionRatio": 0.01
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": null,
+          "prompt-coverage": "covered"
+        },
+        "discarded": [
+          {
+            "dimension": "goal-legibility",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Aquarium de Papier",
+          "Poissons :",
+          "Vider le bocal",
+          "Touchez pour commencer"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "aquarium-papier",
+      "intendedType": "toy-box",
+      "lang": "fr",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 30425,
+        "output": 5189
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 51908,
+          "output": 10632
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 6596,
+          "output": 390
+        }
+      },
+      "wallMs": 83077
+    },
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 16.7,
+          "distinctColours": 410,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.002,
+          "lumaStddev": 28.315,
+          "tapMotionRatio": 0.146
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Pop the Bubbles",
+          "Pops:",
+          "Clear Table",
+          "Tap to begin"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "bubble-pop",
+      "intendedType": "toy-box",
+      "lang": "en",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 29872,
+        "output": 5009
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 50932,
+          "output": 10269
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 6325,
+          "output": 516
+        }
+      },
+      "wallMs": 80880
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 40.4,
+          "distinctColours": 2145,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.004,
+          "lumaStddev": 29.069,
+          "tapMotionRatio": 0.037
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "partly"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Falling Stars",
+          "Clear Jar",
+          "FALLING STARS",
+          "Tap to begin",
+          "Stars:"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": null,
+        "verdict": "abstain"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "calm-but-lose",
+      "intendedType": null,
+      "lang": "en",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 21779,
+          "output": 6129
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7189,
+          "output": 447
+        }
+      },
+      "wallMs": 50071
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "fail",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 5.811,
+        "metrics": {
+          "bootMs": 51.3,
+          "distinctColours": 1173,
+          "firstEndSeconds": 5.254,
+          "idleMotionRatio": 0,
+          "lumaStddev": 37.333,
+          "tapMotionRatio": 0.063
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Canal Lanterns",
+          "CANAL LANTERNS",
+          "DRAG TO STEER YOUR BOAT",
+          "TAP OR DRAG TO BEGIN",
+          "LANTERNS COLLECTED:",
+          "TAP TO SAIL AGAIN"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "canal-long-brief",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 20573,
+          "output": 7510
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8769,
+          "output": 753
+        }
+      },
+      "wallMs": 57181
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "fail",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 10.963,
+        "metrics": {
+          "bootMs": 41.5,
+          "distinctColours": 653,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.001,
+          "lumaStddev": 26.099,
+          "tapMotionRatio": 0.31
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Comet Dodger",
+          "Drag anywhere to steer and start",
+          "Crashed!",
+          "Score:",
+          "Tap to try again",
+          "Paused"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "comet-dodger",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 22497,
+          "output": 6175
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7153,
+          "output": 548
+        }
+      },
+      "wallMs": 48424
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 9.021,
+        "metrics": {
+          "bootMs": 28.4,
+          "distinctColours": 1823,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.039,
+          "lumaStddev": 17.756,
+          "tapMotionRatio": 0.071
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Comet Lane Runner",
+          "COMET LANE",
+          "TAP TO BEGIN",
+          "Tap left / right side to switch lanes",
+          "RUN OVER",
+          "TAP TO REPLAY"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "comet-lanes-brief",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 23095,
+          "output": 6727
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7622,
+          "output": 664
+        }
+      },
+      "wallMs": 55961
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 5.503,
+        "metrics": {
+          "bootMs": 25.8,
+          "distinctColours": 1200,
+          "firstEndSeconds": 2.583,
+          "idleMotionRatio": 0.009,
+          "lumaStddev": 61.801,
+          "tapMotionRatio": 0.044
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Course d'Escargots",
+          "Score:",
+          "Touchez pour commencer",
+          "Course terminée !",
+          "Score final:",
+          "Touchez pour revenir au titre",
+          "Pause"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "course-escargots",
+      "intendedType": "arcade-run",
+      "lang": "fr",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 22726,
+          "output": 7049
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7978,
+          "output": 545
+        }
+      },
+      "wallMs": 54265
+    },
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 34.2,
+          "distinctColours": 1873,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 20.205,
+          "tapMotionRatio": 0.037
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Jardin de Cailloux",
+          "Cailloux :",
+          "Ratisser le sable",
+          "JARDIN DE CAILLOUX",
+          "Touchez l'écran pour commencer"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "jardin-cailloux",
+      "intendedType": "toy-box",
+      "lang": "fr",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 26932,
+        "output": 4087
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 47518,
+          "output": 8477
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 5356,
+          "output": 444
+        }
+      },
+      "wallMs": 68511
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 26.9,
+          "distinctColours": 558,
+          "firstEndSeconds": 1.086,
+          "idleMotionRatio": 0.017,
+          "lumaStddev": 36.254,
+          "tapMotionRatio": 0.042
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Kite Over the Rooftops",
+          "use strict",
+          "Tap to begin",
+          "Flight over! Ribbons:",
+          "Tap to fly again"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "kite-over-roofs",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 19785,
+          "output": 6980
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8192,
+          "output": 687
+        }
+      },
+      "wallMs": 56984
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 3.953,
+        "metrics": {
+          "bootMs": 10,
+          "distinctColours": 2226,
+          "firstEndSeconds": 3.355,
+          "idleMotionRatio": 0.018,
+          "lumaStddev": 16.242,
+          "tapMotionRatio": 0.076
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Lighthouse Tide",
+          "Stage : Light lamps!",
+          "All lit! Climb the stairs!",
+          "Light every lamp before the tide rises,",
+          "then climb the stairs to the next floor.",
+          "Tap to begin",
+          "Stage /",
+          "Lamps: /",
+          "You lit every floor!",
+          "The tide took the tower...",
+          "Final Score:",
+          "Tap to return to title"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "lighthouse-floors",
+      "intendedType": "stage-clear",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 22375,
+          "output": 7390
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8702,
+          "output": 539
+        }
+      },
+      "wallMs": 59695
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable"
+        ],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "fail",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "fail"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 30.2,
+          "distinctColours": 1428,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 43.284,
+          "tapMotionRatio": 0
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Le Labyrinthe du Hérisson",
+          "Sortie atteinte !",
+          "Plus de pas possibles.",
+          "Le Labyrinthe",
+          "du Hérisson",
+          "Glissez ou touchez pour jouer",
+          "Guidez le hérisson vers la sortie",
+          "Bravo !",
+          "Coincé !",
+          "Score final:",
+          "Toucher pour rejouer"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "maze-de-haies",
+      "intendedType": "puzzle-board",
+      "lang": "fr",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 26292,
+          "output": 9532
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 10239,
+          "output": 896
+        }
+      },
+      "wallMs": 73084
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 32.2,
+          "distinctColours": 2330,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.018,
+          "lumaStddev": 23.609,
+          "tapMotionRatio": 0.186
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "partly"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Chess Puzzle",
+          "Checkmate! You win.",
+          "Stalemate - no legal move.",
+          "No legal move left.",
+          "Tap to begin",
+          "Moves:",
+          "Black king in check!",
+          "Checkmate the lone king",
+          "Paused"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "online-chess",
+      "intendedType": null,
+      "lang": "en",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 25966,
+          "output": 9850
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 10750,
+          "output": 536
+        }
+      },
+      "wallMs": 79120
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 21.4,
+          "distinctColours": 841,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.003,
+          "lumaStddev": 39.279,
+          "tapMotionRatio": 0.194
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Orchard Catch",
+          ": Catch",
+          "Rotten! Basket emptied",
+          "Stage",
+          "Apples",
+          "Score",
+          "Get ready...",
+          "Tap or drag to begin",
+          "Catch good apples, dodge rotten ones!",
+          "Stage Clear!",
+          "Next stage incoming...",
+          "Game Over",
+          "Tap to retry",
+          "You Win!",
+          "Tap to play again"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "orchard-rounds",
+      "intendedType": "stage-clear",
+      "lang": "en",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 24091,
+          "output": 7797
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8855,
+          "output": 979
+        }
+      },
+      "wallMs": 60560
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined"
+        ],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "fail",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "fail"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 46.7,
+          "distinctColours": 2140,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.001,
+          "lumaStddev": 41.148,
+          "tapMotionRatio": 0.002
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Le Gardien du Phare",
+          ": guidez",
+          "au port",
+          "Phare",
+          "• Sauvés:",
+          "Touchez et glissez pour tourner le faisceau",
+          "Préparez-vous...",
+          "terminé !",
+          "Prochain phare...",
+          "Toutes les nuits sont sauves !",
+          "Vous avez gagné",
+          "Un bateau a heurté les rochers...",
+          "Nuit perdue"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "phare-long",
+      "intendedType": "stage-clear",
+      "lang": "fr",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 25349,
+          "output": 8010
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 9284,
+          "output": 748
+        }
+      },
+      "wallMs": 64826
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined"
+        ],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "fail",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "fail"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 44.2,
+          "distinctColours": 12440,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 51.711,
+          "tapMotionRatio": 0
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Potager Malin",
+          "Score:",
+          "Échangez les légumes voisins",
+          "pour aligner carottes ou plus.",
+          "Jouer",
+          "Potager parfait !",
+          "Plus aucun coup possible",
+          "Score final :",
+          "(réinitialisation via l'hôte)"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "potager-grille",
+      "intendedType": "puzzle-board",
+      "lang": "fr",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 25643,
+          "output": 9278
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 10128,
+          "output": 571
+        }
+      },
+      "wallMs": 71753
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 3.166,
+        "metrics": {
+          "bootMs": 22.9,
+          "distinctColours": 3609,
+          "firstEndSeconds": 3.897,
+          "idleMotionRatio": 0.069,
+          "lumaStddev": 35.411,
+          "tapMotionRatio": 0.141
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Trois Secondes",
+          "Touche l'écran pour commencer",
+          "Trouve la bonne case avant la fin du temps !",
+          "Partie terminée",
+          "Score :",
+          "Touche l'écran pour revenir",
+          "Trouve la case marquée !"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "reflexion-chrono",
+      "intendedType": "puzzle-board",
+      "lang": "fr",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 21812,
+          "output": 6145
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7188,
+          "output": 867
+        }
+      },
+      "wallMs": 51371
+    },
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 24.1,
+          "distinctColours": 742,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 23.575,
+          "tapMotionRatio": 0.011
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Sticker Table",
+          "Clear",
+          "Stickers:",
+          "Tap to begin"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": null,
+        "verdict": "abstain"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "sticker-table",
+      "intendedType": "toy-box",
+      "lang": "en",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 30754,
+        "output": 5179
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 53511,
+          "output": 10906
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 6417,
+          "output": 619
+        }
+      },
+      "wallMs": 83620
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 29.3,
+          "distinctColours": 1508,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 73.886,
+          "tapMotionRatio": 0.255
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Colour Rows",
+          "Moves:",
+          "No moves left",
+          "— tap to play again",
+          "Tap to begin",
+          "Paused"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "tile-sort",
+      "intendedType": "puzzle-board",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 23650,
+          "output": 7466
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8157,
+          "output": 788
+        }
+      },
+      "wallMs": 59760
+    },
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 27.9,
+          "distinctColours": 3550,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.132,
+          "lumaStddev": 34.492,
+          "tapMotionRatio": 0.302
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Tiny Maze",
+          "Swipe left/right to change lanes &middot; swipe up/down or arrows to move forward/back",
+          "Reach the glowing exit u2014 stage",
+          "You escaped every maze!",
+          "Swipe or tap to begin",
+          "find the exit",
+          "Maze Master!",
+          "Score",
+          "Tap to play again",
+          "Stage",
+          "Paused"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "tiny-maze",
+      "intendedType": null,
+      "lang": "en",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [
+        "E1-15"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 37589,
+        "output": 7932
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 61377,
+          "output": 15688
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8939,
+          "output": 608
+        }
+      },
+      "wallMs": 118675
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 23.625,
+        "metrics": {
+          "bootMs": 81.2,
+          "distinctColours": 2321,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.06,
+          "lumaStddev": 26.017,
+          "tapMotionRatio": 0.124
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": "stated",
+          "prompt-coverage": null
+        },
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Tram en Ville",
+          "px \"Comic Sans MS\", cursive",
+          "Touchez l'écran pour ouvrir les portes",
+          "quand le quai s'éclaire, pour faire monter",
+          "les voyageurs visés par le niveau.",
+          "Touchez pour commencer",
+          "Objectif: /",
+          "Portes ouvertes !",
+          "Terminus atteint !",
+          "Bravo, tous les quais sont desservis.",
+          "Trois quais ratés...",
+          "Le tram repart sans vous.",
+          "Score final:"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "tramway-niveaux",
+      "intendedType": "stage-clear",
+      "lang": "fr",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 23146,
+          "output": 7352
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8487,
+          "output": 984
+        }
+      },
+      "wallMs": 63590
+    }
+  ],
+  "judgeErrors": [],
+  "noiseFloor": "One generation per item. With 5 items per band, one item moves a band rate by 20 points. Differences smaller than that are not interpretable.",
+  "notMeasured": [
+    "fun or difficulty",
+    "audio",
+    "accessibility",
+    "real-device performance",
+    "multi-turn edits",
+    "languages other than en/fr",
+    "variance across repeated generations",
+    "E3 agreement with human raters",
+    "E4 accuracy beyond its 40 authored bundles",
+    "E2 detection rates on generated games (the thresholds encode this repo's own fixture-based definitions)"
+  ],
+  "repair": {
+    "histogram": {
+      "1": 15,
+      "2": 5
+    },
+    "triggers": {
+      "E1-15": 1,
+      "E1-24": 4
+    }
+  },
+  "totals": {
+    "contractFailed": 0,
+    "estUsd": 3.15,
+    "games": 20,
+    "harnessFailures": 0,
+    "n": 20,
+    "refusals": 0
+  }
+}

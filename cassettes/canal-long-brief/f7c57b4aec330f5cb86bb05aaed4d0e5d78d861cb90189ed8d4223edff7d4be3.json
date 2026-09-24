@@ -1,0 +1,475 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:f7c57b4aec330f5cb86bb05aaed4d0e5d78d861cb90189ed8d4223edff7d4be3",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nA long brief for a canal boat game. The player steers a narrow wooden boat along a city canal at dusk, and the view scrolls upward so the canal keeps coming toward the boat. The boat sits in one of three channels, and the player drags a finger left or right to move it between them. Moored barges, low bridges and floating crates block the channels, and they arrive faster as the run goes on. Lanterns float between the obstacles; each lantern collected adds to the score, and a lantern that is missed simply drifts away. There is only one boat, so the first collision ends the run. Please make the water a deep teal, the barges a warm brown and the lanterns a soft orange, with thin white lines for the ripples. I would also like a gentle splash sound whenever a lantern is collected and a low horn when the boat hits something, if that is possible. During play, show the score in the top corner in a clear, readable font. At the end, show how many lanterns were collected, say what the boat hit, and offer a way to set off again. The first few seconds should be calm, with no obstacles at all, so a new player can learn to steer before anything arrives.\n\nPlan:\n{\"gameType\":\"arcade-run\",\"input\":\"drag-follow\",\"lang\":\"en\",\"loop\":\"Drag to steer your narrow boat between three canal channels, dodging barges, bridges and crates while collecting floating lanterns. One collision ends the run, so survive as long as you can and gather as many lanterns as possible.\",\"slug\":\"canal-lanterns\",\"style\":\"risograph\",\"title\":\"Canal Lanterns\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Canal Lanterns</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #fbf7ee;\n11|     overflow: hidden;\n12|     touch-action: none;\n13|     font-family: 'Arial Narrow', Arial, sans-serif;\n14|   }\n15|   #wrap {\n16|     position: fixed; inset: 0;\n17|     display: flex; align-items: center; justify-content: center;\n18|     background: #fbf7ee;\n19|   }\n20|   canvas {\n21|     display: block;\n22|     touch-action: none;\n23|     background: #fbf7ee;\n24|   }\n25|   #hint {\n26|     position: absolute;\n27|     pointer-events: none;\n28|     color: #0078bf;\n29|     font-weight: 900;\n30|     letter-spacing: 1px;\n31|     text-shadow: 1px 1px 0 #ff48b0;\n32|   }\n33| </style>\n34| </head>\n35| <body>\n36| <div id=\"wrap\">\n37| <canvas id=\"game\"></canvas>\n38| </div>\n39| <script>\n40| // ---- Bridge helper (verbatim) ----\n41| const CARTRIDGE = {\n42|   send(type, payload = {}) {\n43|     window.parent.postMessage(\n44|       { source: \"cartridge\", v: 1, type, payload },\n45|       \"*\",\n46|     );\n47|   },\n48| };\n49| </script>\n50| <script>\n51| (function(){\n52|   const canvas = document.getElementById('game');\n53|   const ctx = canvas.getContext('2d');\n54| \n55|   // ---------- sizing ----------\n56|   let W = 0, H = 0, DPR = 1;\n57|   function resize(){\n58|     DPR = window.devicePixelRatio || 1;\n59|     W = window.innerWidth;\n60|     H = window.innerHeight;\n61|     canvas.width = Math.floor(W * DPR);\n62|     canvas.height = Math.floor(H * DPR);\n63|     canvas.style.width = W + 'px';\n64|     canvas.style.height = H + 'px';\n65|     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n66|     buildGrain();\n67|   }\n68|   window.addEventListener('resize', resize);\n69| \n70|   // ---------- grain tile (pre-rendered once) ----------\n71|   let grainCanvas = null;\n72|   function buildGrain(){\n73|     const size = 128;\n74|     grainCanvas = document.createElement('canvas');\n75|     grainCanvas.width = size;\n76|     grainCanvas.height = size;\n77|     const gctx = grainCanvas.getContext('2d');\n78|     const imgData = gctx.createImageData(size, size);\n79|     for (let i = 0; i < imgData.data.length; i += 4) {\n80|       const v = Math.random() * 255;\n81|       imgData.data[i] = v;\n82|       imgData.data[i+1] = v;\n83|       imgData.data[i+2] = v;\n84|       imgData.data[i+3] = 255;\n85|     }\n86|     gctx.putImageData(imgData, 0, 0);\n87|   }\n88| \n89|   function drawGrain(){\n90|     if (!grainCanvas) return;\n91|     ctx.save();\n92|     ctx.globalAlpha = 0.08;\n93|     const pat = ctx.createPattern(grainCanvas, 'repeat');\n94|     ctx.fillStyle = pat;\n95|     ctx.fillRect(0, 0, W, H);\n96|     ctx.restore();\n97|   }\n98| \n99|   // ---------- palette ----------\n100|   const PAPER = '#fbf7ee';\n101|   const INK1 = '#ff48b0';\n102|   const INK2 = '#0078bf';\n103|   const OVER = '#5b3a8c';\n104| \n105|   // ---------- game state ----------\n106|   const LANES = 3;\n107|   let laneX = [];\n108|   function computeLanes(){\n109|     const margin = W * 0.18;\n110|     const usable = W - margin * 2;\n111|     laneX = [];\n112|     for (let i = 0; i < LANES; i++){\n113|       laneX.push(margin + usable * (i + 0.5) / LANES);\n114|     }\n115|   }\n116| \n117|   let last = 0;\n118|   let running = false; // is a run in progress (post-start, pre-end)\n119|   let started = false; // has start ever been sent for this run\n120|   let paused = false;\n121|   let score = 0;\n122|   let scoreShown = -1;\n123|   let gameTime = 0;\n124|   let speed = 220; // px/sec scroll speed\n125|   let boat = { x: 0, y: 0, targetX: 0, lane: 1, w: 0, h: 0 };\n126|   let obstacles = [];\n127|   let lanterns = [];\n128|   let spawnTimer = 0;\n129|   let lanternTimer = 0;\n130|   let idleTimer = 0;\n131|   let hasMoved = false;\n132|   let bootSent = false;\n133|   let firstFrameDrawn = false;\n134|   let endSent = false;\n135| \n136|   function toCanvas(evt){\n137|     const rect = canvas.getBoundingClientRect();\n138|     return {\n139|       x: (evt.clientX - rect.left),\n140|       y: (evt.clientY - rect.top)\n141|     };\n142|   }\n143| \n144|   function resetState(){\n145|     score = 0;\n146|     scoreShown = -1;\n147|     gameTime = 0;\n148|     speed = 220;\n149|     obstacles = [];\n150|     lanterns = [];\n151|     spawnTimer = 1.4; // fairness: first hazard well ahead\n152|     lanternTimer = 0.8;\n153|     idleTimer = 0;\n154|     hasMoved = false;\n155|     endSent = false;\n156|     computeLanes();\n157|     boat.lane = 1;\n158|     boat.x = laneX[1];\n159|     boat.targetX = laneX[1];\n160|     boat.y = H * 0.78;\n161|     boat.w = Math.min(W, H) * 0.09;\n162|     boat.h = boat.w * 2.0;\n163|   }\n164| \n165|   function backToTitle(){\n166|     running = false;\n167|     started = false;\n168|     paused = false;\n169|     resetState();\n170|   }\n171| \n172|   function startRun(){\n173|     if (running) return;\n174|     resetState();\n175|     running = true;\n176|     started = true;\n177|     CARTRIDGE.send('start', {});\n178|   }\n179| \n180|   // ---------- input ----------\n181|   let held = false;\n182|   canvas.addEventListener('pointerdown', (event) => {\n183|     if (!started){\n184|       startRun();\n185|     }\n186|     held = true;\n187|     hasMoved = true;\n188|     idleTimer = 0;\n189|     try { canvas.setPointerCapture(event.pointerId); } catch(e){}\n190|     const p = toCanvas(event);\n191|     boat.targetX = clamp(p.x, boat.w, W - boat.w);\n192|   });\n193|   canvas.addEventListener('pointermove', (event) => {\n194|     if (!held) return;\n195|     hasMoved = true;\n196|     idleTimer = 0;\n197|     const p = toCanvas(event);\n198|     boat.targetX = clamp(p.x, boat.w, W - boat.w);\n199|   });\n200|   function releasePointer(){ held = false; }\n201|   canvas.addEventListener('pointerup', releasePointer);\n202|   canvas.addEventListener('pointercancel', releasePointer);\n203| \n204|   function clamp(v, lo, hi){\n205|     return Math.max(lo, Math.min(hi, v));\n206|   }\n207| \n208|   // ---------- spawning ----------\n209|   function spawnObstacle(){\n210|     // pick 1 or 2 lanes blocked, leave at least one open\n211|     const type = Math.random();\n212|     const blockedCount = Math.random() < 0.6 ? 1 : 2;\n213|     const lanesArr = [0,1,2];\n214|     for (let i = lanesArr.length - 1; i > 0; i--){\n215|       const j = Math.floor(Math.random() * (i+1));\n216|       [lanesArr[i], lanesArr[j]] = [lanesArr[j], lanesArr[i]];\n217|     }\n218|     const blocked = lanesArr.slice(0, blockedCount);\n219|     const kind = type < 0.5 ? 'barge' : (type < 0.8 ? 'bridge' : 'crate');\n220|     for (const laneIdx of blocked){\n221|       obstacles.push({\n222|         lane: laneIdx,\n223|         x: laneX[laneIdx],\n224|         y: -100,\n225|         w: Math.min(W,H) * (kind === 'bridge' ? 0.24 : 0.16),\n226|         h: Math.min(W,H) * (kind === 'bridge' ? 0.14 : 0.12),\n227|         kind: kind,\n228|         passed: false\n229|       });\n230|     }\n231|   }\n232| \n233|   function spawnLantern(){\n234|     const laneIdx = Math.floor(Math.random() * LANES);\n235|     lanterns.push({\n236|       lane: laneIdx,\n237|       x: laneX[laneIdx],\n238|       y: -60,\n239|       r: Math.min(W,H) * 0.035,\n240|       taken: false\n241|     });\n242|   }\n243| \n244|   // ---------- update ----------\n245|   function advance(dt){\n246|     gameTime += dt;\n247|     idleTimer += dt;\n248|     speed += dt * 4.2; // ramp difficulty via speed\n249| \n250|     // ease boat towards target\n251|     boat.x += (boat.targetX - boat.x) * Math.min(1, dt * 10);\n252| \n253|     // spawn timers\n254|     spawnTimer -= dt;\n255|     if (spawnTimer <= 0){\n256|       spawnObstacle();\n257|       spawnTimer = Math.max(0.55, 1.5 - gameTime * 0.01);\n258|     }\n259|     lanternTimer -= dt;\n260|     if (lanternTimer <= 0){\n261|       spawnLantern();\n262|       lanternTimer = 0.9 + Math.random() * 0.9;\n263|     }\n264| \n265|     for (const o of obstacles){\n266|       o.y += speed * dt;\n267|     }\n268|     obstacles = obstacles.filter(o => o.y < H + 150);\n269| \n270|     for (const l of lanterns){\n271|       l.y += speed * dt;\n272|     }\n273|     lanterns = lanterns.filter(l => l.y < H + 80 && !l.taken);\n274|   }\n275| \n276|   function collide(){\n277|     for (const o of obstacles){\n278|       const dx = Math.abs(o.x - boat.x);\n279|       const dy = Math.abs(o.y - boat.y);\n280|       if (dx < (o.w + boat.w) * 0.42 && dy < (o.h + boat.h) * 0.38){\n281|         crash();\n282|         return;\n283|       }\n284|     }\n285|     for (const l of lanterns){\n286|       if (l.taken) continue;\n287|       const dx = l.x - boat.x;\n288|       const dy = l.y - boat.y;\n289|       const dist = Math.sqrt(dx*dx + dy*dy);\n290|       if (dist < l.r + boat.w * 0.5){\n291|         l.taken = true;\n292|         score += 10;\n293|         CARTRIDGE.send('score', { value: score });\n294|       }\n295|     }\n296|   }\n297| \n298|   function crash(){\n299|     if (endSent) return;\n300|     running = false;\n301|     endSent = true;\n302|     CARTRIDGE.send('end', { reason: 'lose', value: score });\n303|   }\n304| \n305|   // ---------- drawing ----------\n306|   function drawWater(){\n307|     ctx.fillStyle = PAPER;\n308|     ctx.fillRect(0, 0, W, H);\n309| \n310|     // canal channels (ink2 flat, offset stripes for misregistration)\n311|     const margin = W * 0.18;\n312|     const usable = W - margin * 2;\n313|     ctx.save();\n314|     ctx.globalAlpha = 0.18;\n315|     ctx.fillStyle = INK2;\n316|     ctx.fillRect(margin, 0, usable, H);\n317|     ctx.restore();\n318| \n319|     // lane divider lines with misregistration offset\n320|     ctx.strokeStyle = INK2;\n321|     ctx.lineWidth = 3;\n322|     ctx.setLineDash([18, 14]);\n323|     const scrollOffset = (gameTime * speed) % 32;\n324|     for (let i = 1; i < LANES; i++){\n325|       const x = margin + usable * i / LANES;\n326|       ctx.save();\n327|       ctx.translate(1, 1);\n328|       ctx.strokeStyle = INK1;\n329|       ctx.globalAlpha = 0.5;\n330|       ctx.beginPath();\n331|       ctx.moveTo(x, -scrollOffset);\n332|       ctx.lineTo(x, H);\n333|       ctx.stroke();\n334|       ctx.restore();\n335| \n336|       ctx.beginPath();\n337|       ctx.moveTo(x, -scrollOffset);\n338|       ctx.lineTo(x, H);\n339|       ctx.stroke();\n340|     }\n341|     ctx.setLineDash([]);\n342| \n343|     // canal edges\n344|     ctx.fillStyle = INK1;\n345|     ctx.fillRect(0, 0, margin, H);\n346|     ctx.fillRect(W - margin, 0, margin, H);\n347|   }\n348| \n349|   function drawHalftoneCircle(x, y, r, color){\n350|     ctx.save();\n351|     ctx.fillStyle = color;\n352|     ctx.beginPath();\n353|     ctx.arc(x, y, r, 0, Math.PI * 2);\n354|     ctx.fill();\n355|     ctx.restore();\n356|   }\n357| \n358|   function drawBoat(){\n359|     const x = boat.x, y = boat.y, w = boat.w, h = boat.h;\n360|     // shadow ink2 offset\n361|     ctx.save();\n362|     ctx.translate(2, 2);\n363|     ctx.fillStyle = INK2;\n364|     ctx.globalAlpha = 0.55;\n365|     drawHullPath(x, y, w, h);\n366|     ctx.fill();\n367|     ctx.restore();\n368| \n369|     // main hull ink1\n370|     ctx.fillStyle = INK1;\n371|     drawHullPath(x, y, w, h);\n372|     ctx.fill();\n373| \n374|     // cabin (overlap color)\n375|     ctx.fillStyle = OVER;\n376|     ctx.fillRect(x - w*0.28, y - h*0.12, w*0.56, h*0.28);\n377|   }\n378| \n379|   function drawHullPath(x, y, w, h){\n380|     ctx.beginPath();\n381|     ctx.moveTo(x - w*0.5, y - h*0.3);\n382|     ctx.lineTo(x + w*0.5, y - h*0.3);\n383|     ctx.lineTo(x + w*0.4, y + h*0.45);\n384|     ctx.quadraticCurveTo(x, y + h*0.65, x - w*0.4, y + h*0.45);\n385|     ctx.closePath();\n386|   }\n387| \n388|   function drawObstacle(o){\n389|     ctx.save();\n390|     ctx.translate(1, 1);\n391|     ctx.globalAlpha = 0.5;\n392|     ctx.fillStyle = INK2;\n393|     obstacleShape(o);\n394|     ctx.restore();\n395| \n396|     ctx.fillStyle = o.kind === 'bridge' ? OVER : INK2;\n397|     obstacleShape(o);\n398|   }\n399| \n400|   function obstacleShape(o){\n401|     ctx.beginPath();\n402|     if (o.kind === 'bridge'){\n403|       ctx.fillRect(o.x - o.w/2, o.y - o.h/2, o.w, o.h);\n404|     } else if (o.kind === 'barge'){\n405|       ctx.fillRect(o.x - o.w/2, o.y - o.h/2, o.w, o.h*0.8);\n406|     } else {\n407|       // crate: rotated square\n408|       ctx.save();\n409|       ctx.translate(o.x, o.y);\n410|       ctx.rotate(Math.PI/4);\n411|       ctx.fillRect(-o.w/2.6, -o.w/2.6, o.w/1.3, o.w/1.3);\n412|       ctx.restore();\n413|       return;\n414|     }\n415|   }\n416| \n417|   function drawLantern(l){\n418|     // glow ink1 offset\n419|     ctx.save();\n420|     ctx.translate(1, -1);\n421|     ctx.globalAlpha = 0.5;\n422|     drawHalftoneCircle(l.x, l.y, l.r, INK1);\n423|     ctx.restore();\n424| \n425|     drawHalftoneCircle(l.x, l.y, l.r, INK1);\n426|     ctx.fillStyle = OVER;\n427|     ctx.fillRect(l.x - l.r*0.15, l.y - l.r*1.4, l.r*0.3, l.r*0.6);\n428|   }\n429| \n430|   function drawHUD(){\n431|     ctx.fillStyle = INK2;\n432|     ctx.font = '900 ' + Math.round(Math.min(W,H)*0.055) + 'px Arial Narrow, Arial, sans-serif';\n433|     ctx.textBaseline = 'top';\n434|     ctx.save();\n435|     ctx.translate(1,1);\n436|     ctx.fillStyle = INK1;\n437|     ctx.fillText('LANTERNS ' + score, 16, 14);\n438|     ctx.restore();\n439|     ctx.fillStyle = INK2;\n440|     ctx.fillText('LANTERNS ' + score, 16, 14);\n441|   }\n442| \n443|   function drawTitle(){\n444|     ctx.fillStyle = PAPER;\n445|     ctx.fillRect(0, 0, W, H);\n446|     drawWater();\n447| \n448|     const t = gameTime;\n449|     ctx.save();\n450|     ctx.globalAlpha = 0.9;\n451|     ctx.fillStyle = INK1;\n452|     ctx.font = '900 ' + Math.round(Math.min(W,H)*0.09) + 'px Arial Narrow, Arial, sans-serif';\n453|     ctx.textAlign = 'center';\n454|     ctx.save();\n455|     ctx.translate(2,2);\n456|     ctx.fillStyle = INK2;\n457|     ctx.fillText('CANAL LANTERNS', W/2, H*0.28);\n458|     ctx.restore();\n459|     ctx.fillStyle = INK1;\n460|     ctx.fillText('CANAL LANTERNS', W/2, H*0.28);\n461|     ctx.restore();\n462| \n463|     const pulse = 0.6 + 0.4 * Math.sin(t * 3);\n464|     ctx.save();\n465|     ctx.globalAlpha = pulse;\n466|     ctx.fillStyle = OVER;\n467|     ctx.font = '700 ' + Math.round(Math.min(W,H)*0.04) + 'px Arial Narrow, Arial, sans-serif';\n468|     ctx.textAlign = 'center';\n469|     ctx.fillText('DRAG TO STEER YOUR BOAT', W/2, H*0.42);\n470|     ctx.fillText('TAP OR DRAG TO BEGIN', W/2, H*0.48);\n471|     ctx.restore();\n472| \n473|     // idle floating boat preview\n474|     boat.x = laneX[1] + Math.sin(t * 1.5) * W * 0.08;\n475|     boat.y = H * 0.7;\n476|     drawBoat();\n477| \n478|     ctx.textAlign = 'left';\n479|   }\n480| \n481|   function drawGameOver(){\n482|     ctx.save();\n483|     ctx.fillStyle = PAPER;\n484|     ctx.globalAlpha = 0.85;\n485|     ctx.fillRect(0, 0, W, H);\n486|     ctx.restore();\n487| \n488|     ctx.textAlign = 'center';\n489|     ctx.save();\n490|     ctx.translate(2,2);\n491|     ctx.fillStyle = INK2;\n492|     ctx.font = '900 ' + Math.round(Math.min(W,H)*0.08) + 'px Arial Narrow, Arial, sans-serif';\n493|     ctx.fillText('CAPSIZED', W/2, H*0.36);\n494|     ctx.restore();\n495|     ctx.fillStyle = INK1;\n496|     ctx.fillText('CAPSIZED', W/2, H*0.36);\n497| \n498|     ctx.font = '700 ' + Math.round(Math.min(W,H)*0.045) + 'px Arial Narrow, Arial, sans-serif';\n499|     ctx.fillStyle = OVER;\n500|     ctx.fillText('LANTERNS COLLECTED: ' + score, W/2, H*0.46);\n501|     ctx.fillText('TAP TO SAIL AGAIN', W/2, H*0.54);\n502|     ctx.textAlign = 'left';\n503|   }\n504| \n505|   function draw(){\n506|     ctx.clearRect(0, 0, W, H);\n507|     if (!started){\n508|       drawTitle();\n509|     } else if (running){\n510|       drawWater();\n511|       for (const l of lanterns) drawLantern(l);\n512|       for (const o of obstacles) drawObstacle(o);\n513|       drawBoat();\n514|       drawHUD();\n515|     } else {\n516|       drawWater();\n517|       for (const l of lanterns) drawLantern(l);\n518|       for (const o of obstacles) drawObstacle(o);\n519|       drawBoat();\n520|       drawHUD();\n521|       drawGameOver();\n522|     }\n523|     drawGrain();\n524|     if (!firstFrameDrawn){\n525|       firstFrameDrawn = true;\n526|       if (!bootSent){\n527|         bootSent = true;\n528|         CARTRIDGE.send('boot', { title: 'Canal Lanterns', gameType: 'arcade-run', lang: 'en' });\n529|       }\n530|     }\n531|   }\n532| \n533|   // restart on tap after game over\n534|   canvas.addEventListener('pointerdown', (event) => {\n535|     if (started && !running){\n536|       // after game over, restart\n537|       startRun();\n538|     }\n539|   });\n540| \n541|   // ---------- loop ----------\n542|   function frame(now){\n543|     const dt = Math.min((now - last) / 1000, 0.05);\n544|     last = now;\n545|     if (running && !paused){\n546|       advance(dt || 0);\n547|       collide();\n548|     }\n549|     draw();\n550|     requestAnimationFrame(frame);\n551|   }\n552| \n553|   // ---------- host messages ----------\n554|   window.addEventListener('message', (event) => {\n555|     const data = event.data;\n556|     if (!data || data.source !== 'cartridge-host') return;\n557|     if (data.type === 'pause') paused = true;\n558|     if (data.type === 'resume') paused = false;\n559|     if (data.type === 'reset') backToTitle();\n560|   });\n561| \n562|   // ---------- init ----------\n563|   resize();\n564|   resetState();\n565|   requestAnimationFrame((t) => { last = t; requestAnimationFrame(frame); });\n566| })();\n567| </script>\n568| </body>\n569| </html>\n570| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNqz9LBiQmZV3nnBG8S5\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8769,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}               }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"106\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LANES\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 3\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 182\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"canvas\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".addEventListener\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"('pointerdown', (event)\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" => {\\\"}, {\\\"line\\\": 219\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"const\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" kind\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = type\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"< 0.\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"5 ? 'b\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"arge\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"' : (\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"type < 0.8\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ? 'bridge\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"' : 'c\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rate\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"');\\\"}, {\\\"line\\\": 233\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sp\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"awnLantern()\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"}, {\\\"line\\\": 290\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (dist\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"< l\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".r\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boat\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".w\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".5)\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"}, {\\\"line\\\": 298\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" crash\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(){\\\"}, {\\\"line\\\": 437\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"('LAN\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"TERNS '\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" + score, \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"16\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", 14\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"The code\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" three\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lane steering\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" via\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pointer\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input, spaw\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ns\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bar\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ges/\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bridges/c\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rates as\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" obstacles\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", includes\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lan\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"terns\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" increment\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score on\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collection\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", ends\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" run\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collision\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and displays\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the score\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" during\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 469\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text('DRAG\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" TO\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ST\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"EER YOUR\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" BOAT', W\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/2, H*0.42\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 470\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text('TA\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"P OR\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" DRAG\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" TO BEGIN\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"', W/2, H*0\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".48);\\\"}, {\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 437\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text('LANTERNS ' + score\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", 16, 14);\\\"}\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"], \\\"rationale\\\": \\\"The title\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicitly\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instru\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player to drag to steer and\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tap to begin, and\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the H\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"UD clearly\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" labels\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the score\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'LANTERNS'\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" during\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play.\\\"},\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 191\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"boat\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".target\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"X = cl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amp(p\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x, boat\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".w\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" W\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" -\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boat.w);\\\"}, {\\\"line\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 251\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"boat\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".x\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"boat\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".targetX - boat.x)\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * Math\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".min(1, dt *\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 10);\\\"}, {\\\"line\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 290\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if (dist\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" < l.r + boat.w\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 0.5){\\\"},\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 292\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"l\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".taken\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = true;\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Pointer\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input immediately\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boat's target position, the\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" boat vis\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ually e\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ases toward\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" it\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" each\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame, and lan\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tern\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collection is\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" marked\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" scored\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" within\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collision\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 493\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"('CAPS\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"IZED', W/2, H*\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.36)\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 500\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"('LANTERNS\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" COLLECTED: ' + score, W/\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"2, H*0.46)\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 501\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text('TAP TO SAIL\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" AGAIN', W/2, H*\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.54);\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game-\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"over screen displays\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'CAPSIZED' to\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explain\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the run\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ended, shows\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lan\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tern count\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" collected\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and offers\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a clear\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" restart instruction\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}}\"}             }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8769,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":753}             }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"         }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      185,
+      185,
+      185,
+      185,
+      185,
+      185,
+      185,
+      61,
+      0,
+      6,
+      27,
+      28,
+      111,
+      111,
+      111,
+      111,
+      72,
+      0,
+      4,
+      27,
+      28,
+      65,
+      0,
+      14,
+      28,
+      24,
+      57,
+      0,
+      27,
+      21,
+      75,
+      0,
+      7,
+      25,
+      26,
+      132,
+      0,
+      0,
+      0,
+      1,
+      87,
+      0,
+      0,
+      17,
+      81,
+      0,
+      0,
+      27,
+      24,
+      73,
+      0,
+      6,
+      26,
+      95,
+      1,
+      0,
+      9,
+      27,
+      81,
+      0,
+      0,
+      27,
+      23,
+      74,
+      0,
+      3,
+      26,
+      26,
+      67,
+      0,
+      12,
+      30,
+      81,
+      0,
+      0,
+      21,
+      101,
+      1,
+      0,
+      7,
+      24,
+      25,
+      66,
+      7,
+      8,
+      25,
+      88,
+      0,
+      0,
+      17,
+      28,
+      68,
+      0,
+      8,
+      26,
+      26,
+      63,
+      0,
+      20,
+      23,
+      83,
+      0,
+      0,
+      143,
+      1,
+      0,
+      0,
+      0,
+      14,
+      23,
+      116,
+      0,
+      0,
+      0,
+      16,
+      68,
+      0,
+      0,
+      28,
+      66,
+      0,
+      8,
+      28,
+      24,
+      63,
+      0,
+      17,
+      27,
+      81,
+      1,
+      0,
+      23,
+      26,
+      72,
+      0,
+      7,
+      31,
+      21,
+      62,
+      0,
+      17,
+      27,
+      79,
+      0,
+      1,
+      25,
+      26,
+      26,
+      27,
+      134,
+      0,
+      0,
+      0,
+      0,
+      26,
+      24,
+      137,
+      0,
+      0,
+      0,
+      0,
+      94,
+      0,
+      0,
+      5,
+      28,
+      66,
+      0,
+      15,
+      24,
+      84,
+      0,
+      0,
+      21,
+      26,
+      77,
+      2,
+      3,
+      23,
+      29,
+      65,
+      1,
+      11,
+      25,
+      92,
+      0,
+      0,
+      21,
+      19,
+      77,
+      0,
+      2,
+      26,
+      26,
+      68,
+      0,
+      13,
+      25,
+      85,
+      0,
+      0,
+      31,
+      17,
+      75,
+      0,
+      2,
+      30,
+      24,
+      66,
+      0,
+      14,
+      32,
+      77,
+      1,
+      0,
+      31,
+      18,
+      81,
+      0,
+      0,
+      22,
+      26,
+      62,
+      0,
+      20,
+      26,
+      81,
+      2,
+      0,
+      22,
+      395,
+      143,
+      143
+    ]
+  },
+  "usage": {
+    "input": 8769,
+    "output": 753,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

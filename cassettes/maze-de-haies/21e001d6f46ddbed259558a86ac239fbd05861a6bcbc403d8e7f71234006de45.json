@@ -1,0 +1,522 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:21e001d6f46ddbed259558a86ac239fbd05861a6bcbc403d8e7f71234006de45",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nUn labyrinthe de haies vu du dessus, joué au tour par tour. Le joueur guide un hérisson case par case en glissant le doigt vers une direction. Chaque déplacement coûte un pas, et des pommes posées dans les allées rapportent des points. La partie est gagnée quand le hérisson atteint la sortie, et elle est bloquée si plus aucun pas ne reste. Aucun chronomètre ne presse le joueur.\n\nPlan:\n{\"gameType\":\"puzzle-board\",\"input\":\"swipe-lanes\",\"lang\":\"fr\",\"loop\":\"Glissez le doigt pour guider le hérisson case par case dans les haies, ramassez des pommes pour marquer des points et atteignez la sortie avant d'épuiser vos pas.\",\"slug\":\"le-labyrinthe-du-herisson\",\"style\":\"paper-cut\",\"title\":\"Le Labyrinthe du Hérisson\"}\n\nGame source (line-numbered):\n1| \n2| <!doctype html>\n3| <html lang=\"fr\">\n4| <head>\n5| <meta charset=\"utf-8\">\n6| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n7| <title>Le Labyrinthe du Hérisson</title>\n8| <style>\n9|   html, body {\n10|     margin: 0; padding: 0; width: 100%; height: 100%;\n11|     background: #f4ecd8;\n12|     overflow: hidden;\n13|     touch-action: none;\n14|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n15|   }\n16|   #game {\n17|     display: block;\n18|     width: 100vw;\n19|     height: 100dvh;\n20|     touch-action: none;\n21|   }\n22| </style>\n23| </head>\n24| <body>\n25| <canvas id=\"game\"></canvas>\n26| <script>\n27| // ---- Bridge helper (verbatim) ----\n28| const CARTRIDGE = {\n29|   send(type, payload = {}) {\n30|     window.parent.postMessage(\n31|       { source: \"cartridge\", v: 1, type, payload },\n32|       \"*\",\n33|     );\n34|   },\n35| };\n36| \n37| window.addEventListener(\"message\", (event) => {\n38|   const data = event.data;\n39|   if (!data || data.source !== \"cartridge-host\") return;\n40|   if (data.type === \"pause\") paused = true;\n41|   if (data.type === \"resume\") paused = false;\n42|   if (data.type === \"reset\") backToTitle();\n43| });\n44| \n45| // ---- Game setup ----\n46| const canvas = document.getElementById(\"game\");\n47| const ctx = canvas.getContext(\"2d\");\n48| \n49| let paused = false;\n50| let dpr = Math.max(1, window.devicePixelRatio || 1);\n51| \n52| function resize() {\n53|   dpr = Math.max(1, window.devicePixelRatio || 1);\n54|   const w = window.innerWidth;\n55|   const h = window.innerHeight;\n56|   canvas.width = Math.floor(w * dpr);\n57|   canvas.height = Math.floor(h * dpr);\n58|   canvas.style.width = w + \"px\";\n59|   canvas.style.height = h + \"px\";\n60|   draw();\n61| }\n62| window.addEventListener(\"resize\", resize);\n63| \n64| // ---- Palette ----\n65| const COL_BG = \"#f4ecd8\";\n66| const COL_LAYER = \"#e07a5f\";\n67| const COL_ACCENT = \"#3d405b\";\n68| const COL_HILITE = \"#81b29a\";\n69| \n70| // ---- Seeded jitter ----\n71| function makeRng(seed) {\n72|   let s = seed >>> 0;\n73|   return function () {\n74|     s = (s * 1664525 + 1013904223) >>> 0;\n75|     return (s & 0xffffffff) / 4294967296;\n76|   };\n77| }\n78| const jitterRng = makeRng(1337);\n79| function jitterVal() {\n80|   return (jitterRng() - 0.5) * 3;\n81| }\n82| \n83| // ---- Board / maze ----\n84| const LANES = 4; // columns = lanes for swipe control\n85| const ROWS = 7;\n86| const GRID_W = LANES;\n87| const GRID_H = ROWS;\n88| \n89| let grid = []; // grid[row][col] = { wallsRight, wallsBottom, apple, visited }\n90| let hedgehogRow, hedgehogCol;\n91| let exitRow, exitCol;\n92| let lane = 0; // current column lane\n93| let stepsLeft = 0;\n94| let score = 0;\n95| let moves = 0;\n96| let level = 1;\n97| let state = \"title\"; // title, playing, ended\n98| let endReason = null;\n99| let message = \"\";\n100| \n101| // jitter cache per cell-edge for stable irregular look\n102| let jitterCache = {};\n103| function getJitter(key) {\n104|   if (!(key in jitterCache)) {\n105|     jitterCache[key] = { dx: jitterVal(), dy: jitterVal() };\n106|   }\n107|   return jitterCache[key];\n108| }\n109| \n110| function genMaze(seed) {\n111|   const rng = makeRng(seed);\n112|   const cells = [];\n113|   for (let r = 0; r < GRID_H; r++) {\n114|     const row = [];\n115|     for (let c = 0; c < GRID_W; c++) {\n116|       row.push({ right: true, bottom: true, visited: false, apple: false });\n117|     }\n118|     cells.push(row);\n119|   }\n120|   // randomized DFS to carve maze, walls = true means wall present\n121|   const stack = [[0, 0]];\n122|   cells[0][0].visited = true;\n123|   function neighbors(r, c) {\n124|     const list = [];\n125|     if (r > 0 && !cells[r - 1][c].visited) list.push([r - 1, c, \"up\"]);\n126|     if (r < GRID_H - 1 && !cells[r + 1][c].visited) list.push([r + 1, c, \"down\"]);\n127|     if (c > 0 && !cells[r][c - 1].visited) list.push([r, c - 1, \"left\"]);\n128|     if (c < GRID_W - 1 && !cells[r][c + 1].visited) list.push([r, c + 1, \"right\"]);\n129|     return list;\n130|   }\n131|   while (stack.length) {\n132|     const [r, c] = stack[stack.length - 1];\n133|     const opts = neighbors(r, c);\n134|     if (opts.length === 0) {\n135|       stack.pop();\n136|       continue;\n137|     }\n138|     const pick = opts[Math.floor(rng() * opts.length)];\n139|     const [nr, nc, dir] = pick;\n140|     if (dir === \"up\") cells[r - 1][nc ? c : c].bottom = false, cells[nr][nc].bottom = false;\n141|     if (dir === \"down\") cells[r][c].bottom = false;\n142|     if (dir === \"left\") cells[r][c - 1 === nc ? nc : nc].right = false, cells[nr][nc].right = false;\n143|     if (dir === \"right\") cells[r][c].right = false;\n144|     cells[nr][nc].visited = true;\n145|     stack.push([nr, nc]);\n146|   }\n147|   // place apples on random open cells (not start, not exit)\n148|   const appleCount = 4 + Math.floor(rng() * 2);\n149|   let placed = 0;\n150|   let attempts = 0;\n151|   while (placed < appleCount && attempts < 200) {\n152|     attempts++;\n153|     const r = Math.floor(rng() * GRID_H);\n154|     const c = Math.floor(rng() * GRID_W);\n155|     if (r === 0 && c === 0) continue;\n156|     if (r === GRID_H - 1 && c === GRID_W - 1) continue;\n157|     if (cells[r][c].apple) continue;\n158|     cells[r][c].apple = true;\n159|     placed++;\n160|   }\n161|   return cells;\n162| }\n163| \n164| function setupLevel(idx) {\n165|   grid = genMaze(idx * 977 + 42);\n166|   hedgehogRow = 0;\n167|   hedgehogCol = 0;\n168|   lane = 0;\n169|   exitRow = GRID_H - 1;\n170|   exitCol = GRID_W - 1;\n171|   stepsLeft = GRID_W * GRID_H + 6;\n172|   jitterCache = {};\n173|   message = \"\";\n174| }\n175| \n176| function totalApples() {\n177|   let n = 0;\n178|   for (let r = 0; r < GRID_H; r++)\n179|     for (let c = 0; c < GRID_W; c++) if (grid[r][c].apple) n++;\n180|   return n;\n181| }\n182| \n183| function canMove(r, c, dir) {\n184|   if (dir === \"left\") {\n185|     if (c === 0) return false;\n186|     return !grid[r][c - 1].right;\n187|   }\n188|   if (dir === \"right\") {\n189|     if (c === GRID_W - 1) return false;\n190|     return !grid[r][c].right;\n191|   }\n192|   if (dir === \"up\") {\n193|     if (r === 0) return false;\n194|     return !grid[r - 1][c].bottom;\n195|   }\n196|   if (dir === \"down\") {\n197|     if (r === GRID_H - 1) return false;\n198|     return !grid[r][c].bottom;\n199|   }\n200|   return false;\n201| }\n202| \n203| function anyLegalMove() {\n204|   if (stepsLeft <= 0) return false;\n205|   const dirs = [\"left\", \"right\", \"up\", \"down\"];\n206|   for (const d of dirs) {\n207|     if (canMove(hedgehogRow, hedgehogCol, d)) return true;\n208|   }\n209|   return false;\n210| }\n211| \n212| function tryMove(dir) {\n213|   if (state !== \"playing\" || paused) return;\n214|   if (!canMove(hedgehogRow, hedgehogCol, dir)) return;\n215|   if (dir === \"left\") hedgehogCol -= 1;\n216|   if (dir === \"right\") hedgehogCol += 1;\n217|   if (dir === \"up\") hedgehogRow -= 1;\n218|   if (dir === \"down\") hedgehogRow += 1;\n219|   lane = hedgehogCol;\n220|   moves += 1;\n221|   stepsLeft -= 1;\n222| \n223|   const cell = grid[hedgehogRow][hedgehogCol];\n224|   if (cell.apple) {\n225|     cell.apple = false;\n226|     score += 10;\n227|     CARTRIDGE.send(\"score\", { value: score });\n228|   }\n229| \n230|   if (hedgehogRow === exitRow && hedgehogCol === exitCol) {\n231|     score += 25;\n232|     CARTRIDGE.send(\"score\", { value: score });\n233|     state = \"ended\";\n234|     endReason = \"win\";\n235|     message = \"Sortie atteinte !\";\n236|     CARTRIDGE.send(\"end\", { reason: \"win\", value: score });\n237|   } else if (!anyLegalMove()) {\n238|     state = \"ended\";\n239|     endReason = \"stuck\";\n240|     message = \"Plus de pas possibles.\";\n241|     CARTRIDGE.send(\"end\", { reason: \"stuck\", value: score });\n242|   }\n243|   draw();\n244| }\n245| \n246| // ---- Input: swipe lanes ----\n247| const SWIPE_FRACTION = 0.08;\n248| let pressX = 0;\n249| let pressY = 0;\n250| \n251| canvas.addEventListener(\"pointerdown\", (event) => {\n252|   pressX = event.clientX;\n253|   pressY = event.clientY;\n254|   if (state === \"title\") {\n255|     beginPlay();\n256|   }\n257| });\n258| \n259| canvas.addEventListener(\"pointerup\", (event) => {\n260|   if (state !== \"playing\") return;\n261|   const dx = event.clientX - pressX;\n262|   const dy = event.clientY - pressY;\n263|   const w = canvas.clientWidth;\n264|   const h = canvas.clientHeight;\n265|   if (Math.abs(dx) < w * SWIPE_FRACTION && Math.abs(dy) < h * SWIPE_FRACTION) return;\n266|   if (Math.abs(dx) > Math.abs(dy)) {\n267|     if (dx > 0) tryMove(\"right\");\n268|     else tryMove(\"left\");\n269|   } else {\n270|     if (dy > 0) tryMove(\"down\");\n271|     else tryMove(\"up\");\n272|   }\n273| });\n274| \n275| window.addEventListener(\"keydown\", (event) => {\n276|   if (state === \"title\" && (event.key === \"Enter\" || event.key === \" \")) {\n277|     beginPlay();\n278|     return;\n279|   }\n280|   if (state !== \"playing\") return;\n281|   if (event.key === \"ArrowLeft\") tryMove(\"left\");\n282|   if (event.key === \"ArrowRight\") tryMove(\"right\");\n283|   if (event.key === \"ArrowUp\") tryMove(\"up\");\n284|   if (event.key === \"ArrowDown\") tryMove(\"down\");\n285| });\n286| \n287| function beginPlay() {\n288|   if (state === \"playing\") return;\n289|   score = 0;\n290|   moves = 0;\n291|   level = 1;\n292|   setupLevel(level);\n293|   state = \"playing\";\n294|   endReason = null;\n295|   CARTRIDGE.send(\"start\");\n296|   CARTRIDGE.send(\"level\", { index: level });\n297|   CARTRIDGE.send(\"score\", { value: score });\n298|   draw();\n299| }\n300| \n301| function backToTitle() {\n302|   state = \"title\";\n303|   endReason = null;\n304|   message = \"\";\n305|   draw();\n306| }\n307| \n308| // ---- Drawing helpers (paper-cut style) ----\n309| function roundedRectPath(x, y, w, h, r, seedKey) {\n310|   const pts = [\n311|     [x, y], [x + w, y], [x + w, y + h], [x, y + h]\n312|   ];\n313|   ctx.beginPath();\n314|   const rr = Math.min(r, w / 2, h / 2);\n315|   // approximate irregular rounded rect using jittered corners\n316|   const j0 = getJitter(seedKey + \"-0\");\n317|   const j1 = getJitter(seedKey + \"-1\");\n318|   const j2 = getJitter(seedKey + \"-2\");\n319|   const j3 = getJitter(seedKey + \"-3\");\n320|   ctx.moveTo(x + rr + j0.dx, y + j0.dy);\n321|   ctx.lineTo(x + w - rr + j1.dx, y + j1.dy);\n322|   ctx.quadraticCurveTo(x + w + j1.dx, y + j1.dy, x + w + j1.dx, y + rr + j1.dy);\n323|   ctx.lineTo(x + w + j2.dx, y + h - rr + j2.dy);\n324|   ctx.quadraticCurveTo(x + w + j2.dx, y + h + j2.dy, x + w - rr + j2.dx, y + h + j2.dy);\n325|   ctx.lineTo(x + rr + j3.dx, y + h + j3.dy);\n326|   ctx.quadraticCurveTo(x + j3.dx, y + h + j3.dy, x + j3.dx, y + h - rr + j3.dy);\n327|   ctx.lineTo(x + j0.dx, y + rr + j0.dy);\n328|   ctx.quadraticCurveTo(x + j0.dx, y + j0.dy, x + rr + j0.dx, y + j0.dy);\n329|   ctx.closePath();\n330| }\n331| \n332| function drawCard(x, y, w, h, fill, seedKey, shadow) {\n333|   ctx.save();\n334|   if (shadow !== false) {\n335|     ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n336|     ctx.shadowBlur = 6;\n337|     ctx.shadowOffsetY = 3;\n338|   }\n339|   ctx.fillStyle = fill;\n340|   roundedRectPath(x, y, w, h, Math.min(w, h) * 0.15, seedKey);\n341|   ctx.fill();\n342|   ctx.restore();\n343| }\n344| \n345| function drawText(text, x, y, size, color, align) {\n346|   ctx.fillStyle = color;\n347|   ctx.font = \"bold \" + size + \"px -apple-system, Segoe UI, Roboto, Arial, sans-serif\";\n348|   ctx.textAlign = align || \"center\";\n349|   ctx.textBaseline = \"middle\";\n350|   ctx.fillText(text, x, y);\n351| }\n352| \n353| function drawHedgehog(cx, cy, size) {\n354|   ctx.save();\n355|   ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n356|   ctx.shadowBlur = 5;\n357|   ctx.shadowOffsetY = 2;\n358|   // body\n359|   ctx.fillStyle = COL_ACCENT;\n360|   ctx.beginPath();\n361|   ctx.ellipse(cx, cy, size * 0.5, size * 0.4, 0, 0, Math.PI * 2);\n362|   ctx.fill();\n363|   ctx.restore();\n364|   // spikes\n365|   ctx.fillStyle = COL_LAYER;\n366|   for (let i = -3; i <= 3; i++) {\n367|     const angle = (i / 8) * Math.PI - Math.PI / 2.2;\n368|     const sx = cx - Math.cos(angle) * size * 0.35;\n369|     const sy = cy - Math.sin(angle) * size * 0.35 - size * 0.1;\n370|     ctx.beginPath();\n371|     ctx.moveTo(sx, sy);\n372|     ctx.lineTo(sx - 6, sy - 12);\n373|     ctx.lineTo(sx + 6, sy - 3);\n374|     ctx.closePath();\n375|     ctx.fill();\n376|   }\n377|   // face\n378|   ctx.fillStyle = \"#f4ecd8\";\n379|   ctx.beginPath();\n380|   ctx.ellipse(cx + size * 0.35, cy + size * 0.05, size * 0.18, size * 0.14, 0, 0, Math.PI * 2);\n381|   ctx.fill();\n382|   ctx.fillStyle = COL_ACCENT;\n383|   ctx.beginPath();\n384|   ctx.arc(cx + size * 0.45, cy + size * 0.05, size * 0.03, 0, Math.PI * 2);\n385|   ctx.fill();\n386| }\n387| \n388| function drawApple(cx, cy, size) {\n389|   ctx.save();\n390|   ctx.shadowColor = \"rgba(61,64,91,0.3)\";\n391|   ctx.shadowBlur = 4;\n392|   ctx.shadowOffsetY = 2;\n393|   ctx.fillStyle = \"#c1443a\";\n394|   ctx.beginPath();\n395|   ctx.arc(cx, cy, size * 0.3, 0, Math.PI * 2);\n396|   ctx.fill();\n397|   ctx.restore();\n398|   ctx.strokeStyle = COL_HILITE;\n399|   ctx.lineWidth = 2;\n400|   ctx.beginPath();\n401|   ctx.moveTo(cx, cy - size * 0.3);\n402|   ctx.lineTo(cx + size * 0.08, cy - size * 0.42);\n403|   ctx.stroke();\n404| }\n405| \n406| function drawExitFlag(cx, cy, size) {\n407|   ctx.fillStyle = COL_HILITE;\n408|   ctx.beginPath();\n409|   ctx.moveTo(cx - size * 0.25, cy - size * 0.35);\n410|   ctx.lineTo(cx - size * 0.25, cy + size * 0.35);\n411|   ctx.lineTo(cx - size * 0.28, cy + size * 0.35);\n412|   ctx.lineTo(cx - size * 0.28, cy - size * 0.35);\n413|   ctx.closePath();\n414|   ctx.fill();\n415|   ctx.beginPath();\n416|   ctx.moveTo(cx - size * 0.25, cy - size * 0.35);\n417|   ctx.lineTo(cx + size * 0.2, cy - size * 0.2);\n418|   ctx.lineTo(cx - size * 0.25, cy - size * 0.05);\n419|   ctx.closePath();\n420|   ctx.fill();\n421| }\n422| \n423| // ---- Main draw ----\n424| function draw() {\n425|   const w = canvas.width / dpr;\n426|   const h = canvas.height / dpr;\n427|   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n428|   ctx.clearRect(0, 0, w, h);\n429|   ctx.fillStyle = COL_BG;\n430|   ctx.fillRect(0, 0, w, h);\n431| \n432|   if (state === \"title\") {\n433|     drawTitleScreen(w, h);\n434|     return;\n435|   }\n436| \n437|   // layout board\n438|   const margin = Math.min(w, h) * 0.05;\n439|   const topBar = h * 0.12;\n440|   const boardTop = topBar + margin;\n441|   const boardW = w - margin * 2;\n442|   const boardH = h - boardTop - margin;\n443|   const cellW = boardW / GRID_W;\n444|   const cellH = boardH / GRID_H;\n445|   const cellSize = Math.min(cellW, cellH);\n446|   const gridPxW = cellSize * GRID_W;\n447|   const gridPxH = cellSize * GRID_H;\n448|   const ox = (w - gridPxW) / 2;\n449|   const oy = boardTop + (boardH - gridPxH) / 2;\n450| \n451|   // top bar card\n452|   drawCard(margin * 0.5, margin * 0.3, w - margin, topBar * 0.8, COL_LAYER, \"topbar\", true);\n453|   drawText(\"Score: \" + score, margin * 1.2, margin * 0.3 + topBar * 0.4, Math.max(14, cellSize * 0.28), \"#f4ecd8\", \"left\");\n454|   drawText(\"Pas: \" + Math.max(0, stepsLeft), w - margin * 1.2, margin * 0.3 + topBar * 0.4, Math.max(14, cellSize * 0.28), \"#f4ecd8\", \"right\");\n455| \n456|   // background board plate\n457|   drawCard(ox - 6, oy - 6, gridPxW + 12, gridPxH + 12, \"#ddd0b0\", \"boardplate\", true);\n458| \n459|   // draw cells (floor tiles)\n460|   for (let r = 0; r < GRID_H; r++) {\n461|     for (let c = 0; c < GRID_W; c++) {\n462|       const x = ox + c * cellSize;\n463|       const y = oy + r * cellSize;\n464|       const key = \"cell-\" + r + \"-\" + c;\n465|       const isPath = (r === hedgehogRow && c === hedgehogCol);\n466|       drawCard(x + 2, y + 2, cellSize - 4, cellSize - 4, \"#f4ecd8\", key, false);\n467|     }\n468|   }\n469| \n470|   // exit marker\n471|   {\n472|     const x = ox + exitCol * cellSize + cellSize / 2;\n473|     const y = oy + exitRow * cellSize + cellSize / 2;\n474|     drawExitFlag(x, y, cellSize);\n475|   }\n476| \n477|   // apples\n478|   for (let r = 0; r < GRID_H; r++) {\n479|     for (let c = 0; c < GRID_W; c++) {\n480|       if (grid[r][c].apple) {\n481|         const x = ox + c * cellSize + cellSize / 2;\n482|         const y = oy + r * cellSize + cellSize / 2;\n483|         drawApple(x, y, cellSize);\n484|       }\n485|     }\n486|   }\n487| \n488|   // walls\n489|   ctx.strokeStyle = COL_ACCENT;\n490|   ctx.lineWidth = 2;\n491|   for (let r = 0; r < GRID_H; r++) {\n492|     for (let c = 0; c < GRID_W; c++) {\n493|       const x = ox + c * cellSize;\n494|       const y = oy + r * cellSize;\n495|       const cell = grid[r][c];\n496|       const jkey1 = \"wall-r-\" + r + \"-\" + c;\n497|       const j1 = getJitter(jkey1);\n498|       const jkey2 = \"wall-b-\" + r + \"-\" + c;\n499|       const j2 = getJitter(jkey2);\n500|       if (cell.right) {\n501|         ctx.beginPath();\n502|         ctx.moveTo(x + cellSize + j1.dx, y + j1.dy);\n503|         ctx.lineTo(x + cellSize + j1.dx, y + cellSize + j1.dy);\n504|         ctx.stroke();\n505|       }\n506|       if (cell.bottom) {\n507|         ctx.beginPath();\n508|         ctx.moveTo(x + j2.dx, y + cellSize + j2.dy);\n509|         ctx.lineTo(x + cellSize + j2.dx, y + cellSize + j2.dy);\n510|         ctx.stroke();\n511|       }\n512|     }\n513|   }\n514|   // outer border\n515|   ctx.strokeRect(ox, oy, gridPxW, gridPxH);\n516| \n517|   // hedgehog\n518|   {\n519|     const x = ox + hedgehogCol * cellSize + cellSize / 2;\n520|     const y = oy + hedgehogRow * cellSize + cellSize / 2;\n521|     drawHedgehog(x, y, cellSize * 0.7);\n522|   }\n523| \n524|   if (state === \"ended\") {\n525|     drawEndOverlay(w, h);\n526|   }\n527| \n528|   if (paused) {\n529|     drawPauseOverlay(w, h);\n530|   }\n531| }\n532| \n533| function drawTitleScreen(w, h) {\n534|   const cardW = Math.min(w * 0.85, 520);\n535|   const cardH = h * 0.4;\n536|   const cx = w / 2;\n537|   const cy = h * 0.35;\n538|   drawCard(cx - cardW / 2, cy - cardH / 2, cardW, cardH, COL_LAYER, \"titlecard\", true);\n539|   drawText(\"Le Labyrinthe\", cx, cy - cardH * 0.18, Math.max(20, cardW * 0.09), \"#f4ecd8\", \"center\");\n540|   drawText(\"du Hérisson\", cx, cy + cardH * 0.05, Math.max(20, cardW * 0.09), \"#f4ecd8\", \"center\");\n541| \n542|   drawHedgehog(cx, cy + cardH * 0.35, cardW * 0.14);\n543| \n544|   const btnW = cardW * 0.7;\n545|   const btnH = h * 0.09;\n546|   const bx = cx - btnW / 2;\n547|   const by = h * 0.72;\n548|   drawCard(bx, by, btnW, btnH, COL_HILITE, \"startbtn\", true);\n549|   drawText(\"Glissez ou touchez pour jouer\", cx, by + btnH / 2, Math.max(14, btnH * 0.32), COL_ACCENT, \"center\");\n550| \n551|   drawText(\"Guidez le hérisson vers la sortie\", cx, h * 0.88, Math.max(12, h * 0.025), COL_ACCENT, \"center\");\n552| }\n553| \n554| function drawEndOverlay(w, h) {\n555|   ctx.save();\n556|   ctx.fillStyle = \"rgba(61,64,91,0.55)\";\n557|   ctx.fillRect(0, 0, w, h);\n558|   ctx.restore();\n559| \n560|   const cardW = Math.min(w * 0.8, 480);\n561|   const cardH = h * 0.3;\n562|   const cx = w / 2;\n563|   const cy = h / 2;\n564|   drawCard(cx - cardW / 2, cy - cardH / 2, cardW, cardH, COL_LAYER, \"endcard\", true);\n565|   const title = endReason === \"win\" ? \"Bravo !\" : \"Coincé !\";\n566|   drawText(title, cx, cy - cardH * 0.2, Math.max(20, cardH * 0.22), \"#f4ecd8\", \"center\");\n567|   drawText(message, cx, cy + cardH * 0.05, Math.max(14, cardH * 0.13), \"#f4ecd8\", \"center\");\n568|   drawText(\"Score final: \" + score, cx, cy + cardH * 0.28, Math.max(14, cardH * 0.13), \"#f4ecd8\", \"center\");\n569| \n570|   const btnW = cardW * 0.6;\n571|   const btnH = cardH * 0.28;\n572|   const bx = cx - btnW / 2;\n573|   const by = cy + cardH * 0.42;\n574|   drawCard(bx, by, btnW, btnH, COL_HILITE, \"replaybtn\", true);\n575|   drawText(\"Toucher pour rejouer\", cx, by + btnH / 2, Math.max(12, btnH * 0.35), COL_ACCENT, \"center\");\n576| }\n577| \n578| function drawPauseOverlay(w, h) {\n579|   ctx.save();\n580|   ctx.fillStyle = \"rgba(244,236,216,0.7)\";\n581|   ctx.fillRect(0, 0, w, h);\n582|   ctx.restore();\n583|   drawText(\"Pause\", w / 2, h / 2, Math.max(20, h * 0.05), COL_ACCENT, \"center\");\n584| }\n585| \n586| // tap to replay after end\n587| canvas.addEventListener(\"pointerup\", (event) => {\n588|   if (state === \"ended\") {\n589|     state = \"title\";\n590|     endReason = null;\n591|     message = \"\";\n592|     draw();\n593|   }\n594| });\n595| \n596| // ---- Boot ----\n597| resize();\n598| draw();\n599| CARTRIDGE.send(\"boot\", { title: \"Le Labyrinthe du Hérisson\", gameType: \"puzzle-board\", lang: \"fr\" });\n600| </script>\n601| </body>\n602| </html>\n603| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNrsUDAVSKDmgdsSWi9G\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":10239,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}            }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"} }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"84\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LANES\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = 4\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" //\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" columns\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lanes\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" for\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sw\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ipe\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" control\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 212\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" try\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Move\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(dir\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\\\"\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 224\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if (cell\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apple\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") {\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cell\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".apple = false\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"; score\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 10;\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 230\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if (hed\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"gehog\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Row\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" === exit\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Row &&\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" hedgehogCol === exitCol)\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"}, {\\\"line\\\": 237\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"}\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" else if (!\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"any\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"L\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"egal\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Move())\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ended\\\\\\\"; end\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Reason = \\\\\\\"stuck\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"; message\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"Plus\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" de\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pas\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" poss\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibles.\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\";\\\"}, {\\\"line\\\": 171\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"st\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"eps\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Left\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" GRID\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"_W\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" GRID_H +\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 6\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"The\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" major\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns and verbs from\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" hed\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"gehog character\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" navig\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ating a maze grid\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", ap\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ples that award\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" points, an\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" exit to\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reach\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", step\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" de\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ple\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"tion mechanics\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", and sw\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ipe-\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"based direct\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ional input\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"stated\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 551\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"draw\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Guid\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez le hérisson vers la sort\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ie\\\\\\\", cx, h * \"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.88, Math.max(\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"12, h * 0.025\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), COL_ACCENT, \\\\\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"center\\\\\\\");\\\"}, {\\\"line\\\":\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 453\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"drawText(\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"Score\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + score, margin\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" *\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".2\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", margin\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 0.3\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+ top\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Bar\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 0.4\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", Math.max(14, cell\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Size * 0.28\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), \\\\\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"#\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"f4ecd8\\\\\\\", \\\\\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"left\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\");\\\"}, {\\\"line\\\": \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"454\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"drawText(\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"Pas\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\" + Math\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".max\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(0\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", stepsLeft), w\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" -\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" margin\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 1.2, margin *\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0.3 + topBar\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 0.4, Math.\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"max(14, cellSize * \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.28), \\\\\\\"#f4\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ecd8\\\\\\\", \\\\\\\"right\\\\\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\");\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicitly\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" states the goal\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" guide\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the hed\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"gehog to the exit, and\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the gameplay\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" interface\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" remaining\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" steps as\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-screen text.\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"on\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 212\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tryMove(dir) {\\\"}, {\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 220\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"moves\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1;\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" st\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"epsLeft -= 1;\\\"}, {\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 243\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"draw\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"();\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"Player\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sw\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ipe\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is processed in\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" try\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Move which\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates game\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state (\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"position\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", steps,\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" score) and calls draw() to render\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" changes\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" handler\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 565\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"const\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = endReason === \\\\\\\"win\\\\\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ? \\\\\\\"Bravo !\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" : \\\\\\\"Coincé !\\\\\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 567\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"drawText(\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"message\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", cx, cy +\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cardH * 0.05\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", Math.max(14, card\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"H * 0.13), \\\\\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"#f4ecd8\\\\\\\",\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"center\\\\\\\");\\\"}, {\\\"line\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": 235\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Sort\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ie at\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"teinte !\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\";\\\"}, {\\\"line\\\": 240\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = \\\\\\\"Plus\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" de pas possibles.\\\\\\\";\\\"},\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 575\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"drawText(\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Toucher pour rejouer\\\\\\\", cx\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", by + btnH / 2\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", Math.max(12, btn\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"H * 0.35), CO\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"L_ACCENT, \\\\\\\"center\\\\\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\");\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends, the overlay\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" indicating\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" win\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stuck\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", a\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" message explaining\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the outcome\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", the\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" final score, and a button prom\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pting the\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player to touch\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to replay\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}}\"}       }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":10239,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":896}          }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"       }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      232,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      30,
+      24,
+      26,
+      161,
+      161,
+      161,
+      161,
+      161,
+      25,
+      26,
+      26,
+      31,
+      21,
+      24,
+      29,
+      82,
+      82,
+      82,
+      26,
+      24,
+      32,
+      21,
+      32,
+      22,
+      27,
+      31,
+      22,
+      25,
+      27,
+      30,
+      25,
+      33,
+      19,
+      33,
+      22,
+      25,
+      27,
+      24,
+      28,
+      26,
+      26,
+      25,
+      41,
+      15,
+      25,
+      25,
+      34,
+      25,
+      21,
+      27,
+      24,
+      27,
+      27,
+      26,
+      25,
+      27,
+      33,
+      23,
+      29,
+      25,
+      23,
+      27,
+      52,
+      25,
+      25,
+      28,
+      28,
+      26,
+      24,
+      28,
+      25,
+      40,
+      13,
+      26,
+      29,
+      29,
+      19,
+      29,
+      26,
+      26,
+      30,
+      24,
+      24,
+      26,
+      29,
+      26,
+      25,
+      31,
+      30,
+      240,
+      68,
+      1,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      20,
+      25,
+      32,
+      20,
+      26,
+      29,
+      47,
+      4,
+      1,
+      21,
+      32,
+      26,
+      23,
+      28,
+      27,
+      24,
+      26,
+      26,
+      70,
+      3,
+      9,
+      127,
+      127,
+      2,
+      2,
+      2,
+      34,
+      22,
+      27,
+      25,
+      26,
+      25,
+      56,
+      56,
+      23,
+      25,
+      28,
+      26,
+      27,
+      31,
+      24,
+      24,
+      32,
+      22,
+      25,
+      26,
+      27,
+      23,
+      31,
+      28,
+      24,
+      30,
+      20,
+      54,
+      5,
+      26,
+      23,
+      31,
+      20,
+      27,
+      26,
+      27,
+      25,
+      35,
+      18,
+      27,
+      26,
+      25,
+      29,
+      26,
+      25,
+      28,
+      26,
+      24,
+      29,
+      25,
+      25,
+      26,
+      30,
+      26,
+      24,
+      26,
+      28,
+      25,
+      30,
+      23,
+      30,
+      42,
+      7,
+      26,
+      29,
+      26,
+      23,
+      27,
+      25,
+      30,
+      24,
+      26,
+      26,
+      30,
+      23,
+      27,
+      26,
+      27,
+      27,
+      27,
+      28,
+      23,
+      26,
+      25,
+      31,
+      26,
+      26,
+      24,
+      30,
+      25,
+      31,
+      20,
+      28,
+      26,
+      26,
+      26,
+      25,
+      28,
+      30,
+      22,
+      27,
+      27,
+      30,
+      45,
+      3,
+      2,
+      23,
+      25,
+      27,
+      27,
+      27,
+      27,
+      31,
+      27,
+      21,
+      25,
+      29,
+      24,
+      27,
+      26,
+      32,
+      22,
+      23,
+      29,
+      25,
+      28,
+      25,
+      24,
+      27,
+      27,
+      32,
+      21,
+      31,
+      24,
+      24,
+      27,
+      24,
+      26,
+      31,
+      22,
+      31,
+      28,
+      156,
+      1,
+      1
+    ]
+  },
+  "usage": {
+    "input": 10239,
+    "output": 896,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

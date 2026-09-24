@@ -1,0 +1,166 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:1fe4a42875d29f282e65ca37cf7e13cf950475d3b5ccd2b383d3bd5c9d864764",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Course d'Escargots\",\n  \"slug\": \"course-d-escargots\",\n  \"lang\": \"fr\",\n  \"gameType\": \"arcade-run\",\n  \"loop\": \"L'escargot avance tout seul sur la piste, tape l'écran pour sauter les obstacles et ramasser les feuilles. Une collision termine la course et affiche le score final.\",\n  \"input\": \"tap-anywhere\",\n  \"style\": \"risograph\"\n}\n```\n\n## Cards\n\n### Card `arcade-run`\n\n# Arcade run\n\nThe world scrolls on its own, the player dodges and gathers, and one mistake ends the run.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `required`    |\n| level                | `forbidden`   |\n| end                  | `required`    |\n| end reasons          | `lose`        |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above at least once: `score` as points change and `end` when the run is over. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden`. A run has no levels, so ramp difficulty with speed instead. <!-- rule:E1-16 -->\n- The only allowed `end` reason is `lose`. <!-- rule:E1-17 -->\n\n## Fairness\n\nA player who does nothing must survive for a few seconds after `start`. Spawn the first hazard well ahead of the player and keep the opening lane clear.\n\n## Loop skeleton\n\n```js\nlet last = 0,\n  running = false,\n  paused = false,\n  score = 0;\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 0.05);\n  last = now;\n  if (running && !paused) {\n    advance(dt);\n    collide();\n  }\n  draw();\n  requestAnimationFrame(frame);\n}\nfunction crash() {\n  running = false;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n```\n\nKeep something moving on screen while idle (clouds, a pulsing prompt) so the run never looks frozen.\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `risograph`\n\n# Risograph\n\nThe screen looks like a cheap two-colour print: flat ink, grain and a little misregistration.\n\n## Palette\n\n| role    | colour    |\n| ------- | --------- |\n| paper   | `#fbf7ee` |\n| ink one | `#ff48b0` |\n| ink two | `#0078bf` |\n| overlap | `#5b3a8c` |\n\n## Primitives\n\n- Flat fills in one ink per shape; where the two inks overlap, use the overlap colour.\n- Offset the second ink layer by one or two pixels to fake misregistration.\n- A grain pass: a pre-rendered noise tile drawn with `globalAlpha` around 0.08 over the whole frame.\n- Bold, condensed system type in one ink.\n\n## Avoid\n\n- More than the four colours above.\n- Smooth gradients; use halftone dots if a shade is needed.\n- Re-rendering the grain every frame; draw the tile once and reuse it.\n\n### Card `tap-anywhere`\n\n# Tap anywhere\n\nThe whole screen is the button. Best for jumps, flaps and single choices.\n\n- Register pointer input on the canvas: `canvas.addEventListener(\"pointerdown\", onTap)`. <!-- rule:E1-22 -->\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\n- Ignore taps while paused.\n\n```js\ncanvas.style.touchAction = \"none\";\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!running) {\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n```\n\nShow a short pulsing hint (\"Tap to begin\") until the first tap.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll build the complete game page now."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01JAuHoydcj4LehtvtWgnr41",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Course d'Escargots</title>\n<style>\n  html, body {\n    margin: 0; padding: 0;\n    width: 100%; height: 100%;\n    background: #fbf7ee;\n    overflow: hidden;\n    font-family: 'Arial Narrow', Arial, sans-serif;\n  }\n  canvas {\n    display: block;\n    touch-action: none;\n    background: #fbf7ee;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<script>\n// ---------- Bridge helper (verbatim) ----------\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n\n// ---------- Setup ----------\nconst canvas = document.getElementById(\"game\");\nconst ctx = canvas.getContext(\"2d\");\ncanvas.style.touchAction = \"none\";\n\nlet W = 0, H = 0, DPR = 1;\nfunction resize() {\n  DPR = window.devicePixelRatio || 1;\n  W = window.innerWidth;\n  H = window.innerHeight;\n  canvas.width = Math.floor(W * DPR);\n  canvas.height = Math.floor(H * DPR);\n  canvas.style.width = W + \"px\";\n  canvas.style.height = H + \"px\";\n  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n  buildGrain();\n}\nwindow.addEventListener(\"resize\", resize);\n\n// ---------- Risograph palette ----------\nconst PAPER = \"#fbf7ee\";\nconst INK1 = \"#ff48b0\";\nconst INK2 = \"#0078bf\";\nconst OVERLAP = \"#5b3a8c\";\n\n// ---------- Grain tile (pre-rendered) ----------\nlet grainCanvas = null;\nfunction buildGrain() {\n  const size = 128;\n  grainCanvas = document.createElement(\"canvas\");\n  grainCanvas.width = size;\n  grainCanvas.height = size;\n  const gctx = grainCanvas.getContext(\"2d\");\n  const imgData = gctx.createImageData(size, size);\n  for (let i = 0; i < imgData.data.length; i += 4) {\n    const v = Math.random() * 255;\n    imgData.data[i] = v;\n    imgData.data[i + 1] = v;\n    imgData.data[i + 2] = v;\n    imgData.data[i + 3] = 255;\n  }\n  gctx.putImageData(imgData, 0, 0);\n}\n\nfunction drawGrain() {\n  if (!grainCanvas) return;\n  ctx.save();\n  ctx.globalAlpha = 0.08;\n  const pattern = ctx.createPattern(grainCanvas, \"repeat\");\n  ctx.fillStyle = pattern;\n  ctx.fillRect(0, 0, W, H);\n  ctx.restore();\n}\n\n// ---------- Game state ----------\nlet last = 0;\nlet running = false;\nlet paused = false;\nlet started = false; // whether boot/start flow has begun\nlet score = 0;\nlet scoreShown = -1;\n\nconst GROUND_Y_FRAC = 0.75;\nlet groundY = 0;\n\nlet snail = {\n  x: 0,\n  y: 0,\n  vy: 0,\n  w: 56,\n  h: 34,\n  onGround: true,\n  jumpForce: -620,\n};\nconst GRAVITY = 1700;\n\nlet obstacles = [];\nlet leaves = [];\nlet spawnTimer = 0;\nlet leafTimer = 0;\nlet speed = 220;\nconst BASE_SPEED = 220;\nconst MAX_SPEED = 520;\nlet elapsed = 0;\nlet firstHazardSpawned = false;\n\nlet clouds = [];\nfunction initClouds() {\n  clouds = [];\n  for (let i = 0; i < 5; i++) {\n    clouds.push({\n      x: Math.random() * 1000,\n      y: 40 + Math.random() * 140,\n      s: 0.6 + Math.random() * 0.8,\n      speed: 15 + Math.random() * 15,\n    });\n  }\n}\n\nlet tapHintPulse = 0;\n\nfunction resetState() {\n  score = 0;\n  scoreShown = -1;\n  obstacles = [];\n  leaves = [];\n  spawnTimer = 1.4; // opening lane clear\n  leafTimer = 0.8;\n  speed = BASE_SPEED;\n  elapsed = 0;\n  firstHazardSpawned = false;\n  groundY = H * GROUND_Y_FRAC;\n  snail.x = W * 0.22;\n  snail.y = groundY - snail.h;\n  snail.vy = 0;\n  snail.onGround = true;\n  initClouds();\n}\n\nfunction backToTitle() {\n  running = false;\n  paused = false;\n  started = false;\n  resetState();\n}\n\n// ---------- Input ----------\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!started) {\n    started = true;\n    running = true;\n    resetState();\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  if (running) {\n    act();\n  } else {\n    // after crash, tap restarts to title-ready state, then next tap starts\n    backToTitle();\n  }\n});\n\nfunction act() {\n  if (snail.onGround) {\n    snail.vy = snail.jumpForce;\n    snail.onGround = false;\n  }\n}\n\n// ---------- Host messages ----------\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n\n// ---------- Spawning ----------\nfunction spawnObstacle() {\n  const size = 34 + Math.random() * 20;\n  obstacles.push({\n    x: W + size,\n    y: groundY - size,\n    w: size,\n    h: size,\n    passed: false,\n  });\n  firstHazardSpawned = true;\n}\n\nfunction spawnLeaf() {\n  const y = groundY - 60 - Math.random() * 120;\n  leaves.push({\n    x: W + 20,\n    y: y,\n    r: 12,\n    taken: false,\n  });\n}\n\n// ---------- Update ----------\nfunction advance(dt) {\n  elapsed += dt;\n  speed = Math.min(MAX_SPEED, BASE_SPEED + elapsed * 9);\n\n  // clouds always move for liveliness\n  for (const c of clouds) {\n    c.x -= c.speed * dt;\n    if (c.x < -80) c.x = W + 80;\n  }\n\n  // physics\n  snail.vy += GRAVITY * dt;\n  snail.y += snail.vy * dt;\n  if (snail.y >= groundY - snail.h) {\n    snail.y = groundY - snail.h;\n    snail.vy = 0;\n    snail.onGround = true;\n  }\n\n  // spawn timers\n  spawnTimer -= dt;\n  if (spawnTimer <= 0) {\n    spawnObstacle();\n    spawnTimer = Math.max(0.9, 1.9 - elapsed * 0.02) + Math.random() * 0.6;\n  }\n  leafTimer -= dt;\n  if (leafTimer <= 0) {\n    spawnLeaf();\n    leafTimer = 1.2 + Math.random() * 1.4;\n  }\n\n  // move obstacles\n  for (const o of obstacles) {\n    o.x -= speed * dt;\n    if (!o.passed && o.x + o.w < snail.x) {\n      o.passed = true;\n      score += 1;\n      CARTRIDGE.send(\"score\", { value: score });\n    }\n  }\n  obstacles = obstacles.filter((o) => o.x > -60);\n\n  // move leaves\n  for (const l of leaves) {\n    l.x -= speed * dt;\n  }\n  leaves = leaves.filter((l) => l.x > -40 && !l.taken);\n}\n\nfunction collide() {\n  // obstacle collision\n  const sx = snail.x + 8;\n  const sy = snail.y + 4;\n  const sw = snail.w - 16;\n  const sh = snail.h - 8;\n  for (const o of obstacles) {\n    if (\n      sx < o.x + o.w &&\n      sx + sw > o.x &&\n      sy < o.y + o.h &&\n      sy + sh > o.y\n    ) {\n      crash();\n      return;\n    }\n  }\n  // leaf pickup\n  for (const l of leaves) {\n    const dx = (snail.x + snail.w / 2) - l.x;\n    const dy = (snail.y + snail.h / 2) - l.y;\n    const dist = Math.sqrt(dx * dx + dy * dy);\n    if (dist < l.r + 20) {\n      l.taken = true;\n      score += 3;\n      CARTRIDGE.send(\"score\", { value: score });\n    }\n  }\n}\n\nfunction crash() {\n  running = false;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n\n// ---------- Drawing ----------\nfunction drawCloud(c) {\n  ctx.save();\n  ctx.translate(c.x, c.y);\n  ctx.scale(c.s, c.s);\n  ctx.fillStyle = INK2;\n  ctx.globalAlpha = 0.5;\n  ctx.beginPath();\n  ctx.arc(0, 0, 22, 0, Math.PI * 2);\n  ctx.arc(24, -6, 16, 0, Math.PI * 2);\n  ctx.arc(-22, -4, 14, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.restore();\n  ctx.globalAlpha = 1;\n}\n\nfunction drawGround() {\n  // ground band ink2\n  ctx.fillStyle = INK2;\n  ctx.fillRect(0, groundY, W, H - groundY);\n  // misregistered offset strip ink1\n  ctx.fillStyle = INK1;\n  ctx.globalAlpha = 0.85;\n  ctx.fillRect(0, groundY + 2, W, 6);\n  ctx.globalAlpha = 1;\n  // dashes for motion\n  ctx.fillStyle = PAPER;\n  const dashW = 30, gap = 26;\n  const offset = (elapsed * speed) % (dashW + gap);\n  for (let x = -offset; x < W; x += dashW + gap) {\n    ctx.fillRect(x, groundY + H * 0.06, dashW, 4);\n  }\n}\n\nfunction drawSnail() {\n  const x = snail.x, y = snail.y;\n  ctx.save();\n  ctx.translate(x, y);\n\n  // shell (ink1) with slight offset ink2 outline for misregistration\n  ctx.fillStyle = INK2;\n  ctx.beginPath();\n  ctx.arc(18, 12, 17, 0, Math.PI * 2);\n  ctx.fill();\n\n  ctx.fillStyle = INK1;\n  ctx.beginPath();\n  ctx.arc(16, 10, 16, 0, Math.PI * 2);\n  ctx.fill();\n\n  // shell spiral (overlap color)\n  ctx.strokeStyle = OVERLAP;\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  ctx.arc(16, 10, 9, 0, Math.PI * 1.5);\n  ctx.stroke();\n\n  // body (ink2)\n  ctx.fillStyle = INK2;\n  ctx.beginPath();\n  ctx.moveTo(0, snail.h);\n  ctx.quadraticCurveTo(-4, snail.h - 14, 10, snail.h - 18);\n  ctx.quadraticCurveTo(30, snail.h - 22, 46, snail.h - 6);\n  ctx.quadraticCurveTo(50, snail.h, 44, snail.h);\n  ctx.lineTo(0, snail.h);\n  ctx.fill();\n\n  // eye stalks\n  ctx.strokeStyle = INK2;\n  ctx.lineWidth = 3;\n  ctx.beginPath();\n  ctx.moveTo(42, snail.h - 10);\n  ctx.lineTo(50, snail.h - 22);\n  ctx.stroke();\n  ctx.fillStyle = OVERLAP;\n  ctx.beginPath();\n  ctx.arc(50, snail.h - 22, 3, 0, Math.PI * 2);\n  ctx.fill();\n\n  ctx.restore();\n}\n\nfunction drawObstacle(o) {\n  ctx.save();\n  ctx.translate(o.x, o.y);\n  // rock shape, ink2 base, ink1 offset top for misregistration\n  ctx.fillStyle = INK2;\n  ctx.beginPath();\n  ctx.moveTo(0, o.h);\n  ctx.lineTo(o.w * 0.15, o.h * 0.2);\n  ctx.lineTo(o.w * 0.55, 0);\n  ctx.lineTo(o.w, o.h * 0.35);\n  ctx.lineTo(o.w * 0.9, o.h);\n  ctx.closePath();\n  ctx.fill();\n\n  ctx.fillStyle = INK1;\n  ctx.globalAlpha = 0.7;\n  ctx.beginPath();\n  ctx.moveTo(2, o.h - 2);\n  ctx.lineTo(o.w * 0.15 + 2, o.h * 0.2 - 2);\n  ctx.lineTo(o.w * 0.55 + 2, -2);\n  ctx.lineTo(o.w + 2, o.h * 0.35 - 2);\n  ctx.lineTo(o.w * 0.9 + 2, o.h - 2);\n  ctx.closePath();\n  ctx.fill();\n  ctx.globalAlpha = 1;\n\n  ctx.restore();\n}\n\nfunction drawLeaf(l) {\n  ctx.save();\n  ctx.translate(l.x, l.y);\n  ctx.fillStyle = INK1;\n  ctx.beginPath();\n  ctx.ellipse(0, 0, l.r, l.r * 0.6, Math.PI / 4, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.fillStyle = OVERLAP;\n  ctx.globalAlpha = 0.6;\n  ctx.beginPath();\n  ctx.ellipse(1, 1, l.r, l.r * 0.6, Math.PI / 4, 0, Math.PI * 2);\n  ctx.fill();\n  ctx.globalAlpha = 1;\n  ctx.restore();\n}\n\nfunction drawScore() {\n  ctx.fillStyle = OVERLAP;\n  ctx.font = \"bold 28px Arial Narrow, Arial, sans-serif\";\n  ctx.textAlign = \"left\";\n  ctx.textBaseline = \"top\";\n  ctx.fillText(\"Score: \" + score, 16, 16);\n}\n\nfunction drawTitleScreen() {\n  ctx.fillStyle = PAPER;\n  ctx.fillRect(0, 0, W, H);\n\n  for (const c of clouds) drawCloud(c);\n  drawGround();\n  drawSnail();\n\n  ctx.fillStyle = OVERLAP;\n  ctx.textAlign = \"center\";\n  ctx.font = \"bold 40px Arial Narrow, Arial, sans-serif\";\n  ctx.fillText(\"Course d'Escargots\", W / 2, H * 0.25);\n\n  tapHintPulse += 0.05;\n  const alpha = 0.6 + 0.4 * Math.sin(tapHintPulse);\n  ctx.globalAlpha = alpha;\n  ctx.fillStyle = INK1;\n  ctx.font = \"bold 26px Arial Narrow, Arial, sans-serif\";\n  ctx.fillText(\"Touchez pour commencer\", W / 2, H * 0.4);\n  ctx.globalAlpha = 1;\n\n  drawGrain();\n}\n\nfunction drawGameOver() {\n  ctx.fillStyle = PAPER;\n  ctx.fillRect(0, 0, W, H);\n  for (const c of clouds) drawCloud(c);\n  drawGround();\n  for (const o of obstacles) drawObstacle(o);\n  for (const l of leaves) if (!l.taken) drawLeaf(l);\n  drawSnail();\n\n  ctx.fillStyle = \"rgba(251,247,238,0.85)\";\n  ctx.fillRect(0, H * 0.28, W, H * 0.3);\n\n  ctx.fillStyle = OVERLAP;\n  ctx.textAlign = \"center\";\n  ctx.font = \"bold 38px Arial Narrow, Arial, sans-serif\";\n  ctx.fillText(\"Course terminée !\", W / 2, H * 0.35);\n\n  ctx.font = \"bold 28px Arial Narrow, Arial, sans-serif\";\n  ctx.fillStyle = INK2;\n  ctx.fillText(\"Score final: \" + score, W / 2, H * 0.42);\n\n  tapHintPulse += 0.05;\n  const alpha = 0.6 + 0.4 * Math.sin(tapHintPulse);\n  ctx.globalAlpha = alpha;\n  ctx.fillStyle = INK1;\n  ctx.font = \"bold 22px Arial Narrow, Arial, sans-serif\";\n  ctx.fillText(\"Touchez pour revenir au titre\", W / 2, H * 0.5);\n  ctx.globalAlpha = 1;\n\n  drawGrain();\n}\n\nfunction drawGameplay() {\n  ctx.fillStyle = PAPER;\n  ctx.fillRect(0, 0, W, H);\n\n  for (const c of clouds) drawCloud(c);\n  drawGround();\n  for (const o of obstacles) drawObstacle(o);\n  for (const l of leaves) if (!l.taken) drawLeaf(l);\n  drawSnail();\n  drawScore();\n\n  if (paused) {\n    ctx.fillStyle = \"rgba(91,58,140,0.5)\";\n    ctx.fillRect(0, 0, W, H);\n    ctx.fillStyle = PAPER;\n    ctx.textAlign = \"center\";\n    ctx.font = \"bold 32px Arial Narrow, Arial, sans-serif\";\n    ctx.fillText(\"Pause\", W / 2, H / 2);\n  }\n\n  drawGrain();\n}\n\nfunction draw() {\n  if (!started) {\n    drawTitleScreen();\n  } else if (running) {\n    drawGameplay();\n  } else {\n    drawGameOver();\n  }\n}\n\n// ---------- Main loop ----------\nlet booted = false;\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 0.05);\n  last = now;\n  if (running && !paused) {\n    advance(dt);\n    collide();\n  }\n  draw();\n  if (!booted) {\n    booted = true;\n    CARTRIDGE.send(\"boot\", {\n      title: \"Course d'Escargots\",\n      gameType: \"arcade-run\",\n      lang: \"fr\",\n    });\n  }\n  requestAnimationFrame(frame);\n}\n\nresize();\nresetState();\nrequestAnimationFrame(frame);\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01JAuHoydcj4LehtvtWgnr41",
+              "content": "{\"version\":\"a0\",\"bytes\":12491,\"sha256\":\"3cc6596e5c2b1eb8cbebbe006c00984fceb082086dc734774a00487b20c5a18b\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNrHwgxQn8KPihWSezgC\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11085,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}            }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}          }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete \\\"Course\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" d'Escargots\\\" ar\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cade-run game as a single\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" self\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-contained HTML page\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with ris\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ogra\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ph\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" styling, tap-to-\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"jump input, and full\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge event\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" wiring.\"}         }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":11085,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":61,\"output_tokens_details\":{\"thinking_tokens\":0}}   }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      47,
+      270,
+      270,
+      270,
+      0,
+      0,
+      34,
+      27,
+      84,
+      33,
+      30,
+      32,
+      32,
+      32,
+      32
+    ]
+  },
+  "usage": {
+    "input": 11085,
+    "output": 61,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

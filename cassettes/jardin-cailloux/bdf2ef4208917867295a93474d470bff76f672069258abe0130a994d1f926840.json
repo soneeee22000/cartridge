@@ -1,0 +1,259 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:bdf2ef4208917867295a93474d470bff76f672069258abe0130a994d1f926840",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\njardin de cailloux\n\nPlan:\n{\"gameType\":\"toy-box\",\"input\":\"tap-anywhere\",\"lang\":\"fr\",\"loop\":\"Le joueur pose des cailloux sur le sable pour composer un jardin zen, chaque pose fait grandir un décompte visible. Un bouton toujours visible efface le jardin pour recommencer une composition.\",\"slug\":\"jardin-de-cailloux\",\"style\":\"risograph\",\"title\":\"Jardin de Cailloux\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"fr\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Jardin de Cailloux</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     background: #fbf7ee;\n14|     overflow: hidden;\n15|     font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;\n16|   }\n17|   #wrap {\n18|     position: fixed;\n19|     inset: 0;\n20|     width: 100vw;\n21|     height: 100dvh;\n22|   }\n23|   canvas {\n24|     display: block;\n25|     width: 100%;\n26|     height: 100%;\n27|     touch-action: none;\n28|   }\n29|   #clearBtn {\n30|     position: fixed;\n31|     left: 50%;\n32|     bottom: max(16px, env(safe-area-inset-bottom));\n33|     transform: translateX(-50%);\n34|     z-index: 10;\n35|     min-width: 200px;\n36|     min-height: 48px;\n37|     padding: 8px 22px;\n38|     background: #fbf7ee;\n39|     border: 3px solid #0078bf;\n40|     color: #0078bf;\n41|     font-weight: 900;\n42|     font-size: 17px;\n43|     letter-spacing: 1px;\n44|     text-transform: uppercase;\n45|     border-radius: 10px;\n46|     cursor: pointer;\n47|     font-family: inherit;\n48|     box-shadow: 2px 2px 0 #ff48b0;\n49|   }\n50|   #clearBtn:active {\n51|     transform: translateX(-50%) translateY(2px);\n52|     box-shadow: 1px 1px 0 #ff48b0;\n53|   }\n54|   #tally {\n55|     position: fixed;\n56|     top: max(14px, env(safe-area-inset-top));\n57|     left: 50%;\n58|     transform: translateX(-50%);\n59|     z-index: 10;\n60|     color: #0078bf;\n61|     font-weight: 900;\n62|     font-size: 18px;\n63|     letter-spacing: 2px;\n64|     text-transform: uppercase;\n65|     text-shadow: 1px 1px 0 #ff48b0;\n66|     pointer-events: none;\n67|     user-select: none;\n68|   }\n69| </style>\n70| </head>\n71| <body>\n72| <div id=\"wrap\">\n73|   <canvas id=\"game\"></canvas>\n74| </div>\n75| <div id=\"tally\">Cailloux : 0</div>\n76| <button id=\"clearBtn\">Ratisser le sable</button>\n77| \n78| <script>\n79| // ---- Bridge helper (verbatim) ----\n80| const CARTRIDGE = {\n81|   send(type, payload = {}) {\n82|     window.parent.postMessage(\n83|       { source: \"cartridge\", v: 1, type, payload },\n84|       \"*\",\n85|     );\n86|   },\n87| };\n88| </script>\n89| \n90| <script>\n91| (function () {\n92|   const canvas = document.getElementById(\"game\");\n93|   const ctx = canvas.getContext(\"2d\");\n94|   const clearBtn = document.getElementById(\"clearBtn\");\n95|   const tallyEl = document.getElementById(\"tally\");\n96| \n97|   let dpr = Math.max(1, window.devicePixelRatio || 1);\n98|   let W = 0, H = 0;\n99| \n100|   let paused = false;\n101|   let running = false; // becomes true after first tap (start)\n102| \n103|   const pieces = []; // {x,y,r,rot,shade}\n104|   let tally = 0;\n105| \n106|   // ---------- grain tile ----------\n107|   let grainCanvas = null;\n108|   function buildGrain() {\n109|     const size = 128;\n110|     grainCanvas = document.createElement(\"canvas\");\n111|     grainCanvas.width = size;\n112|     grainCanvas.height = size;\n113|     const gctx = grainCanvas.getContext(\"2d\");\n114|     const imgData = gctx.createImageData(size, size);\n115|     for (let i = 0; i < imgData.data.length; i += 4) {\n116|       const v = Math.random() * 255;\n117|       imgData.data[i] = v;\n118|       imgData.data[i + 1] = v;\n119|       imgData.data[i + 2] = v;\n120|       imgData.data[i + 3] = 255;\n121|     }\n122|     gctx.putImageData(imgData, 0, 0);\n123|   }\n124|   buildGrain();\n125| \n126|   function resize() {\n127|     dpr = Math.max(1, window.devicePixelRatio || 1);\n128|     W = window.innerWidth;\n129|     H = window.innerHeight;\n130|     canvas.width = Math.round(W * dpr);\n131|     canvas.height = Math.round(H * dpr);\n132|     canvas.style.width = W + \"px\";\n133|     canvas.style.height = H + \"px\";\n134|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n135|     draw();\n136|   }\n137|   window.addEventListener(\"resize\", resize);\n138| \n139|   // ---------- sand raked lines ----------\n140|   function drawSand() {\n141|     ctx.fillStyle = \"#fbf7ee\";\n142|     ctx.fillRect(0, 0, W, H);\n143| \n144|     ctx.save();\n145|     ctx.strokeStyle = \"#0078bf\";\n146|     ctx.globalAlpha = 0.18;\n147|     ctx.lineWidth = 1.5;\n148|     const spacing = 22;\n149|     for (let y = -H; y < H * 2; y += spacing) {\n150|       ctx.beginPath();\n151|       for (let x = -20; x <= W + 20; x += 14) {\n152|         const wob = Math.sin((x + y) * 0.04) * 5;\n153|         if (x === -20) ctx.moveTo(x, y + wob);\n154|         else ctx.lineTo(x, y + wob);\n155|       }\n156|       ctx.stroke();\n157|     }\n158|     ctx.restore();\n159|   }\n160| \n161|   function drawStone(p) {\n162|     ctx.save();\n163|     ctx.translate(p.x, p.y);\n164|     ctx.rotate(p.rot);\n165| \n166|     // ripple rings, ink two\n167|     ctx.save();\n168|     ctx.strokeStyle = \"#0078bf\";\n169|     ctx.globalAlpha = 0.35;\n170|     ctx.lineWidth = 1.5;\n171|     for (let i = 1; i <= 3; i++) {\n172|       ctx.beginPath();\n173|       ctx.ellipse(1, 1, p.r + i * 9, p.r * 0.55 + i * 5, 0, 0, Math.PI * 2);\n174|       ctx.stroke();\n175|     }\n176|     ctx.restore();\n177| \n178|     // stone shadow offset (misregistration) - ink two layer\n179|     ctx.save();\n180|     ctx.fillStyle = \"#0078bf\";\n181|     ctx.globalAlpha = 0.55;\n182|     ctx.beginPath();\n183|     ctx.ellipse(2, 3, p.r, p.r * 0.72, 0, 0, Math.PI * 2);\n184|     ctx.fill();\n185|     ctx.restore();\n186| \n187|     // stone body - ink one or overlap\n188|     ctx.save();\n189|     ctx.fillStyle = p.shade ? \"#ff48b0\" : \"#5b3a8c\";\n190|     ctx.beginPath();\n191|     ctx.ellipse(0, 0, p.r * 0.96, p.r * 0.68, 0, 0, Math.PI * 2);\n192|     ctx.fill();\n193|     ctx.restore();\n194| \n195|     // halftone dots\n196|     ctx.save();\n197|     ctx.fillStyle = \"#5b3a8c\";\n198|     ctx.globalAlpha = 0.5;\n199|     for (let i = 0; i < 6; i++) {\n200|       const ang = (i / 6) * Math.PI * 2;\n201|       const dx = Math.cos(ang) * p.r * 0.5;\n202|       const dy = Math.sin(ang) * p.r * 0.32;\n203|       ctx.beginPath();\n204|       ctx.arc(dx, dy, 1.6, 0, Math.PI * 2);\n205|       ctx.fill();\n206|     }\n207|     ctx.restore();\n208| \n209|     ctx.restore();\n210|   }\n211| \n212|   function drawGrain() {\n213|     if (!grainCanvas) return;\n214|     ctx.save();\n215|     ctx.globalAlpha = 0.08;\n216|     const pattern = ctx.createPattern(grainCanvas, \"repeat\");\n217|     ctx.fillStyle = pattern;\n218|     ctx.fillRect(0, 0, W, H);\n219|     ctx.restore();\n220|   }\n221| \n222|   function drawTitleHint() {\n223|     ctx.save();\n224|     ctx.textAlign = \"center\";\n225|     ctx.textBaseline = \"middle\";\n226| \n227|     const pulse = 0.7 + 0.3 * Math.sin(Date.now() / 350);\n228| \n229|     ctx.font = \"900 34px 'Arial Narrow', Arial, sans-serif\";\n230|     ctx.fillStyle = \"#0078bf\";\n231|     ctx.globalAlpha = 0.9;\n232|     ctx.fillText(\"JARDIN DE CAILLOUX\", W / 2 + 2, H / 2 - 40 + 2);\n233|     ctx.fillStyle = \"#ff48b0\";\n234|     ctx.fillText(\"JARDIN DE CAILLOUX\", W / 2, H / 2 - 40);\n235| \n236|     ctx.globalAlpha = pulse;\n237|     ctx.font = \"700 18px 'Arial Narrow', Arial, sans-serif\";\n238|     ctx.fillStyle = \"#5b3a8c\";\n239|     ctx.fillText(\"Touchez l'écran pour commencer\", W / 2, H / 2 + 10);\n240|     ctx.restore();\n241|   }\n242| \n243|   function draw() {\n244|     drawSand();\n245|     for (const p of pieces) drawStone(p);\n246|     if (!running) drawTitleHint();\n247|     drawGrain();\n248|   }\n249| \n250|   function updateTally() {\n251|     tallyEl.textContent = \"Cailloux : \" + tally;\n252|   }\n253| \n254|   function place(x, y) {\n255|     const r = 16 + Math.random() * 14;\n256|     pieces.push({\n257|       x, y, r,\n258|       rot: (Math.random() - 0.5) * 1.2,\n259|       shade: Math.random() > 0.4,\n260|     });\n261|     tally += 1;\n262|     updateTally();\n263|     CARTRIDGE.send(\"score\", { value: tally });\n264|   }\n265| \n266|   // Single clear-the-table function: called by the visible button\n267|   // AND by the host reset command directly (no indirection).\n268|   function clearTable() {\n269|     pieces.length = 0;\n270|     tally = 0;\n271|     updateTally();\n272|     CARTRIDGE.send(\"score\", { value: 0 });\n273|     draw();\n274|   }\n275| \n276|   clearBtn.addEventListener(\"click\", clearTable);\n277| \n278|   // ---------- input ----------\n279|   canvas.style.touchAction = \"none\";\n280|   canvas.addEventListener(\"pointerdown\", (event) => {\n281|     event.preventDefault();\n282|     if (paused) return;\n283|     if (!running) {\n284|       running = true;\n285|       CARTRIDGE.send(\"start\");\n286|       draw();\n287|       return;\n288|     }\n289|     const rect = canvas.getBoundingClientRect();\n290|     const x = event.clientX - rect.left;\n291|     const y = event.clientY - rect.top;\n292|     place(x, y);\n293|     draw();\n294|   });\n295| \n296|   // ---------- host messages ----------\n297|   window.addEventListener(\"message\", (event) => {\n298|     const data = event.data;\n299|     if (!data || data.source !== \"cartridge-host\") return;\n300|     if (data.type === \"pause\") paused = true;\n301|     if (data.type === \"resume\") paused = false;\n302|     if (data.type === \"reset\") {\n303|       running = false;\n304|       clearTable();\n305|     }\n306|   });\n307| \n308|   // ---------- loop ----------\n309|   function frame() {\n310|     if (!paused) draw();\n311|     requestAnimationFrame(frame);\n312|   }\n313| \n314|   resize();\n315|   updateTally();\n316|   CARTRIDGE.send(\"boot\", { title: \"Jardin de Cailloux\", gameType: \"toy-box\", lang: \"fr\" });\n317|   requestAnimationFrame(frame);\n318| })();\n319| </script>\n320| </body>\n321| </html>\n322| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNrbk9Am72EVP9wmkd1j\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":5356,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}            }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}              }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt-coverage\\\": {\\\"label\\\": \\\"covered\\\", \\\"evidence\\\": [{\\\"line\\\": 254, \\\"quote\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"function place(x, y) {\\\"}, {\\\"line\\\": 75, \\\"quote\\\": \\\"<div id=\\\\\\\"tally\\\\\\\">Cailloux :\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0</div>\\\"}, {\\\"line\\\": 76, \\\"quote\\\": \\\"<button id=\\\\\\\"clearBtn\\\\\\\">Ratisser le sable</button>\\\"}],\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"The code implements placing stones (cailloux) via tap input,\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays a visible counter that increments with each placement, and provides a button to clear the garden and restart.\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, \\\"goal-legibility\\\": {\\\"label\\\": \\\"stated\\\", \\\"evidence\\\": [{\\\"line\\\": 239, \\\"quote\\\": \\\"ctx.fillText\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"Touchez l'écran pour commencer\\\\\\\", W / 2, H / 2 + 10);\\\"}, {\\\"line\\\": 232, \\\"quote\\\": \\\"ctx.fillText(\\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"JARDIN DE CAILLOUX\\\\\\\", W / 2 + 2, H / 2 - 40 + 2);\\\"}, {\\\"line\\\": 75, \\\"quote\\\": \\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"<div id=\\\\\\\"tally\\\\\\\">Cailloux : 0</div>\\\"}], \\\"rationale\\\": \\\"The game displays the title and an instruction\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to touch the screen to begin, and shows an on-screen counter labeled \\\\\\\"Cailloux\\\\\\\" that makes the goal\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" of placing stones explicit.\\\"}, \\\"feedback-on-input\\\": {\\\"label\\\": \\\"immediate\\\", \\\"evidence\\\": [{\\\"line\\\": 292, \\\"quote\\\": \\\"place(x, y\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 293, \\\"quote\\\": \\\"draw();\\\"}, {\\\"line\\\": 261, \\\"quote\\\": \\\"tally += 1;\\\"}], \\\"rationale\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"When the player taps, the pointerdown handler immediately calls place() and draw() in\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same event handler, producing visible changes to the stone array and tally display within\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the same frame.\\\"}, \\\"fail-state-clarity\\\": null}\"}    }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0               }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":5356,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":444}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      259,
+      328,
+      391,
+      246,
+      347,
+      268,
+      407,
+      320,
+      233,
+      307,
+      369,
+      558,
+      19,
+      375,
+      231,
+      1,
+      14,
+      14
+    ]
+  },
+  "usage": {
+    "input": 5356,
+    "output": 444,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

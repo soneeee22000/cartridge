@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour Rows</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #f4ecd8;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---- Game setup ----
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.style.touchAction = "none";
+
+let dpr = Math.max(1, window.devicePixelRatio || 1);
+let W = 0, H = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+window.addEventListener("resize", resize);
+
+// ---- Paper-cut palette ----
+const PAL = {
+  bg: "#f4ecd8",
+  layer: "#e07a5f",
+  accent: "#3d405b",
+  highlight: "#81b29a",
+};
+
+// A few extra colours for tiles (cut-paper feel), derived tastefully
+const TILE_COLORS = ["#e07a5f", "#81b29a", "#3d405b", "#f2cc8f"];
+
+// seeded jitter so it doesn't flicker between draws
+function seededRand(seed) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function () {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+const rand = seededRand(918273);
+function jitter(px) {
+  return (rand() - 0.5) * 2 * px;
+}
+
+// ---- Puzzle state ----
+const ROWS = 3;
+const COLS = 3;
+const BOARD_SIZE = ROWS * COLS; // 9 cells, one empty
+let board = []; // array of colour index, -1 = empty
+let emptyIndex = 0;
+let moves = 0;
+let running = false;
+let paused = false;
+let gameOver = false;
+let winFlag = false;
+let stuckFlag = false;
+let tapHintPulse = 0;
+
+// Precompute jitter offsets per cell corner, stable per cell id
+const cellJitters = {};
+function getCellJitter(id) {
+  if (!cellJitters[id]) {
+    const localRand = seededRand(1000 + id * 37);
+    cellJitters[id] = {
+      tl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],
+      tr: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],
+      br: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],
+      bl: [(localRand() - 0.5) * 3, (localRand() - 0.5) * 3],
+    };
+  }
+  return cellJitters[id];
+}
+
+function makeSolvedBoard() {
+  // Each row gets its own colour, filled fully, then remove one tile for empty slot
+  const b = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      b.push(r); // colour index = row index (0..ROWS-1), matches TILE_COLORS
+    }
+  }
+  return b;
+}
+
+function isRowSolved(r, b) {
+  const start = r * COLS;
+  let colour = -2;
+  for (let c = 0; c < COLS; c++) {
+    const idx = start + c;
+    if (b[idx] === -1) return false; // empty counts as not solved for that row unless we allow it
+    if (colour === -2) colour = b[idx];
+    else if (b[idx] !== colour) return false;
+  }
+  return true;
+}
+
+function solved() {
+  for (let r = 0; r < ROWS; r++) {
+    if (!isRowSolved(r, board)) return false;
+  }
+  return true;
+}
+
+function neighborsOf(idx) {
+  const r = Math.floor(idx / COLS);
+  const c = idx % COLS;
+  const list = [];
+  if (r > 0) list.push(idx - COLS);
+  if (r < ROWS - 1) list.push(idx + COLS);
+  if (c > 0) list.push(idx - 1);
+  if (c < COLS - 1) list.push(idx + 1);
+  return list;
+}
+
+function anyLegalMove() {
+  // legal move = any neighbor of empty can slide (always true unless solved is the only state and there's no move to make progress)
+  // Since a slide is always possible if empty has any neighbor, "stuck" happens only if no move can ever change the board's solved status.
+  // For this puzzle, a legal move exists whenever empty has neighbors AND board is not already solved.
+  if (solved()) return false;
+  return neighborsOf(emptyIndex).length > 0;
+}
+
+function shuffleBoard() {
+  // Start solved then perform random legal slides to scramble, guaranteeing solvability
+  board = makeSolvedBoard();
+  emptyIndex = Math.floor(BOARD_SIZE / 2);
+  board[emptyIndex] = -1;
+  // Actually need emptyIndex chosen consistently; recompute properly:
+  board = makeSolvedBoard();
+  const startEmpty = BOARD_SIZE - 1;
+  board[startEmpty] = -1;
+  emptyIndex = startEmpty;
+
+  const scrambleSteps = 60 + Math.floor(rand() * 30);
+  let lastMove = -1;
+  for (let i = 0; i < scrambleSteps; i++) {
+    const neigh = neighborsOf(emptyIndex).filter((n) => n !== lastMove);
+    const pick = neigh.length > 0 ? neigh[Math.floor(rand() * neigh.length)] : neighborsOf(emptyIndex)[0];
+    board[emptyIndex] = board[pick];
+    board[pick] = -1;
+    lastMove = emptyIndex;
+    emptyIndex = pick;
+  }
+  // Avoid accidental already-solved shuffle
+  if (solved()) {
+    // do one more swap to break it, if possible
+    const neigh = neighborsOf(emptyIndex);
+    if (neigh.length > 0) {
+      const pick = neigh[0];
+      board[emptyIndex] = board[pick];
+      board[pick] = -1;
+      emptyIndex = pick;
+    }
+  }
+}
+
+function resetGameState() {
+  moves = 0;
+  gameOver = false;
+  winFlag = false;
+  stuckFlag = false;
+  shuffleBoard();
+}
+
+function backToTitle() {
+  running = false;
+  paused = false;
+  resetGameState();
+  draw();
+}
+
+// ---- Drawing helpers (paper-cut style) ----
+function roundRectPath(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawJitteredRoundedRect(x, y, w, h, r, cellId) {
+  const j = getCellJitter(cellId);
+  ctx.beginPath();
+  ctx.moveTo(x + r + j.tl[0], y + j.tl[1]);
+  ctx.lineTo(x + w - r + j.tr[0], y + j.tr[1]);
+  ctx.quadraticCurveTo(x + w + j.tr[0], y + j.tr[1], x + w + j.tr[0], y + r + j.tr[1]);
+  ctx.lineTo(x + w + j.br[0], y + h - r + j.br[1]);
+  ctx.quadraticCurveTo(x + w + j.br[0], y + h + j.br[1], x + w - r + j.br[0], y + h + j.br[1]);
+  ctx.lineTo(x + r + j.bl[0], y + h + j.bl[1]);
+  ctx.quadraticCurveTo(x + j.bl[0], y + h + j.bl[1], x + j.bl[0], y + h - r + j.bl[1]);
+  ctx.lineTo(x + j.tl[0], y + r + j.tl[1]);
+  ctx.quadraticCurveTo(x + j.tl[0], y + j.tl[1], x + r + j.tl[0], y + j.tl[1]);
+  ctx.closePath();
+}
+
+function layout() {
+  const margin = Math.min(W, H) * 0.08;
+  const boardTop = H * 0.18;
+  const boardSize = Math.min(W - margin * 2, H * 0.62);
+  const cellSize = boardSize / COLS;
+  const boardLeft = (W - boardSize) / 2;
+  return { boardLeft, boardTop, boardSize, cellSize };
+}
+
+function drawBackground() {
+  ctx.fillStyle = PAL.bg;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawTitlePlate() {
+  const plateW = Math.min(W * 0.86, 520);
+  const plateH = 90;
+  const x = (W - plateW) / 2;
+  const y = H * 0.05;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(61,64,91,0.35)";
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = PAL.accent;
+  drawJitteredRoundedRect(x, y, plateW, plateH, 16, 9001);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = PAL.bg;
+  ctx.font = "bold " + Math.floor(plateH * 0.4) + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Colour Rows", W / 2, y + plateH / 2);
+}
+
+function drawBoard() {
+  const { boardLeft, boardTop, boardSize, cellSize } = layout();
+
+  // backing board plate (layer of card)
+  ctx.save();
+  ctx.shadowColor = "rgba(61,64,91,0.3)";
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = PAL.accent;
+  drawJitteredRoundedRect(boardLeft - 10, boardTop - 10, boardSize + 20, boardSize + 20, 20, 9002);
+  ctx.fill();
+  ctx.restore();
+
+  for (let idx = 0; idx < BOARD_SIZE; idx++) {
+    const r = Math.floor(idx / COLS);
+    const c = idx % COLS;
+    const x = boardLeft + c * cellSize;
+    const y = boardTop + r * cellSize;
+    const pad = cellSize * 0.06;
+    const cx = x + pad;
+    const cy = y + pad;
+    const cw = cellSize - pad * 2;
+    const ch = cellSize - pad * 2;
+
+    const val = board[idx];
+    if (val === -1) {
+      // empty slot: draw a subtle inset
+      ctx.save();
+      ctx.fillStyle = "rgba(61,64,91,0.08)";
+      drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx + 500);
+      ctx.fill();
+      ctx.restore();
+      continue;
+    }
+
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.35)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = TILE_COLORS[val % TILE_COLORS.length];
+    drawJitteredRoundedRect(cx, cy, cw, ch, 10, idx);
+    ctx.fill();
+    ctx.restore();
+
+    // highlight strip for depth
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = PAL.bg;
+    drawJitteredRoundedRect(cx + cw * 0.08, cy + ch * 0.08, cw * 0.5, ch * 0.25, 6, idx + 700);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // row solved indicators
+  for (let r = 0; r < ROWS; r++) {
+    if (isRowSolved(r, board)) {
+      const y = boardTop + r * cellSize;
+      ctx.save();
+      ctx.strokeStyle = PAL.highlight;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(boardLeft - 6, y + cellSize / 2);
+      ctx.lineTo(boardLeft - 18, y + cellSize / 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function drawHud() {
+  ctx.fillStyle = PAL.accent;
+  ctx.font = "bold 20px sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("Moves: " + moves, 16, H - 40);
+}
+
+function drawEndOverlay() {
+  ctx.save();
+  ctx.fillStyle = "rgba(61,64,91,0.55)";
+  ctx.fillRect(0, 0, W, H);
+
+  const plateW = Math.min(W * 0.8, 460);
+  const plateH = 160;
+  const x = (W - plateW) / 2;
+  const y = (H - plateH) / 2;
+
+  ctx.shadowColor = "rgba(0,0,0,0.3)";
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = PAL.bg;
+  drawJitteredRoundedRect(x, y, plateW, plateH, 18, 9003);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.fillStyle = PAL.accent;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 28px sans-serif";
+  const msg = winFlag ? "Solved!" : "No moves left";
+  ctx.fillText(msg, W / 2, y + plateH * 0.4);
+
+  ctx.font = "18px sans-serif";
+  ctx.fillText("Moves: " + moves + " — tap to play again", W / 2, y + plateH * 0.72);
+  ctx.restore();
+}
+
+function drawTitleScreen() {
+  drawTitlePlate();
+
+  // hint pulse
+  tapHintPulse += 0.05;
+  const alpha = 0.5 + 0.5 * Math.sin(tapHintPulse);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = PAL.accent;
+  ctx.font = "bold 22px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Tap to begin", W / 2, H * 0.85);
+  ctx.restore();
+
+  // small preview board (static, decorative)
+  drawBoard();
+}
+
+function draw() {
+  drawBackground();
+
+  if (!running) {
+    drawTitleScreen();
+    return;
+  }
+
+  drawTitlePlate();
+  drawBoard();
+  drawHud();
+
+  if (gameOver) {
+    drawEndOverlay();
+  } else if (paused) {
+    ctx.save();
+    ctx.fillStyle = "rgba(61,64,91,0.5)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = PAL.bg;
+    ctx.font = "bold 26px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Paused", W / 2, H / 2);
+    ctx.restore();
+  }
+}
+
+// ---- Interaction ----
+function cellFromPoint(px, py) {
+  const { boardLeft, boardTop, boardSize, cellSize } = layout();
+  if (px < boardLeft || px > boardLeft + boardSize) return -1;
+  if (py < boardTop || py > boardTop + boardSize) return -1;
+  const c = Math.floor((px - boardLeft) / cellSize);
+  const r = Math.floor((py - boardTop) / cellSize);
+  if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return -1;
+  return r * COLS + c;
+}
+
+function isLegal(cell) {
+  if (cell < 0 || cell >= BOARD_SIZE) return false;
+  if (board[cell] === -1) return false;
+  return neighborsOf(emptyIndex).includes(cell);
+}
+
+function apply(cell) {
+  board[emptyIndex] = board[cell];
+  board[cell] = -1;
+  emptyIndex = cell;
+}
+
+function points() {
+  // simple scoring: count solved rows
+  let s = 0;
+  for (let r = 0; r < ROWS; r++) if (isRowSolved(r, board)) s++;
+  return s;
+}
+
+function onCellTapped(cell) {
+  if (!isLegal(cell)) return;
+  apply(cell);
+  moves += 1;
+  CARTRIDGE.send("score", { value: points() });
+  if (solved()) {
+    winFlag = true;
+    gameOver = true;
+    CARTRIDGE.send("end", { reason: "win", value: moves });
+  } else if (!anyLegalMove()) {
+    stuckFlag = true;
+    gameOver = true;
+    CARTRIDGE.send("end", { reason: "stuck" });
+  }
+  draw();
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  if (paused) return;
+
+  if (!running) {
+    running = true;
+    resetGameState();
+    CARTRIDGE.send("start");
+    draw();
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+  const px = event.clientX - rect.left;
+  const py = event.clientY - rect.top;
+
+  if (gameOver) {
+    resetGameState();
+    draw();
+    return;
+  }
+
+  const cell = cellFromPoint(px, py);
+  if (cell >= 0) onCellTapped(cell);
+});
+
+// ---- Boot ----
+resetGameState();
+resize();
+CARTRIDGE.send("boot", { title: "Colour Rows", gameType: "puzzle-board", lang: "en" });
+draw();
+
+// light animation loop just for the title pulse (no timers with strings, RAF used)
+function loop() {
+  if (!running && !paused) {
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

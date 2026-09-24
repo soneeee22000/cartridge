@@ -1,0 +1,434 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:fc2ad0784aba38ec4ad456aba5e684aefbe8e714f42ba4f7e00b0ab7338d1a11",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nA lighthouse with a few short floors: light every lamp on a floor before the tide reaches it, then climb the stairs to the next floor.\n\nPlan:\n{\"gameType\":\"stage-clear\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap each lamp on the floor to light it before the rising tide reaches you, then climb the stairs to the next floor. Losing all floors before lighting every lamp ends the run; clearing the top floor wins.\",\"slug\":\"lighthouse-tide\",\"style\":\"chalkboard\",\"title\":\"Lighthouse Tide\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Lighthouse Tide</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #2f3e3a; overflow: hidden;\n11|     font-family: Georgia, 'Comic Sans MS', cursive, sans-serif;\n12|   }\n13|   canvas {\n14|     display: block;\n15|     touch-action: none;\n16|   }\n17| </style>\n18| </head>\n19| <body>\n20| <canvas id=\"game\"></canvas>\n21| <script>\n22| // ---- Bridge helper (verbatim) ----\n23| const CARTRIDGE = {\n24|   send(type, payload = {}) {\n25|     window.parent.postMessage(\n26|       { source: \"cartridge\", v: 1, type, payload },\n27|       \"*\",\n28|     );\n29|   },\n30| };\n31| \n32| window.addEventListener(\"message\", (event) => {\n33|   const data = event.data;\n34|   if (!data || data.source !== \"cartridge-host\") return;\n35|   if (data.type === \"pause\") paused = true;\n36|   if (data.type === \"resume\") paused = false;\n37|   if (data.type === \"reset\") backToTitle();\n38| });\n39| \n40| // ---- Setup canvas ----\n41| const canvas = document.getElementById(\"game\");\n42| const ctx = canvas.getContext(\"2d\");\n43| canvas.style.touchAction = \"none\";\n44| \n45| let dpr = Math.max(1, window.devicePixelRatio || 1);\n46| let W = 0, H = 0;\n47| \n48| function resize() {\n49|   W = window.innerWidth;\n50|   H = window.innerHeight;\n51|   dpr = Math.max(1, window.devicePixelRatio || 1);\n52|   canvas.width = Math.floor(W * dpr);\n53|   canvas.height = Math.floor(H * dpr);\n54|   canvas.style.width = W + \"px\";\n55|   canvas.style.height = H + \"px\";\n56|   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n57| }\n58| window.addEventListener(\"resize\", resize);\n59| resize();\n60| \n61| // ---- Palette ----\n62| const COL = {\n63|   slate: \"#2f3e3a\",\n64|   chalk: \"#eeeae0\",\n65|   accent: \"#f2c14e\",\n66|   second: \"#8fc1e3\",\n67| };\n68| \n69| // ---- Chalk drawing helpers ----\n70| function chalkLine(x1, y1, x2, y2, width, color, alpha) {\n71|   ctx.lineCap = \"round\";\n72|   ctx.lineJoin = \"round\";\n73|   const wob = 1.2;\n74|   for (let pass = 0; pass < 2; pass++) {\n75|     ctx.beginPath();\n76|     const ox = (Math.random() - 0.5) * wob;\n77|     const oy = (Math.random() - 0.5) * wob;\n78|     ctx.moveTo(x1 + ox, y1 + oy);\n79|     // slight midpoint wobble\n80|     const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * wob * 2;\n81|     const my = (y1 + y2) / 2 + (Math.random() - 0.5) * wob * 2;\n82|     ctx.quadraticCurveTo(mx, my, x2 + ox, y2 + oy);\n83|     ctx.lineWidth = width;\n84|     ctx.strokeStyle = color;\n85|     ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);\n86|     ctx.stroke();\n87|   }\n88|   ctx.globalAlpha = 1;\n89| }\n90| \n91| function chalkCircle(cx, cy, r, width, color, alpha) {\n92|   ctx.lineCap = \"round\";\n93|   for (let pass = 0; pass < 2; pass++) {\n94|     ctx.beginPath();\n95|     const segs = 24;\n96|     for (let i = 0; i <= segs; i++) {\n97|       const a = (i / segs) * Math.PI * 2;\n98|       const wob = (Math.random() - 0.5) * 1.5;\n99|       const px = cx + Math.cos(a) * (r + wob);\n100|       const py = cy + Math.sin(a) * (r + wob);\n101|       if (i === 0) ctx.moveTo(px, py);\n102|       else ctx.lineTo(px, py);\n103|     }\n104|     ctx.lineWidth = width;\n105|     ctx.strokeStyle = color;\n106|     ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);\n107|     ctx.stroke();\n108|   }\n109|   ctx.globalAlpha = 1;\n110| }\n111| \n112| function hatchRect(x, y, w, h, color, alpha, spacing) {\n113|   ctx.strokeStyle = color;\n114|   ctx.lineWidth = 2;\n115|   ctx.globalAlpha = alpha;\n116|   spacing = spacing || 8;\n117|   for (let i = -h; i < w; i += spacing) {\n118|     const x1 = x + i;\n119|     const y1 = y;\n120|     const x2 = x + i + h;\n121|     const y2 = y + h;\n122|     ctx.beginPath();\n123|     ctx.moveTo(Math.max(x, x1), y1 + Math.max(0, x - x1));\n124|     ctx.lineTo(Math.min(x + w, x2), y2 - Math.max(0, x2 - (x + w)));\n125|     ctx.stroke();\n126|   }\n127|   ctx.globalAlpha = 1;\n128| }\n129| \n130| function chalkText(text, x, y, size, color, alpha, align) {\n131|   ctx.font = `${size}px Georgia, serif`;\n132|   ctx.textAlign = align || \"center\";\n133|   ctx.textBaseline = \"middle\";\n134|   ctx.fillStyle = color;\n135|   ctx.globalAlpha = alpha === undefined ? 1 : alpha;\n136|   ctx.fillText(text, x, y);\n137|   ctx.globalAlpha = 1;\n138| }\n139| \n140| // ---- Smudge background layer ----\n141| let smudges = [];\n142| function initSmudges() {\n143|   smudges = [];\n144|   for (let i = 0; i < 5; i++) {\n145|     smudges.push({\n146|       x: Math.random() * W,\n147|       y: Math.random() * H,\n148|       r: 60 + Math.random() * 120,\n149|     });\n150|   }\n151| }\n152| \n153| function drawSmudges() {\n154|   for (const s of smudges) {\n155|     ctx.beginPath();\n156|     ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);\n157|     ctx.fillStyle = COL.chalk;\n158|     ctx.globalAlpha = 0.03;\n159|     ctx.fill();\n160|     ctx.globalAlpha = 1;\n161|   }\n162| }\n163| \n164| // ---- Game state ----\n165| let paused = false;\n166| let running = false; // true after first tap (play begins)\n167| let gameOver = false;\n168| let gameWon = false;\n169| \n170| const STAGE_COUNT = 5;\n171| let stage = 0;\n172| let lamps = [];\n173| let lampsLit = 0;\n174| let tideY = 0;\n175| let tideSpeed = 0;\n176| let floorY = 0;\n177| let stageStartTime = 0;\n178| let graceMs = 2500;\n179| let stairsReady = false;\n180| let stairsX = 0, stairsY = 0, stairsW = 60, stairsH = 80;\n181| let message = \"\";\n182| let messageTimer = 0;\n183| let score = 0;\n184| \n185| function stageGoalCount(s) {\n186|   return Math.min(3 + s, 8);\n187| }\n188| \n189| function buildStage(s) {\n190|   lamps = [];\n191|   lampsLit = 0;\n192|   stairsReady = false;\n193|   const count = stageGoalCount(s);\n194|   const margin = 60;\n195|   const usableW = W - margin * 2;\n196|   for (let i = 0; i < count; i++) {\n197|     lamps.push({\n198|       x: margin + Math.random() * usableW,\n199|       y: H * 0.25 + Math.random() * (H * 0.4),\n200|       lit: false,\n201|       r: 22,\n202|       flicker: Math.random() * Math.PI * 2,\n203|     });\n204|   }\n205|   floorY = H * 0.85;\n206|   tideY = H + 40;\n207|   tideSpeed = (0.12 + s * 0.05) * (H / 700);\n208|   stageStartTime = performance.now();\n209|   stairsX = W - 90;\n210|   stairsY = H * 0.15;\n211|   message = `Stage ${s}: Light ${count} lamps!`;\n212|   messageTimer = 3000;\n213| }\n214| \n215| function enterStage(next) {\n216|   stage = next;\n217|   buildStage(stage);\n218|   CARTRIDGE.send(\"level\", { index: stage });\n219| }\n220| \n221| function onGoalMet() {\n222|   if (stage === STAGE_COUNT) {\n223|     gameWon = true;\n224|     gameOver = true;\n225|     CARTRIDGE.send(\"end\", { reason: \"win\", value: score });\n226|   } else {\n227|     score += 100;\n228|     CARTRIDGE.send(\"score\", { value: score });\n229|     enterStage(stage + 1);\n230|   }\n231| }\n232| \n233| function onStageFailed() {\n234|   gameOver = true;\n235|   gameWon = false;\n236|   CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n237| }\n238| \n239| function backToTitle() {\n240|   running = false;\n241|   gameOver = false;\n242|   gameWon = false;\n243|   paused = false;\n244|   stage = 0;\n245|   score = 0;\n246|   lamps = [];\n247|   message = \"\";\n248| }\n249| \n250| // ---- Input ----\n251| let lastTapTime = 0;\n252| \n253| canvas.addEventListener(\"pointerdown\", (event) => {\n254|   event.preventDefault();\n255|   if (paused) return;\n256| \n257|   if (!running) {\n258|     running = true;\n259|     gameOver = false;\n260|     gameWon = false;\n261|     score = 0;\n262|     CARTRIDGE.send(\"start\");\n263|     enterStage(1);\n264|     return;\n265|   }\n266| \n267|   if (gameOver) {\n268|     // tap to restart from title\n269|     backToTitle();\n270|     return;\n271|   }\n272| \n273|   const rect = canvas.getBoundingClientRect();\n274|   const x = event.clientX - rect.left;\n275|   const y = event.clientY - rect.top;\n276| \n277|   // check stairs tap if all lamps lit\n278|   if (stairsReady) {\n279|     if (\n280|       x > stairsX - 10 &&\n281|       x < stairsX + stairsW + 10 &&\n282|       y > stairsY - 10 &&\n283|       y < stairsY + stairsH + 10\n284|     ) {\n285|       onGoalMet();\n286|       return;\n287|     }\n288|   }\n289| \n290|   // check lamp taps\n291|   for (const lamp of lamps) {\n292|     if (lamp.lit) continue;\n293|     const dx = x - lamp.x;\n294|     const dy = y - lamp.y;\n295|     if (Math.sqrt(dx * dx + dy * dy) < Math.max(lamp.r, 22)) {\n296|       lamp.lit = true;\n297|       lampsLit++;\n298|       score += 10;\n299|       CARTRIDGE.send(\"score\", { value: score });\n300|       if (lampsLit >= lamps.length) {\n301|         stairsReady = true;\n302|         message = \"All lit! Climb the stairs!\";\n303|         messageTimer = 2500;\n304|       }\n305|       break;\n306|     }\n307|   }\n308| });\n309| \n310| // ---- Draw functions ----\n311| function drawTitle() {\n312|   ctx.clearRect(0, 0, W, H);\n313|   drawSmudges();\n314|   drawLighthouseIcon(W / 2, H * 0.35, 70);\n315| \n316|   chalkText(\"Lighthouse Tide\", W / 2, H * 0.55, Math.min(42, W * 0.08), COL.chalk, 1);\n317|   chalkText(\n318|     \"Light every lamp before the tide rises,\",\n319|     W / 2,\n320|     H * 0.62,\n321|     Math.min(20, W * 0.045),\n322|     COL.chalk,\n323|     0.85\n324|   );\n325|   chalkText(\n326|     \"then climb the stairs to the next floor.\",\n327|     W / 2,\n328|     H * 0.67,\n329|     Math.min(20, W * 0.045),\n330|     COL.chalk,\n331|     0.85\n332|   );\n333| \n334|   const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n335|   chalkText(\n336|     \"Tap to begin\",\n337|     W / 2,\n338|     H * 0.8,\n339|     Math.min(26, W * 0.06),\n340|     COL.accent,\n341|     0.6 + pulse * 0.4\n342|   );\n343| }\n344| \n345| function drawLighthouseIcon(cx, cy, size) {\n346|   // simple tower with hatching\n347|   const w = size * 0.5;\n348|   const h = size * 1.4;\n349|   chalkLine(cx - w / 2, cy + h / 2, cx - w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n350|   chalkLine(cx + w / 2, cy + h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n351|   chalkLine(cx - w / 3, cy - h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);\n352|   chalkLine(cx - w / 2, cy + h / 2, cx + w / 2, cy + h / 2, 4, COL.chalk, 0.8);\n353|   // lamp room\n354|   chalkCircle(cx, cy - h / 2 - 14, 16, 3, COL.accent, 0.9);\n355|   // rays\n356|   for (let i = -2; i <= 2; i++) {\n357|     chalkLine(\n358|       cx,\n359|       cy - h / 2 - 14,\n360|       cx + i * 30,\n361|       cy - h / 2 - 14 - 40,\n362|       2,\n363|       COL.accent,\n364|       0.3\n365|     );\n366|   }\n367| }\n368| \n369| function drawLamp(lamp) {\n370|   lamp.flicker += 0.08;\n371|   const glow = lamp.lit ? 0.9 : 0.35 + Math.sin(lamp.flicker) * 0.15;\n372|   const color = lamp.lit ? COL.accent : COL.second;\n373|   chalkCircle(lamp.x, lamp.y, lamp.r, 3, color, glow);\n374|   chalkCircle(lamp.x, lamp.y, lamp.r * 0.5, 2, color, glow * 0.7);\n375|   if (lamp.lit) {\n376|     for (let i = 0; i < 6; i++) {\n377|       const a = (i / 6) * Math.PI * 2 + lamp.flicker * 0.3;\n378|       const rr = lamp.r + 10;\n379|       chalkLine(\n380|         lamp.x + Math.cos(a) * lamp.r,\n381|         lamp.y + Math.sin(a) * lamp.r,\n382|         lamp.x + Math.cos(a) * rr,\n383|         lamp.y + Math.sin(a) * rr,\n384|         2,\n385|         COL.accent,\n386|         0.4\n387|       );\n388|     }\n389|   }\n390| }\n391| \n392| function drawStairs() {\n393|   const color = stairsReady ? COL.accent : COL.chalk;\n394|   const alpha = stairsReady ? 0.9 : 0.35;\n395|   for (let i = 0; i < 5; i++) {\n396|     const sy = stairsY + (i * stairsH) / 5;\n397|     chalkLine(\n398|       stairsX,\n399|       sy,\n400|       stairsX + stairsW,\n401|       sy,\n402|       3,\n403|       color,\n404|       alpha\n405|     );\n406|   }\n407|   chalkLine(stairsX, stairsY, stairsX, stairsY + stairsH, 3, color, alpha);\n408|   chalkLine(\n409|     stairsX + stairsW,\n410|     stairsY,\n411|     stairsX + stairsW,\n412|     stairsY + stairsH,\n413|     3,\n414|     color,\n415|     alpha\n416|   );\n417|   chalkText(\n418|     stairsReady ? \"GO!\" : \"\",\n419|     stairsX + stairsW / 2,\n420|     stairsY - 20,\n421|     18,\n422|     COL.accent,\n423|     0.9\n424|   );\n425| }\n426| \n427| function drawTide() {\n428|   const waveH = 10;\n429|   ctx.beginPath();\n430|   ctx.moveTo(0, tideY);\n431|   for (let x = 0; x <= W; x += 20) {\n432|     const y = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;\n433|     ctx.lineTo(x, y);\n434|   }\n435|   ctx.lineTo(W, H);\n436|   ctx.lineTo(0, H);\n437|   ctx.closePath();\n438|   ctx.fillStyle = COL.second;\n439|   ctx.globalAlpha = 0.15;\n440|   ctx.fill();\n441|   ctx.globalAlpha = 1;\n442| \n443|   // wave line chalk stroke\n444|   for (let x = 0; x < W; x += 40) {\n445|     const y1 = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;\n446|     const y2 =\n447|       tideY + Math.sin((x + 40) * 0.02 + performance.now() / 300) * waveH;\n448|     chalkLine(x, y1, x + 40, y2, 3, COL.second, 0.6);\n449|   }\n450| }\n451| \n452| function drawFloorLine() {\n453|   for (let x = 0; x < W; x += 50) {\n454|     chalkLine(x, floorY, x + 50, floorY, 3, COL.chalk, 0.3);\n455|   }\n456| }\n457| \n458| function drawHUD() {\n459|   chalkText(\n460|     `Stage ${stage} / ${STAGE_COUNT}`,\n461|     70,\n462|     30,\n463|     18,\n464|     COL.chalk,\n465|     0.8,\n466|     \"left\"\n467|   );\n468|   chalkText(\n469|     `Lamps: ${lampsLit}/${lamps.length}`,\n470|     70,\n471|     56,\n472|     16,\n473|     COL.accent,\n474|     0.8,\n475|     \"left\"\n476|   );\n477|   chalkText(`Score: ${score}`, W - 70, 30, 16, COL.chalk, 0.8, \"right\");\n478| \n479|   if (messageTimer > 0) {\n480|     chalkText(\n481|       message,\n482|       W / 2,\n483|       H * 0.12,\n484|       Math.min(24, W * 0.05),\n485|       COL.accent,\n486|       Math.min(1, messageTimer / 500)\n487|     );\n488|   }\n489| }\n490| \n491| function drawPauseOverlay() {\n492|   ctx.fillStyle = COL.slate;\n493|   ctx.globalAlpha = 0.6;\n494|   ctx.fillRect(0, 0, W, H);\n495|   ctx.globalAlpha = 1;\n496|   chalkText(\"Paused\", W / 2, H / 2, 32, COL.chalk, 1);\n497| }\n498| \n499| function drawGameOver() {\n500|   ctx.clearRect(0, 0, W, H);\n501|   drawSmudges();\n502|   if (gameWon) {\n503|     drawLighthouseIcon(W / 2, H * 0.3, 80);\n504|     chalkText(\n505|       \"You lit every floor!\",\n506|       W / 2,\n507|       H * 0.55,\n508|       Math.min(36, W * 0.08),\n509|       COL.accent,\n510|       1\n511|     );\n512|   } else {\n513|     chalkText(\n514|       \"The tide took the tower...\",\n515|       W / 2,\n516|       H * 0.45,\n517|       Math.min(30, W * 0.06),\n518|       COL.chalk,\n519|       0.9\n520|     );\n521|   }\n522|   chalkText(\n523|     `Final Score: ${score}`,\n524|     W / 2,\n525|     H * 0.6,\n526|     Math.min(22, W * 0.05),\n527|     COL.chalk,\n528|     0.8\n529|   );\n530|   const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);\n531|   chalkText(\n532|     \"Tap to return to title\",\n533|     W / 2,\n534|     H * 0.75,\n535|     Math.min(22, W * 0.05),\n536|     COL.second,\n537|     0.5 + pulse * 0.4\n538|   );\n539| }\n540| \n541| // ---- Main loop ----\n542| let lastTime = performance.now();\n543| \n544| function update(dt) {\n545|   if (!running || paused || gameOver) return;\n546| \n547|   const elapsed = performance.now() - stageStartTime;\n548|   if (elapsed > graceMs) {\n549|     tideY -= tideSpeed * dt;\n550|   }\n551| \n552|   if (messageTimer > 0) messageTimer -= dt;\n553| \n554|   if (tideY <= floorY) {\n555|     onStageFailed();\n556|   }\n557| }\n558| \n559| function draw() {\n560|   ctx.clearRect(0, 0, W, H);\n561|   drawSmudges();\n562| \n563|   if (!running) {\n564|     drawTitle();\n565|     requestAnimationFrame(loop);\n566|     return;\n567|   }\n568| \n569|   if (gameOver) {\n570|     drawGameOver();\n571|     requestAnimationFrame(loop);\n572|     return;\n573|   }\n574| \n575|   // background lighthouse silhouette\n576|   drawLighthouseIcon(W / 2, H * 0.12, 40);\n577| \n578|   drawFloorLine();\n579|   for (const lamp of lamps) drawLamp(lamp);\n580|   drawStairs();\n581|   drawTide();\n582|   drawHUD();\n583| \n584|   if (paused) drawPauseOverlay();\n585| \n586|   requestAnimationFrame(loop);\n587| }\n588| \n589| function loop(now) {\n590|   const dt = Math.min(50, now - lastTime);\n591|   lastTime = now;\n592|   update(dt);\n593|   draw();\n594| }\n595| \n596| // ---- Boot ----\n597| initSmudges();\n598| window.addEventListener(\"resize\", initSmudges);\n599| \n600| CARTRIDGE.send(\"boot\", { title: \"Lighthouse Tide\", gameType: \"stage-clear\", lang: \"en\" });\n601| \n602| requestAnimationFrame((t) => {\n603|   lastTime = t;\n604|   requestAnimationFrame(loop);\n605| });\n606| </script>\n607| </body>\n608| </html>\n609| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNrmWPxzPUS2rXGS1DbJ\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8702,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null} }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}    }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"211\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"message\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" =\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" `\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Stage\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ${\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"s\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}:\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Light\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ${count\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"} l\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amps!\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"`;\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 302\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message = \\\\\\\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"All\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lit\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"! Climb\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stairs!\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\";\\\"}, {\\\"line\\\": 554\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (t\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ideY <= floorY) \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n    \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"onStageFailed();\\\\n\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"  \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\\\"}],\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The code implements\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" major\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" and verbs from\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" l\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"amps that\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" light\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" up\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lines\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 296\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-297\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), a\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tide\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that rises\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (line 549\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), floors\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"/\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"stages\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line 216\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), and\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stairs\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" climb (lines\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 278\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-287\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"},\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"goal\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-leg\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 318\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"\\\\\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Light\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" every\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lamp\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" before\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the tide rises\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 326\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"\\\\\\\"then\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" climb\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the stairs to the next\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" floor.\\\\\\\"\\\"}, {\\\"line\\\": \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"211\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"message = `\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Stage ${s}: Light ${count}\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lamps!`;\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explicit\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-screen text\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stating\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the objective\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" both\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" title\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen and at\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the start of each stage\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 296\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"lamp\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lit\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = true;\\\"}, {\\\"line\\\": \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"297, \\\"quote\\\": \\\"lam\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"psL\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"it\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"++\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 371\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"const\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" g\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"low = lamp\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".lit ? 0\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"9\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" : 0.35\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"+\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Math.sin(lamp\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fl\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"icker)\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" * 0.15\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a lamp is t\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apped, its\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" lit\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" changes\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately (\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line 296) and the visual\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" g\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"low changes\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" next\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" drawn\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame (line 371)\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" based\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on the lit\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" property\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}, \\\"fail\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 514\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"\\\\\\\"The tide\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" took the tower...\\\\\\\"\\\"}, {\\\"\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 523\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"`Final Score: ${score}`\\\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 532\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"\\\\\\\"Tap\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to return to title\\\\\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the game\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends in\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" failure, it\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays why\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (tide\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reached\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" floor\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"),\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" shows\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the final score, and instru\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the player how\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to restart\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}}\"}         }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0     }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8702,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":539}   }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      239,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      5,
+      26,
+      26,
+      32,
+      147,
+      147,
+      147,
+      147,
+      147,
+      9,
+      23,
+      27,
+      26,
+      36,
+      16,
+      26,
+      77,
+      77,
+      6,
+      26,
+      26,
+      25,
+      27,
+      27,
+      30,
+      25,
+      25,
+      28,
+      26,
+      28,
+      31,
+      23,
+      31,
+      18,
+      34,
+      18,
+      33,
+      23,
+      27,
+      26,
+      29,
+      21,
+      31,
+      21,
+      28,
+      26,
+      24,
+      28,
+      25,
+      28,
+      24,
+      28,
+      25,
+      33,
+      20,
+      26,
+      28,
+      24,
+      26,
+      27,
+      27,
+      25,
+      27,
+      26,
+      26,
+      27,
+      26,
+      29,
+      29,
+      21,
+      29,
+      25,
+      29,
+      25,
+      25,
+      26,
+      28,
+      23,
+      27,
+      32,
+      22,
+      29,
+      24,
+      31,
+      21,
+      31,
+      22,
+      30,
+      27,
+      23,
+      28,
+      25,
+      25,
+      27,
+      27,
+      26,
+      24,
+      29,
+      25,
+      26,
+      27,
+      26,
+      26,
+      32,
+      26,
+      20,
+      27,
+      26,
+      28,
+      25,
+      0,
+      28,
+      24,
+      27,
+      27,
+      25,
+      26,
+      28,
+      28,
+      24,
+      27,
+      25,
+      26,
+      27,
+      26,
+      39,
+      16,
+      28,
+      49,
+      0,
+      31,
+      22,
+      26,
+      40,
+      16,
+      35,
+      14,
+      27,
+      26,
+      27,
+      29,
+      23,
+      26,
+      26,
+      27,
+      27,
+      26,
+      27,
+      34,
+      17,
+      31,
+      22,
+      31,
+      22,
+      26,
+      27,
+      26,
+      27,
+      26,
+      28,
+      28,
+      25,
+      30,
+      23,
+      25,
+      25,
+      27,
+      25,
+      28,
+      28,
+      28,
+      22,
+      26,
+      30,
+      23,
+      30,
+      22,
+      29,
+      24,
+      27,
+      25,
+      29,
+      82,
+      82,
+      82
+    ]
+  },
+  "usage": {
+    "input": 8702,
+    "output": 539,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

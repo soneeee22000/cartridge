@@ -1,0 +1,50 @@
+{
+  "artifact": {
+    "bytes": 9897,
+    "sha256": "ce1bf0eb4abb94f4884b0d52d9a605635e466e247bda809afbc33e48beaae10c",
+    "version": "a1"
+  },
+  "buildAttempts": 2,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "sticker-table",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [
+    "E1-24"
+  ],
+  "spec": {
+    "gameType": "toy-box",
+    "input": "tap-anywhere",
+    "lang": "en",
+    "loop": "Tap anywhere on the table to drop a wobbling leaf, shell or star sticker in turn and watch the counter grow. Press clear to sweep the table empty and start again; nothing is ever lost.",
+    "slug": "sticker-table",
+    "style": "paper-cut",
+    "title": "Sticker Table"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 45155,
+      "output": 10531
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 8356,
+      "output": 375
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 30754,
+      "output": 5179
+    }
+  },
+  "wallMs": 83620
+}

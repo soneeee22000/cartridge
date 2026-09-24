@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lighthouse Tide</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #2f3e3a; overflow: hidden;
+    font-family: Georgia, 'Comic Sans MS', cursive, sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "cartridge-host") return;
+  if (data.type === "pause") paused = true;
+  if (data.type === "resume") paused = false;
+  if (data.type === "reset") backToTitle();
+});
+
+// ---- Setup canvas ----
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+canvas.style.touchAction = "none";
+
+let dpr = Math.max(1, window.devicePixelRatio || 1);
+let W = 0, H = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---- Palette ----
+const COL = {
+  slate: "#2f3e3a",
+  chalk: "#eeeae0",
+  accent: "#f2c14e",
+  second: "#8fc1e3",
+};
+
+// ---- Chalk drawing helpers ----
+function chalkLine(x1, y1, x2, y2, width, color, alpha) {
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  const wob = 1.2;
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.beginPath();
+    const ox = (Math.random() - 0.5) * wob;
+    const oy = (Math.random() - 0.5) * wob;
+    ctx.moveTo(x1 + ox, y1 + oy);
+    // slight midpoint wobble
+    const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * wob * 2;
+    const my = (y1 + y2) / 2 + (Math.random() - 0.5) * wob * 2;
+    ctx.quadraticCurveTo(mx, my, x2 + ox, y2 + oy);
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkCircle(cx, cy, r, width, color, alpha) {
+  ctx.lineCap = "round";
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.beginPath();
+    const segs = 24;
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      const wob = (Math.random() - 0.5) * 1.5;
+      const px = cx + Math.cos(a) * (r + wob);
+      const py = cy + Math.sin(a) * (r + wob);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.lineWidth = width;
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha * (pass === 0 ? 1 : 0.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function hatchRect(x, y, w, h, color, alpha, spacing) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = alpha;
+  spacing = spacing || 8;
+  for (let i = -h; i < w; i += spacing) {
+    const x1 = x + i;
+    const y1 = y;
+    const x2 = x + i + h;
+    const y2 = y + h;
+    ctx.beginPath();
+    ctx.moveTo(Math.max(x, x1), y1 + Math.max(0, x - x1));
+    ctx.lineTo(Math.min(x + w, x2), y2 - Math.max(0, x2 - (x + w)));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function chalkText(text, x, y, size, color, alpha, align) {
+  ctx.font = `${size}px Georgia, serif`;
+  ctx.textAlign = align || "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = color;
+  ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+  ctx.fillText(text, x, y);
+  ctx.globalAlpha = 1;
+}
+
+// ---- Smudge background layer ----
+let smudges = [];
+function initSmudges() {
+  smudges = [];
+  for (let i = 0; i < 5; i++) {
+    smudges.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 60 + Math.random() * 120,
+    });
+  }
+}
+
+function drawSmudges() {
+  for (const s of smudges) {
+    ctx.beginPath();
+    ctx.ellipse(s.x, s.y, s.r, s.r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = COL.chalk;
+    ctx.globalAlpha = 0.03;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// ---- Game state ----
+let paused = false;
+let running = false; // true after first tap (play begins)
+let gameOver = false;
+let gameWon = false;
+
+const STAGE_COUNT = 5;
+let stage = 0;
+let lamps = [];
+let lampsLit = 0;
+let tideY = 0;
+let tideSpeed = 0;
+let floorY = 0;
+let stageStartTime = 0;
+let graceMs = 2500;
+let stairsReady = false;
+let stairsX = 0, stairsY = 0, stairsW = 60, stairsH = 80;
+let message = "";
+let messageTimer = 0;
+let score = 0;
+
+function stageGoalCount(s) {
+  return Math.min(3 + s, 8);
+}
+
+function buildStage(s) {
+  lamps = [];
+  lampsLit = 0;
+  stairsReady = false;
+  const count = stageGoalCount(s);
+  const margin = 60;
+  const usableW = W - margin * 2;
+  for (let i = 0; i < count; i++) {
+    lamps.push({
+      x: margin + Math.random() * usableW,
+      y: H * 0.25 + Math.random() * (H * 0.4),
+      lit: false,
+      r: 22,
+      flicker: Math.random() * Math.PI * 2,
+    });
+  }
+  floorY = H * 0.85;
+  tideY = H + 40;
+  tideSpeed = (0.12 + s * 0.05) * (H / 700);
+  stageStartTime = performance.now();
+  stairsX = W - 90;
+  stairsY = H * 0.15;
+  message = `Stage ${s}: Light ${count} lamps!`;
+  messageTimer = 3000;
+}
+
+function enterStage(next) {
+  stage = next;
+  buildStage(stage);
+  CARTRIDGE.send("level", { index: stage });
+}
+
+function onGoalMet() {
+  if (stage === STAGE_COUNT) {
+    gameWon = true;
+    gameOver = true;
+    CARTRIDGE.send("end", { reason: "win", value: score });
+  } else {
+    score += 100;
+    CARTRIDGE.send("score", { value: score });
+    enterStage(stage + 1);
+  }
+}
+
+function onStageFailed() {
+  gameOver = true;
+  gameWon = false;
+  CARTRIDGE.send("end", { reason: "lose", value: score });
+}
+
+function backToTitle() {
+  running = false;
+  gameOver = false;
+  gameWon = false;
+  paused = false;
+  stage = 0;
+  score = 0;
+  lamps = [];
+  message = "";
+}
+
+// ---- Input ----
+let lastTapTime = 0;
+
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  if (paused) return;
+
+  if (!running) {
+    running = true;
+    gameOver = false;
+    gameWon = false;
+    score = 0;
+    CARTRIDGE.send("start");
+    enterStage(1);
+    return;
+  }
+
+  if (gameOver) {
+    // tap to restart from title
+    backToTitle();
+    return;
+  }
+
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  // check stairs tap if all lamps lit
+  if (stairsReady) {
+    if (
+      x > stairsX - 10 &&
+      x < stairsX + stairsW + 10 &&
+      y > stairsY - 10 &&
+      y < stairsY + stairsH + 10
+    ) {
+      onGoalMet();
+      return;
+    }
+  }
+
+  // check lamp taps
+  for (const lamp of lamps) {
+    if (lamp.lit) continue;
+    const dx = x - lamp.x;
+    const dy = y - lamp.y;
+    if (Math.sqrt(dx * dx + dy * dy) < Math.max(lamp.r, 22)) {
+      lamp.lit = true;
+      lampsLit++;
+      score += 10;
+      CARTRIDGE.send("score", { value: score });
+      if (lampsLit >= lamps.length) {
+        stairsReady = true;
+        message = "All lit! Climb the stairs!";
+        messageTimer = 2500;
+      }
+      break;
+    }
+  }
+});
+
+// ---- Draw functions ----
+function drawTitle() {
+  ctx.clearRect(0, 0, W, H);
+  drawSmudges();
+  drawLighthouseIcon(W / 2, H * 0.35, 70);
+
+  chalkText("Lighthouse Tide", W / 2, H * 0.55, Math.min(42, W * 0.08), COL.chalk, 1);
+  chalkText(
+    "Light every lamp before the tide rises,",
+    W / 2,
+    H * 0.62,
+    Math.min(20, W * 0.045),
+    COL.chalk,
+    0.85
+  );
+  chalkText(
+    "then climb the stairs to the next floor.",
+    W / 2,
+    H * 0.67,
+    Math.min(20, W * 0.045),
+    COL.chalk,
+    0.85
+  );
+
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+  chalkText(
+    "Tap to begin",
+    W / 2,
+    H * 0.8,
+    Math.min(26, W * 0.06),
+    COL.accent,
+    0.6 + pulse * 0.4
+  );
+}
+
+function drawLighthouseIcon(cx, cy, size) {
+  // simple tower with hatching
+  const w = size * 0.5;
+  const h = size * 1.4;
+  chalkLine(cx - w / 2, cy + h / 2, cx - w / 3, cy - h / 2, 4, COL.chalk, 0.8);
+  chalkLine(cx + w / 2, cy + h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);
+  chalkLine(cx - w / 3, cy - h / 2, cx + w / 3, cy - h / 2, 4, COL.chalk, 0.8);
+  chalkLine(cx - w / 2, cy + h / 2, cx + w / 2, cy + h / 2, 4, COL.chalk, 0.8);
+  // lamp room
+  chalkCircle(cx, cy - h / 2 - 14, 16, 3, COL.accent, 0.9);
+  // rays
+  for (let i = -2; i <= 2; i++) {
+    chalkLine(
+      cx,
+      cy - h / 2 - 14,
+      cx + i * 30,
+      cy - h / 2 - 14 - 40,
+      2,
+      COL.accent,
+      0.3
+    );
+  }
+}
+
+function drawLamp(lamp) {
+  lamp.flicker += 0.08;
+  const glow = lamp.lit ? 0.9 : 0.35 + Math.sin(lamp.flicker) * 0.15;
+  const color = lamp.lit ? COL.accent : COL.second;
+  chalkCircle(lamp.x, lamp.y, lamp.r, 3, color, glow);
+  chalkCircle(lamp.x, lamp.y, lamp.r * 0.5, 2, color, glow * 0.7);
+  if (lamp.lit) {
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + lamp.flicker * 0.3;
+      const rr = lamp.r + 10;
+      chalkLine(
+        lamp.x + Math.cos(a) * lamp.r,
+        lamp.y + Math.sin(a) * lamp.r,
+        lamp.x + Math.cos(a) * rr,
+        lamp.y + Math.sin(a) * rr,
+        2,
+        COL.accent,
+        0.4
+      );
+    }
+  }
+}
+
+function drawStairs() {
+  const color = stairsReady ? COL.accent : COL.chalk;
+  const alpha = stairsReady ? 0.9 : 0.35;
+  for (let i = 0; i < 5; i++) {
+    const sy = stairsY + (i * stairsH) / 5;
+    chalkLine(
+      stairsX,
+      sy,
+      stairsX + stairsW,
+      sy,
+      3,
+      color,
+      alpha
+    );
+  }
+  chalkLine(stairsX, stairsY, stairsX, stairsY + stairsH, 3, color, alpha);
+  chalkLine(
+    stairsX + stairsW,
+    stairsY,
+    stairsX + stairsW,
+    stairsY + stairsH,
+    3,
+    color,
+    alpha
+  );
+  chalkText(
+    stairsReady ? "GO!" : "",
+    stairsX + stairsW / 2,
+    stairsY - 20,
+    18,
+    COL.accent,
+    0.9
+  );
+}
+
+function drawTide() {
+  const waveH = 10;
+  ctx.beginPath();
+  ctx.moveTo(0, tideY);
+  for (let x = 0; x <= W; x += 20) {
+    const y = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = COL.second;
+  ctx.globalAlpha = 0.15;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // wave line chalk stroke
+  for (let x = 0; x < W; x += 40) {
+    const y1 = tideY + Math.sin(x * 0.02 + performance.now() / 300) * waveH;
+    const y2 =
+      tideY + Math.sin((x + 40) * 0.02 + performance.now() / 300) * waveH;
+    chalkLine(x, y1, x + 40, y2, 3, COL.second, 0.6);
+  }
+}
+
+function drawFloorLine() {
+  for (let x = 0; x < W; x += 50) {
+    chalkLine(x, floorY, x + 50, floorY, 3, COL.chalk, 0.3);
+  }
+}
+
+function drawHUD() {
+  chalkText(
+    `Stage ${stage} / ${STAGE_COUNT}`,
+    70,
+    30,
+    18,
+    COL.chalk,
+    0.8,
+    "left"
+  );
+  chalkText(
+    `Lamps: ${lampsLit}/${lamps.length}`,
+    70,
+    56,
+    16,
+    COL.accent,
+    0.8,
+    "left"
+  );
+  chalkText(`Score: ${score}`, W - 70, 30, 16, COL.chalk, 0.8, "right");
+
+  if (messageTimer > 0) {
+    chalkText(
+      message,
+      W / 2,
+      H * 0.12,
+      Math.min(24, W * 0.05),
+      COL.accent,
+      Math.min(1, messageTimer / 500)
+    );
+  }
+}
+
+function drawPauseOverlay() {
+  ctx.fillStyle = COL.slate;
+  ctx.globalAlpha = 0.6;
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  chalkText("Paused", W / 2, H / 2, 32, COL.chalk, 1);
+}
+
+function drawGameOver() {
+  ctx.clearRect(0, 0, W, H);
+  drawSmudges();
+  if (gameWon) {
+    drawLighthouseIcon(W / 2, H * 0.3, 80);
+    chalkText(
+      "You lit every floor!",
+      W / 2,
+      H * 0.55,
+      Math.min(36, W * 0.08),
+      COL.accent,
+      1
+    );
+  } else {
+    chalkText(
+      "The tide took the tower...",
+      W / 2,
+      H * 0.45,
+      Math.min(30, W * 0.06),
+      COL.chalk,
+      0.9
+    );
+  }
+  chalkText(
+    `Final Score: ${score}`,
+    W / 2,
+    H * 0.6,
+    Math.min(22, W * 0.05),
+    COL.chalk,
+    0.8
+  );
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+  chalkText(
+    "Tap to return to title",
+    W / 2,
+    H * 0.75,
+    Math.min(22, W * 0.05),
+    COL.second,
+    0.5 + pulse * 0.4
+  );
+}
+
+// ---- Main loop ----
+let lastTime = performance.now();
+
+function update(dt) {
+  if (!running || paused || gameOver) return;
+
+  const elapsed = performance.now() - stageStartTime;
+  if (elapsed > graceMs) {
+    tideY -= tideSpeed * dt;
+  }
+
+  if (messageTimer > 0) messageTimer -= dt;
+
+  if (tideY <= floorY) {
+    onStageFailed();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawSmudges();
+
+  if (!running) {
+    drawTitle();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  if (gameOver) {
+    drawGameOver();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  // background lighthouse silhouette
+  drawLighthouseIcon(W / 2, H * 0.12, 40);
+
+  drawFloorLine();
+  for (const lamp of lamps) drawLamp(lamp);
+  drawStairs();
+  drawTide();
+  drawHUD();
+
+  if (paused) drawPauseOverlay();
+
+  requestAnimationFrame(loop);
+}
+
+function loop(now) {
+  const dt = Math.min(50, now - lastTime);
+  lastTime = now;
+  update(dt);
+  draw();
+}
+
+// ---- Boot ----
+initSmudges();
+window.addEventListener("resize", initSmudges);
+
+CARTRIDGE.send("boot", { title: "Lighthouse Tide", gameType: "stage-clear", lang: "en" });
+
+requestAnimationFrame((t) => {
+  lastTime = t;
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>

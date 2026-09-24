@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess Puzzle</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; overflow: hidden;
+    background: #2f3e3a;
+    height: 100%;
+    width: 100%;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+    background: #2f3e3a;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+  const CARTRIDGE = {
+    send(type, payload = {}) {
+      window.parent.postMessage(
+        { source: "cartridge", v: 1, type, payload },
+        "*",
+      );
+    },
+  };
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  const PALETTE = {
+    slate: '#2f3e3a',
+    chalk: '#eeeae0',
+    accent: '#f2c14e',
+    second: '#8fc1e3'
+  };
+
+  let W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = window.devicePixelRatio || 1;
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    draw();
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- Game state ----
+  let running = false;   // has play begun (after first tap)
+  let paused = false;
+  let gameOver = false;
+  let moves = 0;
+  let selected = null; // {r,c}
+  let boardSize = 8;
+  let cellPx = 0;
+  let originX = 0, originY = 0;
+  let smudges = [];
+  let statusText = '';
+  let legalTargets = [];
+
+  // Piece representation: {type: 'K'|'R'|'Q', color: 'w'|'b', r, c}
+  let pieces = [];
+
+  function backToTitle() {
+    running = false;
+    gameOver = false;
+    paused = false;
+    moves = 0;
+    selected = null;
+    statusText = '';
+    setupPuzzle();
+    draw();
+  }
+
+  // Generate a solvable mate-in-few puzzle: white Rook + Queen vs lone black king,
+  // or simpler: white Rook + King vs black King (basic mate pattern), player controls white.
+  function setupPuzzle() {
+    // Place lone black king somewhere not on edge corner extremes for variety
+    const bk = { type: 'K', color: 'b', r: 0, c: 4 };
+    const wk = { type: 'K', color: 'w', r: 4, c: 4 };
+    const wr = { type: 'R', color: 'w', r: 7, c: 0 };
+    const wq = { type: 'Q', color: 'w', r: 7, c: 3 };
+    pieces = [bk, wk, wr, wq];
+    // Verify not already in check/mate; if invalid arrangement, nudge
+    if (!validPositions()) {
+      wk.r = 5; wk.c = 3;
+    }
+  }
+
+  function validPositions() {
+    // no two pieces on same square, kings not adjacent
+    const set = new Set();
+    for (const p of pieces) {
+      const key = p.r + ',' + p.c;
+      if (set.has(key)) return false;
+      set.add(key);
+    }
+    const wk = pieces.find(p => p.type === 'K' && p.color === 'w');
+    const bk = pieces.find(p => p.type === 'K' && p.color === 'b');
+    if (Math.abs(wk.r - bk.r) <= 1 && Math.abs(wk.c - bk.c) <= 1) return false;
+    return true;
+  }
+
+  function pieceAt(r, c) {
+    return pieces.find(p => p.r === r && p.c === c);
+  }
+
+  function inBounds(r, c) {
+    return r >= 0 && r < 8 && c >= 0 && c < 8;
+  }
+
+  // Movement generation (simplified, ignoring castling/en-passant, includes basic check rules)
+  function rawMoves(piece) {
+    const moves = [];
+    const dirsRook = [[1,0],[-1,0],[0,1],[0,-1]];
+    const dirsKing = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    if (piece.type === 'R' || piece.type === 'Q') {
+      for (const [dr,dc] of dirsRook) {
+        let r = piece.r + dr, c = piece.c + dc;
+        while (inBounds(r,c)) {
+          const occ = pieceAt(r,c);
+          if (!occ) { moves.push([r,c]); }
+          else { if (occ.color !== piece.color) moves.push([r,c]); break; }
+          r += dr; c += dc;
+        }
+      }
+    }
+    if (piece.type === 'Q') {
+      const dirsDiag = [[1,1],[1,-1],[-1,1],[-1,-1]];
+      for (const [dr,dc] of dirsDiag) {
+        let r = piece.r + dr, c = piece.c + dc;
+        while (inBounds(r,c)) {
+          const occ = pieceAt(r,c);
+          if (!occ) { moves.push([r,c]); }
+          else { if (occ.color !== piece.color) moves.push([r,c]); break; }
+          r += dr; c += dc;
+        }
+      }
+    }
+    if (piece.type === 'K') {
+      for (const [dr,dc] of dirsKing) {
+        const r = piece.r + dr, c = piece.c + dc;
+        if (!inBounds(r,c)) continue;
+        const occ = pieceAt(r,c);
+        if (!occ || occ.color !== piece.color) moves.push([r,c]);
+      }
+    }
+    return moves;
+  }
+
+  function squareAttackedBy(r, c, color) {
+    for (const p of pieces) {
+      if (p.color !== color) continue;
+      if (p.type === 'K') {
+        if (Math.abs(p.r - r) <= 1 && Math.abs(p.c - c) <= 1 && !(p.r===r&&p.c===c)) return true;
+        continue;
+      }
+      const mv = rawMoves(p);
+      for (const [mr,mc] of mv) {
+        if (mr === r && mc === c) return true;
+      }
+    }
+    return false;
+  }
+
+  function kingOf(color) {
+    return pieces.find(p => p.type==='K' && p.color===color);
+  }
+
+  function isInCheck(color) {
+    const k = kingOf(color);
+    return squareAttackedBy(k.r, k.c, color === 'w' ? 'b' : 'w');
+  }
+
+  // Legal moves for a white piece (player-controlled), ensuring white king not left in check
+  function legalMovesFor(piece) {
+    const candidates = rawMoves(piece);
+    const legal = [];
+    for (const [r,c] of candidates) {
+      const target = pieceAt(r,c);
+      const origR = piece.r, origC = piece.c;
+      const removed = target;
+      if (removed) pieces = pieces.filter(p => p !== removed);
+      piece.r = r; piece.c = c;
+      const check = isInCheck('w');
+      piece.r = origR; piece.c = origC;
+      if (removed) pieces.push(removed);
+      if (!check) legal.push([r,c]);
+    }
+    return legal;
+  }
+
+  function whitePieces() {
+    return pieces.filter(p => p.color === 'w');
+  }
+
+  function anyWhiteLegalMove() {
+    for (const p of whitePieces()) {
+      if (legalMovesFor(p).length > 0) return true;
+    }
+    return false;
+  }
+
+  // After white moves, check black king status
+  function blackKingLegalSquares() {
+    const bk = kingOf('b');
+    const results = [];
+    const candidates = rawMoves(bk);
+    for (const [r,c] of candidates) {
+      const target = pieceAt(r,c);
+      const removed = target;
+      if (removed) pieces = pieces.filter(p => p !== removed);
+      const origR = bk.r, origC = bk.c;
+      bk.r = r; bk.c = c;
+      const attacked = squareAttackedBy(r, c, 'w');
+      bk.r = origR; bk.c = origC;
+      if (removed) pieces.push(removed);
+      if (!attacked) results.push([r,c]);
+    }
+    return results;
+  }
+
+  function isBlackCheckmated() {
+    if (!isInCheck('b')) return false;
+    if (blackKingLegalSquares().length > 0) return false;
+    // could also check block/capture but with R+Q+K vs K simplification, assume no other black pieces
+    return true;
+  }
+
+  function isBlackStalemated() {
+    if (isInCheck('b')) return false;
+    return blackKingLegalSquares().length === 0;
+  }
+
+  // Very simple "AI" for black king: move to a legal square that maximizes distance from white king/pieces, or random legal
+  function blackKingMove() {
+    const bk = kingOf('b');
+    const opts = blackKingLegalSquares();
+    if (opts.length === 0) return; // stalemate/mate handled elsewhere
+    // pick square farthest from center attackers on average
+    let best = opts[0];
+    let bestScore = -Infinity;
+    for (const [r,c] of opts) {
+      let score = 0;
+      for (const p of whitePieces()) {
+        score += Math.abs(p.r - r) + Math.abs(p.c - c);
+      }
+      // slight randomness
+      score += Math.random() * 0.5;
+      if (score > bestScore) { bestScore = score; best = [r,c]; }
+    }
+    bk.r = best[0]; bk.c = best[1];
+  }
+
+  function points() {
+    // fewer moves is better; score increases each move but represents progress
+    return moves;
+  }
+
+  // ---- Input handling ----
+  function boardMetrics() {
+    const margin = Math.min(W, H) * 0.06;
+    const avail = Math.min(W, H) - margin * 2;
+    cellPx = avail / 8;
+    originX = (W - cellPx * 8) / 2;
+    originY = (H - cellPx * 8) / 2;
+  }
+
+  function screenToCell(x, y) {
+    const c = Math.floor((x - originX) / cellPx);
+    const r = Math.floor((y - originY) / cellPx);
+    if (r < 0 || r > 7 || c < 0 || c > 7) return null;
+    return { r, c };
+  }
+
+  function onCellTapped(cell) {
+    if (gameOver) return;
+    const { r, c } = cell;
+    const occ = pieceAt(r, c);
+
+    if (selected) {
+      const sel = pieceAt(selected.r, selected.c);
+      if (!sel || sel.color !== 'w') { selected = null; draw(); return; }
+      const legal = legalMovesFor(sel);
+      const isLegal = legal.some(([lr,lc]) => lr === r && lc === c);
+      if (isLegal) {
+        // capture if any
+        const target = pieceAt(r, c);
+        if (target) pieces = pieces.filter(p => p !== target);
+        sel.r = r; sel.c = c;
+        selected = null;
+        moves += 1;
+        CARTRIDGE.send('score', { value: points() });
+
+        if (isBlackCheckmated()) {
+          gameOver = true;
+          statusText = 'Checkmate! You win.';
+          CARTRIDGE.send('end', { reason: 'win', value: moves });
+          draw();
+          return;
+        }
+        if (isBlackStalemated()) {
+          gameOver = true;
+          statusText = 'Stalemate - no legal move.';
+          CARTRIDGE.send('end', { reason: 'stuck' });
+          draw();
+          return;
+        }
+        // black moves (king only)
+        blackKingMove();
+        if (isBlackCheckmated()) {
+          gameOver = true;
+          statusText = 'Checkmate! You win.';
+          CARTRIDGE.send('end', { reason: 'win', value: moves });
+          draw();
+          return;
+        }
+        if (isBlackStalemated()) {
+          gameOver = true;
+          statusText = 'Stalemate - no legal move.';
+          CARTRIDGE.send('end', { reason: 'stuck' });
+          draw();
+          return;
+        }
+        if (!anyWhiteLegalMove()) {
+          gameOver = true;
+          statusText = 'No legal move left.';
+          CARTRIDGE.send('end', { reason: 'stuck' });
+          draw();
+          return;
+        }
+        draw();
+        return;
+      } else {
+        // reselect if tapping own piece
+        if (occ && occ.color === 'w') {
+          selected = { r, c };
+        } else {
+          selected = null;
+        }
+        draw();
+        return;
+      }
+    } else {
+      if (occ && occ.color === 'w') {
+        selected = { r, c };
+        draw();
+      }
+    }
+  }
+
+  canvas.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    if (paused) return;
+    if (!running) {
+      running = true;
+      CARTRIDGE.send('start');
+      draw();
+      return;
+    }
+    if (gameOver) return;
+    const x = event.clientX;
+    const y = event.clientY;
+    const cell = screenToCell(x, y);
+    if (cell) onCellTapped(cell);
+  }, { passive: false });
+
+  // ---- Drawing (chalkboard style) ----
+  function wobble(seedBase) {
+    return (Math.sin(seedBase * 12.9898) * 43758.5453 % 1) * 1.4;
+  }
+
+  function chalkLine(x1, y1, x2, y2, width, color, alpha) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.beginPath();
+      const offx = pass === 0 ? 0 : 1;
+      const offy = pass === 0 ? 0 : 1;
+      const wob = (Math.random() - 0.5) * 1.2;
+      ctx.moveTo(x1 + offx + wob, y1 + offy);
+      ctx.lineTo(x2 + offx - wob, y2 + offy);
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = pass === 0 ? alpha : alpha * 0.4;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function hatchRect(x, y, w, h, color, alpha, spacing) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    const step = spacing || 6;
+    for (let i = -h; i < w; i += step) {
+      chalkLine(x + i, y, x + i + h, y + h, 2, color, alpha);
+    }
+    ctx.restore();
+  }
+
+  function drawSmudges() {
+    for (const s of smudges) {
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y, s.rx, s.ry, s.rot, 0, Math.PI * 2);
+      ctx.fillStyle = PALETTE.chalk;
+      ctx.globalAlpha = s.alpha;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function initSmudges() {
+    smudges = [];
+    for (let i = 0; i < 6; i++) {
+      smudges.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        rx: 60 + Math.random() * 120,
+        ry: 30 + Math.random() * 70,
+        rot: Math.random() * Math.PI,
+        alpha: 0.02 + Math.random() * 0.03
+      });
+    }
+  }
+
+  function drawBoard() {
+    boardMetrics();
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const x = originX + c * cellPx;
+        const y = originY + r * cellPx;
+        const dark = (r + c) % 2 === 1;
+        if (dark) {
+          hatchRect(x, y, cellPx, cellPx, PALETTE.chalk, 0.15, 7);
+        }
+        // cell border, wobbly
+        chalkLine(x, y, x + cellPx, y, 2, PALETTE.chalk, 0.25);
+        chalkLine(x, y, x, y + cellPx, 2, PALETTE.chalk, 0.25);
+      }
+    }
+    // outer border thicker
+    const bx = originX, by = originY, bs = cellPx * 8;
+    chalkLine(bx, by, bx + bs, by, 4, PALETTE.chalk, 0.5);
+    chalkLine(bx, by + bs, bx + bs, by + bs, 4, PALETTE.chalk, 0.5);
+    chalkLine(bx, by, bx, by + bs, 4, PALETTE.chalk, 0.5);
+    chalkLine(bx + bs, by, bx + bs, by + bs, 4, PALETTE.chalk, 0.5);
+
+    // highlight selected + legal targets
+    if (selected) {
+      const sx = originX + selected.c * cellPx;
+      const sy = originY + selected.r * cellPx;
+      chalkLine(sx+2, sy+2, sx + cellPx-2, sy+2, 3, PALETTE.accent, 0.9);
+      chalkLine(sx+2, sy + cellPx-2, sx + cellPx-2, sy + cellPx-2, 3, PALETTE.accent, 0.9);
+      chalkLine(sx+2, sy+2, sx+2, sy + cellPx-2, 3, PALETTE.accent, 0.9);
+      chalkLine(sx + cellPx-2, sy+2, sx + cellPx-2, sy + cellPx-2, 3, PALETTE.accent, 0.9);
+
+      const sel = pieceAt(selected.r, selected.c);
+      if (sel) {
+        const legal = legalMovesFor(sel);
+        for (const [lr, lc] of legal) {
+          const lx = originX + lc * cellPx + cellPx/2;
+          const ly = originY + lr * cellPx + cellPx/2;
+          drawDot(lx, ly, cellPx * 0.1, PALETTE.second, 0.7);
+        }
+      }
+    }
+  }
+
+  function drawDot(x, y, r, color, alpha) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPiece(p) {
+    const x = originX + p.c * cellPx + cellPx / 2;
+    const y = originY + p.r * cellPx + cellPx / 2;
+    const s = cellPx * 0.32;
+    const color = p.color === 'w' ? PALETTE.chalk : PALETTE.second;
+
+    if (p.type === 'K') {
+      // simple crown-like king glyph
+      chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);
+      chalkLine(x - s, y + s, x - s*0.6, y - s*0.2, 4, color, 0.9);
+      chalkLine(x - s*0.6, y - s*0.2, x - s*0.2, y + s*0.3, 4, color, 0.9);
+      chalkLine(x - s*0.2, y + s*0.3, x, y - s*0.4, 4, color, 0.9);
+      chalkLine(x, y - s*0.4, x + s*0.2, y + s*0.3, 4, color, 0.9);
+      chalkLine(x + s*0.2, y + s*0.3, x + s*0.6, y - s*0.2, 4, color, 0.9);
+      chalkLine(x + s*0.6, y - s*0.2, x + s, y + s, 4, color, 0.9);
+      // cross on top
+      chalkLine(x, y - s*0.4, x, y - s*0.9, 3, color, 0.9);
+      chalkLine(x - s*0.2, y - s*0.7, x + s*0.2, y - s*0.7, 3, color, 0.9);
+    } else if (p.type === 'R') {
+      // rook: rectangle with crenellations
+      chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);
+      chalkLine(x - s, y + s, x - s*0.7, y - s*0.3, 4, color, 0.9);
+      chalkLine(x + s, y + s, x + s*0.7, y - s*0.3, 4, color, 0.9);
+      chalkLine(x - s*0.7, y - s*0.3, x + s*0.7, y - s*0.3, 4, color, 0.9);
+      // crenellations
+      chalkLine(x - s*0.7, y - s*0.3, x - s*0.7, y - s*0.7, 3, color, 0.9);
+      chalkLine(x - s*0.25, y - s*0.3, x - s*0.25, y - s*0.7, 3, color, 0.9);
+      chalkLine(x + s*0.25, y - s*0.3, x + s*0.25, y - s*0.7, 3, color, 0.9);
+      chalkLine(x + s*0.7, y - s*0.3, x + s*0.7, y - s*0.7, 3, color, 0.9);
+      chalkLine(x - s*0.7, y - s*0.7, x - s*0.25, y - s*0.7, 3, color, 0.9);
+      chalkLine(x + s*0.25, y - s*0.7, x + s*0.7, y - s*0.7, 3, color, 0.9);
+    } else if (p.type === 'Q') {
+      // queen: circle with spikes
+      chalkLine(x - s, y + s, x + s, y + s, 4, color, 0.9);
+      chalkLine(x - s, y + s, x - s*0.6, y - s*0.1, 4, color, 0.9);
+      chalkLine(x + s, y + s, x + s*0.6, y - s*0.1, 4, color, 0.9);
+      chalkLine(x - s*0.6, y - s*0.1, x + s*0.6, y - s*0.1, 4, color, 0.9);
+      // spikes
+      for (let i = -2; i <= 2; i++) {
+        const sx = x + i * s * 0.3;
+        chalkLine(sx, y - s*0.1, sx + (Math.random()-0.5)*4, y - s*0.7, 3, color, 0.9);
+      }
+      drawDot(x, y - s*0.85, 3, color, 0.9);
+    }
+  }
+
+  function drawPieces() {
+    for (const p of pieces) drawPiece(p);
+  }
+
+  function drawTitleScreen() {
+    ctx.font = `bold ${Math.min(W,H)*0.06}px 'Trebuchet MS', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = PALETTE.chalk;
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('Chess Puzzle', W/2, H*0.28);
+    ctx.globalAlpha = 1;
+
+    ctx.font = `${Math.min(W,H)*0.03}px 'Trebuchet MS', sans-serif`;
+    ctx.fillStyle = PALETTE.second;
+    ctx.globalAlpha = 0.8 + 0.2 * Math.sin(Date.now() / 300);
+    ctx.fillText('Tap to begin', W/2, H*0.36);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHUD() {
+    ctx.font = `${Math.min(W,H)*0.025}px 'Trebuchet MS', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillStyle = PALETTE.chalk;
+    ctx.globalAlpha = 0.85;
+    ctx.fillText('Moves: ' + moves, 14, 26);
+    ctx.globalAlpha = 1;
+
+    if (gameOver) {
+      ctx.textAlign = 'center';
+      ctx.font = `bold ${Math.min(W,H)*0.04}px 'Trebuchet MS', sans-serif`;
+      ctx.fillStyle = PALETTE.accent;
+      ctx.globalAlpha = 0.95;
+      ctx.fillText(statusText, W/2, H*0.08);
+      ctx.globalAlpha = 1;
+    } else if (running) {
+      ctx.textAlign = 'center';
+      ctx.font = `${Math.min(W,H)*0.022}px 'Trebuchet MS', sans-serif`;
+      ctx.fillStyle = PALETTE.chalk;
+      ctx.globalAlpha = 0.7;
+      const check = isInCheck('b') ? 'Black king in check!' : 'Checkmate the lone king';
+      ctx.fillText(check, W/2, H*0.06);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = PALETTE.slate;
+    ctx.fillRect(0, 0, W, H);
+    drawSmudges();
+
+    if (!running) {
+      drawTitleScreen();
+      requestAnimationFrame(draw);
+      return;
+    }
+
+    drawBoard();
+    drawPieces();
+    drawHUD();
+
+    if (paused) {
+      ctx.fillStyle = PALETTE.slate;
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+      ctx.font = `bold ${Math.min(W,H)*0.05}px 'Trebuchet MS', sans-serif`;
+      ctx.fillStyle = PALETTE.chalk;
+      ctx.textAlign = 'center';
+      ctx.fillText('Paused', W/2, H/2);
+    }
+
+    if (!gameOver) requestAnimationFrame(draw);
+  }
+
+  // ---- Host messaging ----
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data || data.source !== 'cartridge-host') return;
+    if (data.type === 'pause') { paused = true; draw(); }
+    if (data.type === 'resume') { paused = false; draw(); }
+    if (data.type === 'reset') backToTitle();
+  });
+
+  // ---- Boot ----
+  setupPuzzle();
+  resize();
+  initSmudges();
+  draw();
+  CARTRIDGE.send('boot', { title: 'Chess Puzzle', gameType: 'puzzle-board', lang: 'en' });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comet Lane Runner</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #fbf7ee; overflow: hidden;
+    font-family: "Arial Narrow", Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  const PAPER = "#fbf7ee";
+  const INK1 = "#ff48b0"; // pink
+  const INK2 = "#0078bf"; // blue
+  const OVERLAP = "#5b3a8c";
+
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+  let W = window.innerWidth, H = window.innerHeight;
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildGrain();
+  }
+  window.addEventListener("resize", resize);
+
+  // ---- grain tile (pre-rendered once, reused) ----
+  let grainCanvas = null;
+  function buildGrain() {
+    const size = 128;
+    grainCanvas = document.createElement("canvas");
+    grainCanvas.width = size;
+    grainCanvas.height = size;
+    const gctx = grainCanvas.getContext("2d");
+    const imgData = gctx.createImageData(size, size);
+    for (let i = 0; i < imgData.data.length; i += 4) {
+      const v = Math.random() * 255;
+      imgData.data[i] = v;
+      imgData.data[i+1] = v;
+      imgData.data[i+2] = v;
+      imgData.data[i+3] = 255;
+    }
+    gctx.putImageData(imgData, 0, 0);
+  }
+
+  function drawGrain() {
+    if (!grainCanvas) return;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.globalCompositeOperation = "multiply";
+    const pattern = ctx.createPattern(grainCanvas, "repeat");
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  // ---- game state ----
+  const LANES = 3;
+  let laneX = [];
+  let playerLane = 1;
+  let playerDrawLane = 1; // for smooth transitions
+  let running = false;
+  let paused = false;
+  let started = false;
+  let score = 0;
+  let scoreShown = 0;
+  let speed = 260; // px/sec base scroll speed
+  let elapsed = 0;
+  let last = 0;
+  let hazards = []; // {lane, y, type: 'comet'|'star'}
+  let spawnTimer = 0;
+  let spawnInterval = 1.4;
+  let laneWidth = 0;
+  let playerY = 0;
+  let playerSize = 40;
+  let bootSent = false;
+  let hintPulse = 0;
+  let bgOffset = 0;
+  let firstHazardSpawned = false;
+  let stageIndex = 1;
+  let lastStageSpeed = speed;
+
+  function computeLanes() {
+    laneWidth = W / LANES;
+    laneX = [];
+    for (let i = 0; i < LANES; i++) {
+      laneX.push(laneWidth * i + laneWidth / 2);
+    }
+    playerY = H - Math.max(H * 0.18, 90);
+  }
+
+  function resetState() {
+    playerLane = 1;
+    playerDrawLane = 1;
+    running = false;
+    paused = false;
+    started = false;
+    score = 0;
+    scoreShown = 0;
+    speed = 260;
+    elapsed = 0;
+    hazards = [];
+    spawnTimer = 0;
+    spawnInterval = 1.4;
+    firstHazardSpawned = false;
+    stageIndex = 1;
+    lastStageSpeed = speed;
+    computeLanes();
+  }
+
+  function backToTitle() {
+    resetState();
+  }
+
+  resize();
+  resetState();
+
+  // ---- input ----
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (paused) return;
+    if (!running) {
+      running = true;
+      started = true;
+      CARTRIDGE.send("start");
+      // spawn first hazard well ahead, keep opening lane clear
+      spawnFirstHazard();
+      return;
+    }
+    act(event);
+  });
+
+  function act(event) {
+    // tap left half = move left, right half = move right
+    const x = event.clientX;
+    if (x < W / 2) {
+      playerLane = Math.max(0, playerLane - 1);
+    } else {
+      playerLane = Math.min(LANES - 1, playerLane + 1);
+    }
+  }
+
+  function spawnFirstHazard() {
+    // spawn far away, and never in the player's current lane
+    let lane = Math.floor(Math.random() * LANES);
+    if (lane === playerLane) lane = (lane + 1) % LANES;
+    hazards.push({ lane: lane, y: -H * 1.2, type: "comet" });
+    firstHazardSpawned = true;
+  }
+
+  function spawnHazard() {
+    const isStar = Math.random() < 0.35;
+    const lane = Math.floor(Math.random() * LANES);
+    hazards.push({ lane: lane, y: -60, type: isStar ? "star" : "comet" });
+  }
+
+  function addScore(v) {
+    score += v;
+    if (score < 0) score = 0;
+    CARTRIDGE.send("score", { value: score });
+  }
+
+  function crash() {
+    running = false;
+    CARTRIDGE.send("end", { reason: "lose", value: score });
+  }
+
+  function advance(dt) {
+    elapsed += dt;
+    bgOffset += speed * dt;
+    // ramp difficulty with speed over time (no levels)
+    speed = 260 + Math.min(340, elapsed * 9);
+    spawnInterval = Math.max(0.55, 1.4 - elapsed * 0.02);
+
+    // send periodic "level" style stage markers via speed thresholds
+    // (level event forbidden for arcade-run -> do not send)
+
+    spawnTimer += dt;
+    if (spawnTimer >= spawnInterval) {
+      spawnTimer = 0;
+      spawnHazard();
+    }
+
+    for (let h of hazards) {
+      h.y += speed * dt;
+    }
+    hazards = hazards.filter(h => h.y < H + 80);
+
+    // smooth player lane transition
+    const targetX = laneX[playerLane];
+    playerDrawLane += (playerLane - playerDrawLane) * Math.min(1, dt * 10);
+  }
+
+  function collide() {
+    const px = laneX[playerLane];
+    for (let h of hazards) {
+      const dy = h.y - playerY;
+      if (Math.abs(dy) < playerSize * 0.6 && h.lane === playerLane) {
+        if (h.type === "star") {
+          addScore(10);
+          h.y = H + 1000; // remove
+        } else {
+          crash();
+          return;
+        }
+      }
+    }
+  }
+
+  // ---- drawing ----
+  function drawBackground() {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+
+    // lane dividers, scrolling stripes for motion feedback
+    ctx.save();
+    ctx.strokeStyle = INK2;
+    ctx.globalAlpha = 0.25;
+    ctx.lineWidth = 3;
+    for (let i = 1; i < LANES; i++) {
+      const x = laneWidth * i;
+      ctx.beginPath();
+      const dashLen = 30, gap = 24;
+      const offset = bgOffset % (dashLen + gap);
+      for (let y = -dashLen + offset; y < H; y += dashLen + gap) {
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + dashLen);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // drifting clouds (misregistered dots) for idle motion
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    for (let i = 0; i < 6; i++) {
+      const cx = (i * 137 + bgOffset * 0.2) % (W + 100) - 50;
+      const cy = (i * 97) % H;
+      ctx.fillStyle = INK1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = INK2;
+      ctx.beginPath();
+      ctx.arc(cx + 2, cy + 2, 14, 0, Math.PI * 2);
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
+    }
+    ctx.restore();
+  }
+
+  function drawComet(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    // tail (ink2)
+    ctx.fillStyle = INK2;
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(-14, -60);
+    ctx.lineTo(14, -60);
+    ctx.closePath();
+    ctx.fill();
+    // body (ink1, offset for misregistration)
+    ctx.fillStyle = INK1;
+    ctx.beginPath();
+    ctx.arc(1, 1, 22, 0, Math.PI * 2);
+    ctx.fill();
+    // overlap core
+    ctx.fillStyle = OVERLAP;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStar(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = INK2;
+    drawStarPath(2, 2, 18, 8);
+    ctx.fill();
+    ctx.fillStyle = INK1;
+    drawStarPath(0, 0, 18, 8);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStarPath(ox, oy, outerR, innerR) {
+    ctx.beginPath();
+    const spikes = 5;
+    let rot = -Math.PI / 2;
+    const step = Math.PI / spikes;
+    ctx.moveTo(ox + Math.cos(rot) * outerR, oy + Math.sin(rot) * outerR);
+    for (let i = 0; i < spikes; i++) {
+      rot += step;
+      ctx.lineTo(ox + Math.cos(rot) * innerR, oy + Math.sin(rot) * innerR);
+      rot += step;
+      ctx.lineTo(ox + Math.cos(rot) * outerR, oy + Math.sin(rot) * outerR);
+    }
+    ctx.closePath();
+  }
+
+  function drawPlayer() {
+    const x = laneX[Math.round(playerDrawLane)] !== undefined
+      ? (laneX[playerLane] * 0 + interpLaneX())
+      : laneX[playerLane];
+    const px = interpLaneX();
+    ctx.save();
+    ctx.translate(px, playerY);
+    // ship shadow layer (ink2 offset)
+    ctx.fillStyle = INK2;
+    ctx.beginPath();
+    ctx.moveTo(2, -26);
+    ctx.lineTo(24, 22);
+    ctx.lineTo(-20, 22);
+    ctx.closePath();
+    ctx.fill();
+    // ship body ink1
+    ctx.fillStyle = INK1;
+    ctx.beginPath();
+    ctx.moveTo(0, -28);
+    ctx.lineTo(22, 20);
+    ctx.lineTo(-22, 20);
+    ctx.closePath();
+    ctx.fill();
+    // cockpit overlap
+    ctx.fillStyle = OVERLAP;
+    ctx.beginPath();
+    ctx.arc(0, -2, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function interpLaneX() {
+    // linear interpolate between lane slots for smoothness
+    return laneX[playerLane];
+  }
+
+  function drawHUD() {
+    ctx.save();
+    ctx.fillStyle = INK2;
+    ctx.font = "bold 28px 'Arial Narrow', Arial, sans-serif";
+    ctx.textBaseline = "top";
+    ctx.fillText("SCORE " + Math.floor(scoreShown), 18, 16);
+    ctx.restore();
+  }
+
+  function drawTitle() {
+    ctx.save();
+    ctx.fillStyle = OVERLAP;
+    ctx.textAlign = "center";
+    ctx.font = "bold 46px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillText("COMET LANE", W/2, H*0.28);
+    ctx.fillText("RUNNER", W/2, H*0.28 + 52);
+
+    const pulse = 0.5 + 0.5 * Math.sin(hintPulse);
+    ctx.globalAlpha = 0.5 + pulse * 0.5;
+    ctx.font = "bold 24px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = INK1;
+    ctx.fillText("TAP TO BEGIN", W/2, H*0.55);
+    ctx.globalAlpha = 1;
+    ctx.font = "18px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = INK2;
+    ctx.fillText("Tap left / right side to switch lanes", W/2, H*0.62);
+    ctx.restore();
+  }
+
+  function drawEnd() {
+    ctx.save();
+    ctx.fillStyle = "rgba(251,247,238,0.85)";
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = OVERLAP;
+    ctx.textAlign = "center";
+    ctx.font = "bold 40px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillText("RUN OVER", W/2, H*0.32);
+    ctx.font = "bold 30px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = INK1;
+    ctx.fillText("SCORE " + Math.floor(score), W/2, H*0.42);
+
+    const pulse = 0.5 + 0.5 * Math.sin(hintPulse);
+    ctx.globalAlpha = 0.5 + pulse * 0.5;
+    ctx.font = "22px 'Arial Narrow', Arial, sans-serif";
+    ctx.fillStyle = INK2;
+    ctx.fillText("TAP TO REPLAY", W/2, H*0.5);
+    ctx.restore();
+  }
+
+  function draw() {
+    drawBackground();
+
+    if (started && running) {
+      for (let h of hazards) {
+        const x = laneX[h.lane];
+        if (h.type === "comet") drawComet(x, h.y);
+        else drawStar(x, h.y);
+      }
+      drawPlayer();
+      drawHUD();
+    } else if (!started) {
+      // idle bobbing player preview + title
+      drawPlayer();
+      drawTitle();
+    } else if (started && !running) {
+      // after crash
+      for (let h of hazards) {
+        const x = laneX[h.lane];
+        if (h.type === "comet") drawComet(x, h.y);
+        else drawStar(x, h.y);
+      }
+      drawPlayer();
+      drawHUD();
+      drawEnd();
+    }
+
+    drawGrain();
+  }
+
+  // score smoothing toward actual score for nicer feedback
+  function updateScoreShown(dt) {
+    scoreShown += (score - scoreShown) * Math.min(1, dt * 8);
+    if (Math.abs(score - scoreShown) < 0.1) scoreShown = score;
+  }
+
+  // handle tap-to-replay after end
+  let wantReplayListener = false;
+  canvas.addEventListener("pointerdown", (event) => {
+    if (started && !running && !paused) {
+      // replay
+      event.preventDefault();
+      resetState();
+    }
+  });
+
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    hintPulse += dt * 3;
+    if (running && !paused) {
+      advance(dt);
+      collide();
+    }
+    updateScoreShown(dt);
+    draw();
+    if (!bootSent) {
+      CARTRIDGE.send("boot", { title: "Comet Lane Runner", gameType: "arcade-run", lang: "en" });
+      bootSent = true;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---- host commands ----
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") backToTitle();
+  });
+
+})();
+</script>
+</body>
+</html>

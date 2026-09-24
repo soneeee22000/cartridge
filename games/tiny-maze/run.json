@@ -1,0 +1,50 @@
+{
+  "artifact": {
+    "bytes": 15406,
+    "sha256": "3d2ae5d1edaf6e4ad95927e816f12a05d19a97f35d9c431f771d8359d3e1cb9a",
+    "version": "a1"
+  },
+  "buildAttempts": 2,
+  "failure": null,
+  "format": "cartridge-run/1",
+  "itemId": "tiny-maze",
+  "models": {
+    "builder": "claude-sonnet-5",
+    "planner": "claude-sonnet-5"
+  },
+  "priceTableVersion": "2026-09-24",
+  "repairRules": [
+    "E1-15"
+  ],
+  "spec": {
+    "gameType": "stage-clear",
+    "input": "swipe-lanes",
+    "lang": "en",
+    "loop": "Guide your token through a small maze toward the glowing exit using swipes to move between lanes of the grid. Reaching the exit clears the maze and opens a new one; there is no way to fail, only to keep exploring.",
+    "slug": "tiny-maze",
+    "style": "chalkboard",
+    "title": "Tiny Maze"
+  },
+  "status": "complete",
+  "usage": {
+    "generate": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 53812,
+      "output": 15308
+    },
+    "plan": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 7565,
+      "output": 380
+    },
+    "repair": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 37589,
+      "output": 7932
+    }
+  },
+  "wallMs": 118675
+}

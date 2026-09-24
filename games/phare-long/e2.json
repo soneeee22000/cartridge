@@ -1,20 +1,25 @@
 {
-  "consoleErrors": [],
+  "consoleErrors": [
+    "error: Uncaught ReferenceError: backToTitle is not defined",
+    "error: Uncaught ReferenceError: backToTitle is not defined",
+    "error: Uncaught ReferenceError: backToTitle is not defined",
+    "error: Uncaught ReferenceError: backToTitle is not defined"
+  ],
   "detectors": {
     "blank-frame": "pass",
     "boot-handshake": "pass",
-    "console-error": "pass",
+    "console-error": "fail",
     "idle-death": "pass",
     "idle-static": "pass",
-    "tap-unresponsive": "pass"
+    "tap-unresponsive": "fail"
   },
-  "longestPlaySeconds": 8.81529999999702,
+  "longestPlaySeconds": 25,
   "metrics": {
-    "bootMs": 12.200000002980232,
-    "distinctColours": 5733,
+    "bootMs": 46.70000000298023,
+    "distinctColours": 2140,
     "firstEndSeconds": null,
-    "idleMotionRatio": 0.06770399305555555,
-    "lumaStddev": 28.493195501659788,
-    "tapMotionRatio": 0.1194140625
+    "idleMotionRatio": 0.0011675347222222222,
+    "lumaStddev": 41.14797795229052,
+    "tapMotionRatio": 0.0016927083333333334
   }
 }

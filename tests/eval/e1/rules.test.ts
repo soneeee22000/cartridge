@@ -455,6 +455,21 @@ describe("E1-24 toy-box clear-the-table", () => {
     expect(status("E1-24", otherControl)).toBe("fail");
   });
 
+  it("names the function the reset handler calls, so a repair knows which one to wire", () => {
+    const wrapped = game("toy-box", {
+      host: HOST_HANDLER("backToTitle()"),
+      extra: [
+        "function clearTable() { score = 0; }",
+        "function backToTitle() { running = false; clearTable(); }",
+        'document.getElementById("clear").addEventListener("click", clearTable);',
+      ].join("\n"),
+    });
+    const outcome = evaluateRule("E1-24", wrapped, {});
+    expect(outcome.status).toBe("fail");
+    expect(outcome.message).toContain("backToTitle()");
+    expect(outcome.message).toMatch(/call backToTitle\(\) directly/);
+  });
+
   it("is n/a for other types", () => {
     expect(status("E1-24", game())).toBe("n/a");
   });

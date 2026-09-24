@@ -118,13 +118,18 @@ function checkClearTable(game: ParsedGame): RuleOutcome {
   if (!handlesReset(game) || !listensFor(game, ["message"])) {
     return fail(`The game does not handle reset from "${HOST_SOURCE}".`);
   }
-  const shared = [...resetFunctions(game)].some((name) =>
-    controlCalls(game, name),
-  );
-  return passIf(
-    shared,
-    "No in-game control calls the function that handles reset.",
-  );
+  const called = [...resetFunctions(game)];
+  const shared = called.some((name) => controlCalls(game, name));
+  return passIf(shared, clearTableMessage(called));
+}
+
+/** Names what the reset branch calls, so a repair wires that exact function to a control. */
+function clearTableMessage(called: readonly string[]): string {
+  const [first] = called;
+  if (first === undefined)
+    return "The reset branch calls no function; move the clear-the-table code into one function and call it there.";
+  const names = called.map((name) => `${name}()`).join(", ");
+  return `The reset branch calls ${names}, and no in-game control calls ${called.length === 1 ? "it" : "any of them"}. Make a visible control's click or pointer handler call ${first}() directly, or make the reset branch call the function the control already calls.`;
 }
 
 /** Rules cited by the declared type's card, plus the toy-box replay rule. */

@@ -6,4 +6,5 @@ export const WORDS_FR: ReadonlySet<string> = new Set([
   "ils", "elles", "au", "aux", "en", "ce", "cet", "cette", "ces", "pas", "ne",
   "mais", "donc", "chaque", "leur", "leurs", "nous", "notre", "son", "sa",
   "ses", "puis", "quand", "sans", "vers", "entre", "jusqu", "avant", "après",
+  "à", "par", "je", "tu", "mon", "ma", "mes", "se", "si",
 ]);

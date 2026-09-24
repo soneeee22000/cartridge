@@ -1,0 +1,434 @@
+[
+  {
+    "id": "en-comet-panel",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Comet Lanes",
+      "Tap to launch",
+      "Hit by a comet",
+      "Tap to fly again"
+    ]
+  },
+  {
+    "id": "en-orchard",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Catch the apples",
+      "Round over",
+      "The basket is full",
+      "Wind is picking up"
+    ]
+  },
+  {
+    "id": "en-kite",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Paper Kite",
+      "Tap to rise over the roofs",
+      "You clipped a chimney",
+      "Ribbons collected"
+    ]
+  },
+  {
+    "id": "en-lighthouse",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Light every lamp",
+      "The tide is rising",
+      "Climb to the next floor",
+      "All lamps are lit"
+    ]
+  },
+  {
+    "id": "en-tiles",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Sort the tiles",
+      "Each row needs one colour",
+      "No moves left",
+      "Board solved in style"
+    ]
+  },
+  {
+    "id": "en-stickers",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Sticker Table",
+      "Tap anywhere to add a sticker",
+      "Clear the table",
+      "Stickers on the table"
+    ]
+  },
+  {
+    "id": "en-canal",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Canal Run",
+      "Drag to change channel",
+      "You hit a barge",
+      "Set off again"
+    ]
+  },
+  {
+    "id": "en-maze",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Hedge Maze",
+      "Swipe to move the hedgehog",
+      "You are out of steps",
+      "You found the exit"
+    ]
+  },
+  {
+    "id": "en-tram",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Night Tram",
+      "Open the doors at the lit stop",
+      "You missed a stop",
+      "Level complete"
+    ]
+  },
+  {
+    "id": "en-bubbles",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Bubble Bath",
+      "Pop as many as you like",
+      "Bubbles popped so far",
+      "Start over with a clean tub"
+    ]
+  },
+  {
+    "id": "en-garden",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Pebble Garden",
+      "Place a stone with each tap",
+      "Rake the garden clean",
+      "Stones in the garden"
+    ]
+  },
+  {
+    "id": "en-snail",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Snail Race",
+      "Hold to crawl forward",
+      "A bird got your snail",
+      "Try it again from the start"
+    ]
+  },
+  {
+    "id": "en-aquarium",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Paper Fish",
+      "Tap the water to add a fish",
+      "Fish in the tank",
+      "Empty the bowl"
+    ]
+  },
+  {
+    "id": "en-veggies",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Veggie Patch",
+      "Swap two neighbours",
+      "Line up three carrots",
+      "No swaps are left on the board"
+    ]
+  },
+  {
+    "id": "en-lantern",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Lantern Dash",
+      "Tap to hop between lanes",
+      "A tile fell on you",
+      "Sparks collected this run"
+    ]
+  },
+  {
+    "id": "en-beacon",
+    "label": "en",
+    "hard": false,
+    "strings": [
+      "Storm Beacon",
+      "Sweep the beam over each boat",
+      "A boat struck the rocks",
+      "Every boat is home for the night"
+    ]
+  },
+  {
+    "id": "fr-comete",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Couloirs de comètes",
+      "Touchez pour décoller",
+      "Touché par une comète",
+      "Touchez pour repartir"
+    ]
+  },
+  {
+    "id": "fr-verger",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Attrape les pommes",
+      "Fin de la manche",
+      "Le panier est plein",
+      "Le vent se lève"
+    ]
+  },
+  {
+    "id": "fr-cerf-volant",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Cerf-volant de papier",
+      "Touchez pour monter au-dessus des toits",
+      "Vous avez heurté une cheminée",
+      "Rubans ramassés"
+    ]
+  },
+  {
+    "id": "fr-phare",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Allume chaque lampe",
+      "La marée monte",
+      "Monte à l'étage suivant",
+      "Toutes les lampes sont allumées"
+    ]
+  },
+  {
+    "id": "fr-tuiles",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Trie les tuiles",
+      "Chaque rangée a une seule couleur",
+      "Plus aucun coup",
+      "Le plateau est résolu"
+    ]
+  },
+  {
+    "id": "fr-autocollants",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "La table aux autocollants",
+      "Touchez pour poser un autocollant",
+      "Vider la table",
+      "Autocollants sur la table"
+    ]
+  },
+  {
+    "id": "fr-canal",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Course sur le canal",
+      "Glissez pour changer de voie",
+      "Vous avez heurté une péniche",
+      "Repartir sur l'eau"
+    ]
+  },
+  {
+    "id": "fr-labyrinthe",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Labyrinthe de haies",
+      "Glissez pour guider le hérisson",
+      "Il ne reste plus de pas",
+      "Vous avez trouvé la sortie"
+    ]
+  },
+  {
+    "id": "fr-tramway",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Tramway de nuit",
+      "Ouvrez les portes au quai éclairé",
+      "Vous avez raté un arrêt",
+      "Niveau terminé"
+    ]
+  },
+  {
+    "id": "fr-bulles",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Bain de bulles",
+      "Éclate les bulles à ton rythme",
+      "Bulles éclatées",
+      "Recommencer avec une baignoire vide"
+    ]
+  },
+  {
+    "id": "fr-jardin",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Jardin de cailloux",
+      "Pose un caillou à chaque toucher",
+      "Ratisser le jardin",
+      "Cailloux dans le jardin"
+    ]
+  },
+  {
+    "id": "fr-escargot",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Course d'escargots",
+      "Maintiens pour avancer",
+      "Un oiseau a pris ton escargot",
+      "Rejoue depuis le début"
+    ]
+  },
+  {
+    "id": "fr-aquarium",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Poissons de papier",
+      "Touche l'eau pour ajouter un poisson",
+      "Poissons dans le bocal",
+      "Vider le bocal"
+    ]
+  },
+  {
+    "id": "fr-potager",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Le potager",
+      "Échange deux voisins",
+      "Aligne trois carottes",
+      "Plus aucun échange sur la grille"
+    ]
+  },
+  {
+    "id": "fr-lanterne",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Course de la lanterne",
+      "Touche pour changer de voie",
+      "Une tuile t'est tombée dessus",
+      "Étincelles ramassées pendant la partie"
+    ]
+  },
+  {
+    "id": "fr-balise",
+    "label": "fr",
+    "hard": false,
+    "strings": [
+      "Phare dans la tempête",
+      "Balaie chaque bateau avec le faisceau",
+      "Un bateau a touché les rochers",
+      "Tous les bateaux sont au port"
+    ]
+  },
+  {
+    "id": "hard-mixed-halves",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": [
+      "Tap to start the game",
+      "Touchez pour commencer la partie",
+      "You lost the round",
+      "Vous avez perdu la manche"
+    ]
+  },
+  {
+    "id": "hard-very-short-en",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": ["Go", "Tap", "Again"]
+  },
+  {
+    "id": "hard-very-short-fr",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": ["Jouer", "Encore", "Perdu"]
+  },
+  {
+    "id": "hard-cognates",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": [
+      "Score",
+      "Options",
+      "Pause",
+      "Menu",
+      "Message",
+      "Direction",
+      "Portion",
+      "Collision"
+    ]
+  },
+  {
+    "id": "hard-cognate-titles",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": [
+      "Nature Express",
+      "Orange Rapide",
+      "Train Direct",
+      "Local Radar",
+      "Final Total"
+    ]
+  },
+  {
+    "id": "hard-mixed-en-leaning",
+    "label": "en",
+    "hard": true,
+    "strings": [
+      "Tap to jump over the rocks",
+      "Game over for the fox",
+      "Try it again",
+      "Bonjour",
+      "Merci"
+    ]
+  },
+  {
+    "id": "hard-mixed-fr-leaning",
+    "label": "fr",
+    "hard": true,
+    "strings": [
+      "Touche pour sauter par-dessus les rochers",
+      "Le renard a perdu la partie",
+      "Rejoue une fois de plus",
+      "Game over",
+      "Score"
+    ]
+  },
+  {
+    "id": "hard-numbers-and-names",
+    "label": "abstain-expected",
+    "hard": true,
+    "strings": ["Kiko", "Mira", "Zanzi", "Pomodoro", "Tokyo Drift"]
+  }
+]

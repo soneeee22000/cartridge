@@ -6,4 +6,5 @@ export const WORDS_EN: ReadonlySet<string> = new Set([
   "but", "or", "not", "no", "each", "every", "some", "they", "their", "them",
   "he", "she", "his", "her", "we", "our", "has", "have", "can", "will", "then",
   "than", "until", "before", "after", "over", "under", "through", "without",
+  "if", "my", "up", "down", "out", "off", "all", "again",
 ]);

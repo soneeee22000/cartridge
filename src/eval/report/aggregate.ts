@@ -2,7 +2,7 @@ import { ZERO_USAGE, addUsage, type Usage } from "../../engine/usage.ts";
 import { MODEL_IDS } from "../../models/port.ts";
 import { LENGTH_BANDS, type LengthBand } from "../dataset/schema.ts";
 import { DETECTOR_IDS } from "../e2/types.ts";
-import { DIMENSIONS } from "../e3/rubric.ts";
+import { DIMENSIONS, type Dimension } from "../e3/rubric.ts";
 import {
   LABELLED_NOTE,
   labelledSetStats,
@@ -102,13 +102,30 @@ function e2Stats(games: readonly ItemRecord[]): BandRow["e2"] {
   return { probed: probed.length, passed, detectorFails: tally(failing) };
 }
 
+/** The E3 label a failed judge call counts as: nothing was judged, so it is not `null`. */
+export const JUDGE_ERROR_LABEL = "judge-error";
+
 function e3Stats(games: readonly ItemRecord[]): BandRow["e3"] {
   const judged = games.flatMap((item) => (item.e3 ? [item.e3] : []));
+  const labelOf = (e3: (typeof judged)[number], dimension: Dimension) =>
+    e3.judgeError === null
+      ? (e3.dimensions[dimension] ?? "null")
+      : JUDGE_ERROR_LABEL;
   const entries = DIMENSIONS.map((dimension) => [
     dimension,
-    tally(judged.map((e3) => e3.dimensions[dimension] ?? "null")),
+    tally(judged.map((e3) => labelOf(e3, dimension))),
   ]);
   return Object.fromEntries(entries) as BandRow["e3"];
+}
+
+function judgeErrorsOf(
+  items: readonly ItemRecord[],
+): ReportJson["judgeErrors"] {
+  return items.flatMap((item) =>
+    item.outcome === "game" && item.e3?.judgeError
+      ? [{ id: item.id, error: item.e3.judgeError }]
+      : [],
+  );
 }
 
 function e4Stats(games: readonly ItemRecord[]): BandRow["e4"] {
@@ -211,6 +228,7 @@ export function buildReport(input: ReportInput): ReportJson {
       triggers: tally(items.flatMap((item) => item.repairRules)),
     },
     failures: failuresOf(items),
+    judgeErrors: judgeErrorsOf(items),
     cost,
     e4Labelled: { ...labelledSetStats(loadLabelledSet()), note: LABELLED_NOTE },
     notMeasured: [...NOT_MEASURED, ...NOT_MEASURED_BY_TIER[input.tier]],

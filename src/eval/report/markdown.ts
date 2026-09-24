@@ -99,11 +99,11 @@ function e3Rows(bands: readonly BandRow[]): string[][] {
   );
 }
 
-function bandSection(report: ReportJson): string {
-  const { e4Labelled } = report;
+const E2_CAVEAT =
+  "E2 thresholds were set on hand-authored fixtures (§9), not on generated games. A detector fail here is a single observation to inspect, not a confirmed defect: `idle-death`, for one, also fires on designs where an idle player is meant to lose quickly.";
+
+function outcomesSubsection(report: ReportJson): string {
   return [
-    "## Per-band results",
-    "",
     "### Outcomes",
     "",
     table(
@@ -113,32 +113,52 @@ function bandSection(report: ReportJson): string {
         outcomeRow("all", report.totals),
       ],
     ),
-    "",
+  ].join("\n");
+}
+
+function qualitySubsection(report: ReportJson): string {
+  const anyE2Fail = report.bands.some(
+    (row) => Object.keys(row.e2.detectorFails).length > 0,
+  );
+  const head = [
+    "band",
+    "E1 mean",
+    "E1 min",
+    "E2 passed/probed",
+    "E2 detector fails",
+    "E4 m/mm/abs",
+    "median build attempts",
+  ];
+  return [
     "### Quality",
     "",
     "Game items only. There is no cross-band mean. E4 is match/mismatch/abstain, and an abstention is not a pass.",
     "",
-    table(
-      [
-        "band",
-        "E1 mean",
-        "E1 min",
-        "E2 passed/probed",
-        "E2 detector fails",
-        "E4 m/mm/abs",
-        "median build attempts",
-      ],
-      report.bands.map(qualityRow),
-    ),
-    "",
+    table(head, report.bands.map(qualityRow)),
+    ...(anyE2Fail ? ["", E2_CAVEAT] : []),
+  ].join("\n");
+}
+
+function e3Subsection(report: ReportJson): string {
+  const { e4Labelled } = report;
+  return [
     "### E3 labels",
     "",
-    "Label counts on game items. `null` means no cited finding survived validation; `n/a` means the dimension does not apply. Labels are never averaged.",
+    "Label counts on game items. `null` means the judge answered but no cited finding survived validation; `judge-error` means the judge call failed, so nothing was judged (listed under failures); `n/a` means the dimension does not apply. Labels are never averaged.",
     "",
     table(["band", "dimension", "labels"], e3Rows(report.bands)),
     "",
     `E4 labelled set: accuracy ${fixed(e4Labelled.accuracy)}, abstention rate ${fixed(e4Labelled.abstentionRate)} (${e4Labelled.note}).`,
   ].join("\n");
+}
+
+function bandSection(report: ReportJson): string {
+  return [
+    "## Per-band results",
+    outcomesSubsection(report),
+    qualitySubsection(report),
+    e3Subsection(report),
+  ].join("\n\n");
 }
 
 function repairSection(report: ReportJson): string {
@@ -166,13 +186,29 @@ function repairSection(report: ReportJson): string {
   ].join("\n");
 }
 
+function judgeErrorTable(report: ReportJson): string[] {
+  if (report.judgeErrors.length === 0) return [];
+  return [
+    "",
+    "Judge errors (E3 did not run on these games; not a model failure):",
+    "",
+    table(
+      ["item", "error"],
+      report.judgeErrors.map((entry) => [entry.id, entry.error]),
+    ),
+  ];
+}
+
 function failureSection(report: ReportJson): string {
   const rows = Object.entries(report.failures).flatMap(([step, codes]) =>
     Object.entries(codes).map(([code, n]) => [step, code, String(n)]),
   );
+  const judged = judgeErrorTable(report);
+  const none =
+    judged.length === 0 ? "No failures." : "No attributed step failed.";
   const body =
-    rows.length === 0 ? "No failures." : table(["step", "code", "items"], rows);
-  return ["## Failures by attributed step", "", body].join("\n");
+    rows.length === 0 ? none : table(["step", "code", "items"], rows);
+  return ["## Failures by attributed step", "", body, ...judged].join("\n");
 }
 
 function usageRow(label: string, usage: Usage): string[] {

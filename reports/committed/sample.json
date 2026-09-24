@@ -532,6 +532,7 @@
       "wallMs": 63449
     }
   ],
+  "judgeErrors": [],
   "noiseFloor": "One generation per item. With 1 item per band, one item moves a band rate by 100 points. Differences smaller than that are not interpretable.",
   "notMeasured": [
     "fun or difficulty",

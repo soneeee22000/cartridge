@@ -16,6 +16,34 @@ const SECTION_ORDER = [
   "## Noise floor",
 ];
 
+const JUDGE_FAILED = "judge call failed: output cap reached";
+
+function withJudgeError() {
+  const items = fixtureItems().map((item) =>
+    item.id === "zeta-terse"
+      ? {
+          ...item,
+          e3: {
+            dimensions: {
+              "prompt-coverage": null,
+              "goal-legibility": null,
+              "feedback-on-input": null,
+              "fail-state-clarity": null,
+            },
+            discarded: [],
+            judgeError: JUDGE_FAILED,
+          },
+        }
+      : item,
+  );
+  return buildReport({
+    tier: "full",
+    label: "fixture",
+    datasetVersion: "v1",
+    items,
+  });
+}
+
 function report() {
   return buildReport({
     tier: "full",
@@ -84,6 +112,18 @@ describe("report aggregate (§11.3)", () => {
     expect(edge?.e3["goal-legibility"]).toEqual({ null: 1 });
     const terse = report().bands[0];
     expect(terse?.e3["goal-legibility"]).toEqual({ implied: 2 });
+  });
+
+  it("counts a judge error as its own label, never as null, and lists it", () => {
+    const built = withJudgeError();
+    expect(built.bands[0]?.e3["prompt-coverage"]).toEqual({
+      covered: 1,
+      "judge-error": 1,
+    });
+    expect(built.judgeErrors).toEqual([
+      { id: "zeta-terse", error: JUDGE_FAILED },
+    ]);
+    expect(report().judgeErrors).toEqual([]);
   });
 
   it("counts E4 match, mismatch and abstain without scoring abstentions", () => {
@@ -192,6 +232,15 @@ describe("report.md (§11.3)", () => {
     );
   });
 
+  it("warns that E2 fails on generated games are observations, not confirmed defects", () => {
+    const quality = markdown.slice(
+      markdown.indexOf("### Quality"),
+      markdown.indexOf("### E3 labels"),
+    );
+    expect(quality).toContain("hand-authored fixtures");
+    expect(quality).toContain("idle-death");
+  });
+
   it("has no 'all' row in any quality table", () => {
     const qualityStart = markdown.indexOf("### Quality");
     const qualityEnd = markdown.indexOf("## Repair loop");
@@ -229,4 +278,27 @@ describe("report.json (§11.3)", () => {
     const keys = Object.keys(JSON.parse(text) as object);
     expect(keys).toEqual([...keys].sort());
   });
+
+  it("lists judge errors under failures, apart from the attributed steps", () => {
+    const withError = renderMarkdown(withJudgeError(), { scorerSha: "abc" });
+    const failures = withError.slice(
+      withError.indexOf("## Failures by attributed step"),
+      withError.indexOf("## Cost and latency"),
+    );
+    expect(failures).toContain("Judge errors");
+    expect(failures).toContain(`| zeta-terse | ${JUDGE_FAILED} |`);
+    expect(withError).toContain("`judge-error` means the judge call failed");
+  });
+
+  it("says a judge error is a failure even when no step failed", () => {
+    const only = withJudgeError();
+    const clean = renderMarkdown(
+      { ...only, failures: {} },
+      { scorerSha: "abc" },
+    );
+    expect(clean).not.toContain("No failures.");
+    expect(clean).toContain("No attributed step failed.");
+  });
+
 });
+

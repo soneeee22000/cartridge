@@ -119,6 +119,8 @@ export const ReportJson = z.object({
   totals: Totals,
   repair: z.object({ histogram: Tally, triggers: Tally }),
   failures: z.record(z.string(), Tally),
+  /** Game items whose E3 judge call failed; their dimensions count as `judge-error`, not `null`. */
+  judgeErrors: z.array(z.object({ id: z.string(), error: z.string() })),
   cost: z.object({
     tokens: z.object({ generator: Usage, judge: Usage }),
     repairTokens: Usage,

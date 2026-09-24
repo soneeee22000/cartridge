@@ -50,6 +50,8 @@ export const JUDGE_INSTRUCTIONS = [
   "from that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,",
   "a count out of a total, points, frames per second or milliseconds.",
   "If you cannot point to a line for a dimension, leave that dimension out rather than guessing.",
+  "Give at most one finding per dimension, with at most three evidence items each. Never repeat a",
+  "dimension: once each dimension has its finding or has been left out, stop.",
 ].join("\n");
 
 /**

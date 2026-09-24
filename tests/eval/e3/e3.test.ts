@@ -62,6 +62,12 @@ describe("E3 rubric (§10.1)", () => {
     expect(JUDGE_INSTRUCTIONS).not.toMatch(/\d/);
   });
 
+  it("bounds the answer so a judge cannot repeat findings until the output cap truncates it", () => {
+    expect(JUDGE_INSTRUCTIONS).toContain("at most one finding per dimension");
+    expect(JUDGE_INSTRUCTIONS).toContain("at most three evidence items");
+    expect(JUDGE_INSTRUCTIONS).toContain("stop");
+  });
+
   it("prefixes 1-based line numbers", () => {
     expect(numberLines("a\nb")).toBe("1| a\n2| b");
   });

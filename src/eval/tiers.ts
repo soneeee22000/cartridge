@@ -27,19 +27,20 @@ export const SAMPLE_ITEM_IDS: readonly string[] = [
 ];
 
 /**
- * Per-item usage by model, used for the pre-run cost estimate. Arbitrary starting guess, not
- * measured; replaced by the measured `sample` mean once that tier has run.
+ * Per-item usage by model for the pre-run cost estimate: the rounded per-item mean of the `sample`
+ * tier recorded on 2026-09-24 (`reports/committed/sample.json`, four items). A test keeps the two
+ * in step. Cache kinds are zero because no request sets a cache breakpoint.
  */
 export const EST_ITEM_USAGE: Readonly<Record<string, Usage>> = {
   [MODEL_IDS.builder]: {
-    input: 60_000,
-    output: 30_000,
-    cacheRead: 40_000,
-    cacheWrite: 10_000,
+    input: 31_246,
+    output: 8_888,
+    cacheRead: 0,
+    cacheWrite: 0,
   },
   [MODEL_IDS.judge]: {
-    input: 12_000,
-    output: 1_500,
+    input: 8_578,
+    output: 652,
     cacheRead: 0,
     cacheWrite: 0,
   },

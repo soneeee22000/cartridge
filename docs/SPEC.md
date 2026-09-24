@@ -909,30 +909,31 @@ _(S4 note: on 2026-09-24 all four rates per model were checked against the offic
 
 ### 12.1 npm scripts
 
-| script             | command                                                                                          |
-| ------------------ | ------------------------------------------------------------------------------------------------ |
-| `test`             | `vitest run`                                                                                     |
-| `test:coverage`    | `vitest run --coverage`                                                                          |
-| `typecheck`        | `tsc --noEmit`                                                                                   |
-| `lint`             | `eslint .`                                                                                       |
-| `dev`              | `node --env-file-if-exists=.env src/server/dev.ts` (port `DEV_PORT = 4270`)                      |
-| `eval:one`         | `node --env-file-if-exists=.env src/eval/cli.ts run --tier one`                                  |
-| `eval:sample`      | `node --env-file-if-exists=.env src/eval/cli.ts run --tier sample`                               |
-| `eval:full`        | `node --env-file-if-exists=.env src/eval/cli.ts run --tier full` (plus `-- --yes --max-usd <n>`) |
-| `eval:rescore`     | `node src/eval/cli.ts score --games games --json reports/committed/full.json` ($0, no key)       |
-| `eval:smoke1`      | alias of `eval:one` (`run --tier smoke1`) (S4)                                                   |
-| `eval:smoke`       | alias of `eval:sample` (`run --tier smoke`) (S4)                                                 |
+| script             | command                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------- |
+| `test`             | `vitest run`                                                                                        |
+| `test:coverage`    | `vitest run --coverage`                                                                             |
+| `typecheck`        | `tsc --noEmit`                                                                                      |
+| `lint`             | `eslint .`                                                                                          |
+| `dev`              | `node --env-file-if-exists=.env src/server/dev.ts` (port `DEV_PORT = 4270`)                         |
+| `eval:one`         | `node --env-file-if-exists=.env src/eval/cli.ts run --tier one`                                     |
+| `eval:sample`      | `node --env-file-if-exists=.env src/eval/cli.ts run --tier sample`                                  |
+| `eval:full`        | `node --env-file-if-exists=.env src/eval/cli.ts run --tier full` (plus `-- --yes --max-usd <n>`)    |
+| `eval:rescore`     | `node src/eval/cli.ts score --games games --json reports/committed/full.json` ($0, no key)          |
+| `eval:smoke1`      | alias of `eval:one` (`run --tier smoke1`) (S4)                                                      |
+| `eval:smoke`       | alias of `eval:sample` (`run --tier smoke`) (S4)                                                    |
 | `eval:score-only`  | `node src/eval/cli.ts score --games games` (prints the report JSON; `-- --tier <t>` to narrow) (S4) |
-| `eval:matrix`      | `node src/eval/cli.ts matrix --json reports/committed/matrix.json`                               |
-| `record:demo`      | `node --env-file-if-exists=.env scripts/record-demo.ts`                                          |
-| `build:vercel`     | `node scripts/build-vercel.ts` (§13.3)                                                           |
-| `check:clean-room` | `node scripts/clean-room-scan.ts`                                                                |
+| `eval:matrix`      | `node src/eval/cli.ts matrix --json reports/committed/matrix.json`                                  |
+| `record:demo`      | `node --env-file-if-exists=.env scripts/record-demo.ts`                                             |
+| `build:vercel`     | `node scripts/build-vercel.ts` (§13.3)                                                              |
+| `check:clean-room` | `node scripts/clean-room-scan.ts`                                                                   |
 
 ### 12.2 `cli.ts` behaviour
 
 - `run --tier <t> [--mode live|record|replay] [--label <s>] [--json <path>]`. The default mode for `run` is `record`, so every paid call leaves a cassette. It prints the cost estimate first.
 - **Persistence:** after each item it writes `games/<runKey>/…`, `run.json` (usage, wall ms, outcome, attribution) and the E2 file, before moving to the next item.
 - **Timeouts:** each item has `ITEM_TIMEOUT_MS = 12 * 60_000`, an arbitrary starting cap; after the `sample` tier it is replaced by a multiple of the measured slowest item, with the source noted. A timeout is a harness failure, not a model failure.
+- _(S4 note: after the paid `sample` runs, `ITEM_TIMEOUT_MS = 3 × SLOWEST_MEASURED_ITEM_MS` (143,177 ms, `bubble-pop` with four build attempts), and `EST_ITEM_USAGE` is the rounded per-item mean of `reports/committed/sample.json`, which a test enforces. Details: `docs/research/s4-smoke-runs.md`.)_
 - **Exit codes:** 0 when the run completes, whatever the quality, and 1 on a harness failure in `one`/`sample` (the pre-flight gate before `full`).
 - _(S4 notes: `run` also takes `--skip-e2`, and `--mode mock` runs the whole pipeline at $0 with the dev server's mock models and no E3. Bad usage, an unchecked price table or a missing key in a paid mode exit 2. `score --games <dir>` takes `--tier` (default `full`), `--label`, `--json` and `--rerun-e2`, and exits 1 if an item of the tier has no `run.json`. Every collaborator (models, probe, clock, root, git) is injected through `EvalDeps` in `run/deps.ts`, and `cli.ts` imports the run modules lazily so `score --file` stays light.)_
 

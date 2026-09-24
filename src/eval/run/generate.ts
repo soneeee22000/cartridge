@@ -16,10 +16,14 @@ import type { ItemFailure } from "../report/types.ts";
 import { RUN_RECORD_FORMAT, type RunRecord } from "./record.ts";
 
 /**
- * Wall-clock cap per item. Arbitrary starting cap; after the `sample` tier it is replaced by a
- * multiple of the measured slowest item, with the source noted (§12.2).
+ * Slowest item measured across the four paid `sample` recordings of 2026-09-24: `bubble-pop` with
+ * four build attempts (the one item that exhausted its repairs), from its `run.json`.
  */
-export const ITEM_TIMEOUT_MS = 12 * 60_000;
+export const SLOWEST_MEASURED_ITEM_MS = 143_177;
+/** Headroom over the slowest measured item. Design choice. */
+const TIMEOUT_HEADROOM = 3;
+/** Wall-clock cap per item: a multiple of the slowest measured item (§12.2). */
+export const ITEM_TIMEOUT_MS = TIMEOUT_HEADROOM * SLOWEST_MEASURED_ITEM_MS;
 
 export interface GenerateDeps {
   readonly models: {

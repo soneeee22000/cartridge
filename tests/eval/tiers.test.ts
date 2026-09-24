@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { GAME_TYPES } from "../../src/contract/game-types.ts";
 import {
@@ -21,6 +23,8 @@ import {
   resolveTier,
   selectItems,
 } from "../../src/eval/tiers.ts";
+import { REPO_ROOT } from "../../src/eval/matrix.ts";
+import { ReportJson } from "../../src/eval/report/types.ts";
 import { MODEL_IDS } from "../../src/models/port.ts";
 
 const dataset = loadDataset(DATASET_PATH);
@@ -127,6 +131,30 @@ describe("tiers (§11.2)", () => {
     );
     expect(estimateUsd(4)).toBeCloseTo(4 * perItem);
     expect(estimateUsd(0)).toBe(0);
+  });
+
+  it("uses the per-item mean of the committed sample report as its estimate", () => {
+    const report = ReportJson.parse(
+      JSON.parse(
+        readFileSync(join(REPO_ROOT, "reports/committed/sample.json"), "utf8"),
+      ),
+    );
+    const itemCount = report.items.length;
+    const kinds = ["input", "output", "cacheRead", "cacheWrite"] as const;
+    const roles = [
+      [MODEL_IDS.builder, "generator"],
+      [MODEL_IDS.judge, "judge"],
+    ] as const;
+    for (const [model, role] of roles)
+      for (const kind of kinds) {
+        const total = report.items.reduce(
+          (sum, item) => sum + item.usage[role][kind],
+          0,
+        );
+        expect(EST_ITEM_USAGE[model]?.[kind]).toBe(
+          Math.round(total / itemCount),
+        );
+      }
   });
 
   it("full refuses to start without --yes and --max-usd", () => {

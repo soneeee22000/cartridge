@@ -7,6 +7,7 @@ import { driveRun, type DriverDeps } from "../../src/engine/driver.ts";
 import {
   HEARTBEAT_INTERVAL_MS,
   MAX_CLAIMS,
+  STALE_ACTIVE_MS,
 } from "../../src/engine/lifecycle.ts";
 import { MemoryRunStore } from "../../src/engine/run-store/memory.ts";
 import type { RunStore } from "../../src/engine/run-store/types.ts";
@@ -83,6 +84,40 @@ function handFed(
     },
     cancelled: () => cancelled,
   };
+}
+
+interface GatedHandle extends ScriptedHandle {
+  readonly open: () => void;
+}
+
+function gated(before: readonly unknown[], after: readonly unknown[]) {
+  let cancelled = false;
+  const { promise: gate, resolve } = Promise.withResolvers<undefined>();
+  async function* stream() {
+    for (const chunk of before) {
+      await Promise.resolve();
+      yield chunk;
+    }
+    await gate;
+    for (const chunk of after) {
+      await Promise.resolve();
+      yield chunk;
+    }
+  }
+  const handle: GatedHandle = {
+    fullStream: stream(),
+    result: Promise.resolve({ status: "success", result: {} }),
+    cancel: () => {
+      cancelled = true;
+      resolve(undefined);
+      return Promise.resolve();
+    },
+    cancelled: () => cancelled,
+    open: () => {
+      resolve(undefined);
+    },
+  };
+  return handle;
 }
 
 const stepStart = (id: string) => ({
@@ -362,6 +397,140 @@ describe("driveRun (§5.4)", () => {
     ).toBe("abandoned");
     expect(await store.get(RUN_ID)).toMatchObject({
       attribution: { code: "engine-crashed" },
+    });
+  });
+
+  it("fences out an earlier claim by the same process once the run is reclaimed", async () => {
+    const { store, clock } = await setup();
+    const first = gated([stepStart("plan")], [stepStart("build-cycle")]);
+    const second = gated([stepStart("plan")], []);
+    const running = driveRun(
+      RUN_ID,
+      deps(store, clock, () => Promise.resolve(first)),
+    );
+    await vi.waitFor(async () => {
+      expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+    });
+    clock.advance(STALE_ACTIVE_MS + 1);
+    const controller = new AbortController();
+    const reclaimed = driveRun(
+      RUN_ID,
+      deps(store, clock, () => Promise.resolve(second), {
+        signal: controller.signal,
+      }),
+    );
+    await vi.waitFor(async () => {
+      expect((await store.listEvents(RUN_ID, 0)).length).toBe(4);
+    });
+    first.open();
+    expect(await running).toBe("lease-lost");
+    expect(first.cancelled()).toBe(true);
+    expect(await store.get(RUN_ID)).toMatchObject({
+      status: "active",
+      claims: 2,
+    });
+    const kinds = (await store.listEvents(RUN_ID, 0)).map(
+      (stored) => stored.event.kind,
+    );
+    expect(kinds).toEqual([
+      "run.claimed",
+      "step.start",
+      "run.claimed",
+      "step.start",
+    ]);
+    controller.abort();
+    expect(await reclaimed).toBe("abandoned");
+  });
+
+  it("stops at the first fenced append, before its next heartbeat", async () => {
+    const { store, clock } = await setup();
+    vi.spyOn(store, "heartbeat").mockResolvedValue(true);
+    const handle = gated([stepStart("plan")], [stepStart("build-cycle")]);
+    const running = driveRun(
+      RUN_ID,
+      deps(store, clock, () => Promise.resolve(handle)),
+    );
+    await vi.waitFor(async () => {
+      expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+    });
+    clock.advance(STALE_ACTIVE_MS + 1);
+    expect(await store.claim(RUN_ID, "driver-b", clock.now())).toBe(true);
+    handle.open();
+    expect(await running).toBe("lease-lost");
+    expect(handle.cancelled()).toBe(true);
+    expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+    expect((await store.get(RUN_ID))?.owner).toBe("driver-b");
+  });
+
+  it("settles a row whose seal commit throws instead of leaving it sealing", async () => {
+    const { store, clock } = await setup();
+    vi.spyOn(store, "completeSeal").mockRejectedValueOnce(
+      new Error("disk full"),
+    );
+    const outcome = await driveRun(
+      RUN_ID,
+      deps(store, clock, mockPort([saveTurn(MOCK_GAME_HTML), doneTurn])),
+    );
+    expect(outcome).toBe("abandoned");
+    expect(await store.get(RUN_ID)).toMatchObject({
+      status: "abandoned",
+      attribution: { step: "driver", code: "engine-crashed" },
+    });
+  });
+
+  describe("heartbeat timer", () => {
+    function blockedRun(store: RunStore, clock: ManualClock) {
+      const handle = gated([stepStart("plan")], []);
+      const controller = new AbortController();
+      const running = driveRun(
+        RUN_ID,
+        deps(store, clock, () => Promise.resolve(handle), {
+          signal: controller.signal,
+        }),
+      );
+      const stop = () => {
+        controller.abort();
+      };
+      return { running, stop };
+    }
+
+    it("beats on every tick even when the tick lands early", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      try {
+        const { store, clock } = await setup();
+        const heartbeat = vi.spyOn(store, "heartbeat");
+        const { running, stop } = blockedRun(store, clock);
+        await vi.waitFor(async () => {
+          expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+        });
+        clock.advance(HEARTBEAT_INTERVAL_MS - 1);
+        await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+        expect(heartbeat).toHaveBeenCalledTimes(1);
+        stop();
+        expect(await running).toBe("released");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("survives a heartbeat that throws and keeps the run going", async () => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      try {
+        const { store, clock } = await setup();
+        vi.spyOn(store, "heartbeat").mockRejectedValue(
+          new Error("SQLITE_BUSY"),
+        );
+        const { running, stop } = blockedRun(store, clock);
+        await vi.waitFor(async () => {
+          expect((await store.listEvents(RUN_ID, 0)).length).toBe(2);
+        });
+        clock.advance(HEARTBEAT_INTERVAL_MS);
+        await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 2);
+        stop();
+        expect(await running).toBe("released");
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

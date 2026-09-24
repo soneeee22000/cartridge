@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { attributionForThrown, driverAttribution } from "./attribution.ts";
 import type { Clock } from "./clock.ts";
@@ -13,6 +14,7 @@ export type DriveOutcome =
 export interface DriverDeps {
   readonly store: RunStore;
   readonly clock: Clock;
+  /** Names the process; each claim writes under its own lease id derived from it. */
   readonly owner: string;
   readonly startWorkflowStream: StartWorkflowStream;
   readonly signal?: AbortSignal | undefined;
@@ -32,9 +34,12 @@ const ABORTED = Symbol("aborted");
 interface Session {
   readonly runId: string;
   readonly deps: DriverDeps;
+  /** Per-claim lease id: the fencing token every write carries (§5.2 invariant 7). */
+  readonly lease: string;
   readonly row: RunRow;
   lastBeat: number;
   leaseLost: boolean;
+  sealing: boolean;
   handle: WorkflowHandle | null;
 }
 
@@ -61,14 +66,20 @@ function abortable<T>(
   });
 }
 
-async function keepLease(session: Session): Promise<boolean> {
-  const now = session.deps.clock.now();
+/**
+ * Renews the claim. The stream path is throttled to one beat per interval; the timer forces a
+ * beat on every tick, so an early tick never doubles the gap. Once sealing has begun the seal
+ * lease governs the row and nothing is renewed.
+ */
+async function keepLease(session: Session, force = false): Promise<boolean> {
   if (session.leaseLost) return false;
-  if (now - session.lastBeat < HEARTBEAT_INTERVAL_MS) return true;
+  if (session.sealing) return true;
+  const now = session.deps.clock.now();
+  if (!force && now - session.lastBeat < HEARTBEAT_INTERVAL_MS) return true;
   session.lastBeat = now;
   const held = await session.deps.store.heartbeat(
     session.runId,
-    session.deps.owner,
+    session.lease,
     now,
   );
   if (!held) session.leaseLost = true;
@@ -77,7 +88,12 @@ async function keepLease(session: Session): Promise<boolean> {
 
 async function record(session: Session, event: ProgressEvent): Promise<void> {
   if (session.leaseLost) return;
-  await session.deps.store.appendEvent(session.runId, event);
+  const seq = await session.deps.store.appendEvent(
+    session.runId,
+    session.lease,
+    event,
+  );
+  if (seq === null) session.leaseLost = true;
 }
 
 async function pump(
@@ -93,6 +109,7 @@ async function pump(
     if (!(await keepLease(session))) return { kind: "lease-lost" };
     for (const event of mapWorkflowChunk(next.value))
       await record(session, event);
+    if (session.leaseLost) return { kind: "lease-lost" };
     const finish = FinishChunk.safeParse(next.value);
     if (finish.success) status = finish.data.payload.workflowStatus;
   }
@@ -104,13 +121,13 @@ async function settle(
   attribution: Attribution,
 ): Promise<DriveOutcome> {
   if (session.leaseLost) return "lease-lost";
-  const { store, owner } = session.deps;
+  const { store } = session.deps;
   await record(session, { kind: "run.released", data: { attribution } });
   const action = settlement(attribution, session.row);
   const won =
     action === "release"
-      ? await store.release(session.runId, owner, attribution)
-      : await store.abandon(session.runId, owner, attribution);
+      ? await store.release(session.runId, session.lease, attribution)
+      : await store.abandon(session.runId, session.lease, attribution);
   if (!won) return "lease-lost";
   return action === "release" ? "released" : "abandoned";
 }
@@ -120,9 +137,10 @@ async function seal(
   output: FinalizeOut,
 ): Promise<DriveOutcome> {
   if (session.leaseLost) return "lease-lost";
-  const { store, owner, clock } = session.deps;
-  if (!(await store.beginSeal(session.runId, owner, clock.now())))
+  const { store, clock } = session.deps;
+  if (!(await store.beginSeal(session.runId, session.lease, clock.now())))
     return "lease-lost";
+  session.sealing = true;
   const { spec, artifact, html, verdict } = output;
   const committed = {
     version: artifact.version,
@@ -130,7 +148,7 @@ async function seal(
     bytes: artifact.bytes,
     html,
   };
-  const done = await store.completeSeal(session.runId, owner, {
+  const done = await store.completeSeal(session.runId, session.lease, {
     spec,
     artifact: committed,
     e1Score: verdict.score,
@@ -205,11 +223,21 @@ async function run(session: Session): Promise<DriveOutcome> {
   return conclude(session, handle, pumped.status);
 }
 
+async function beat(session: Session): Promise<void> {
+  try {
+    if (!(await keepLease(session, true))) await stopHandle(session);
+  } catch {
+    return;
+  }
+}
+
+/**
+ * A heartbeat that throws (a busy database, say) is skipped: the claim stays until the next tick
+ * or until it goes stale, and a lost lease is still caught by the next beat or fenced write.
+ */
 function startHeartbeat(session: Session): NodeJS.Timeout {
   const timer = setInterval(() => {
-    void keepLease(session).then((held) =>
-      held ? undefined : stopHandle(session),
-    );
+    void beat(session);
   }, HEARTBEAT_INTERVAL_MS);
   timer.unref();
   return timer;
@@ -217,7 +245,9 @@ function startHeartbeat(session: Session): NodeJS.Timeout {
 
 /**
  * Drives one run (§5.4): claim, stream the workflow into the event log with heartbeats, then seal,
- * release or abandon. A lost lease stops everything and writes nothing further; an aborted signal
+ * release or abandon. Every write carries a lease id minted for this claim, so a second claim of
+ * the same run, even from the same process, fences this one out. A lost lease, seen by a heartbeat
+ * or by a refused event append, stops everything and writes nothing further; an aborted signal
  * cancels the run and releases it with `stream-cut`.
  * @param runId run row id
  * @param deps store, clock, owner id, workflow port and optional abort signal
@@ -226,16 +256,19 @@ export async function driveRun(
   runId: string,
   deps: DriverDeps,
 ): Promise<DriveOutcome> {
-  if (!(await deps.store.claim(runId, deps.owner, deps.clock.now())))
+  const lease = `${deps.owner}/${randomUUID()}`;
+  if (!(await deps.store.claim(runId, lease, deps.clock.now())))
     return "not-claimed";
   const row = await deps.store.get(runId);
   if (!row) return "not-claimed";
   const session: Session = {
     runId,
     deps,
+    lease,
     row,
     lastBeat: deps.clock.now(),
     leaseLost: false,
+    sealing: false,
     handle: null,
   };
   await record(session, {

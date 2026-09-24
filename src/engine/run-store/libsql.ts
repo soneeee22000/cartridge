@@ -60,12 +60,14 @@ const BEGIN_SEAL_SQL = `UPDATE runs SET status = 'sealing', seal_owner = ?, seal
 const COMPLETE_SQL = `UPDATE runs SET status = 'complete', spec_json = ?, artifact_json = ?, artifact_sha = ?,
   e1_score = ?, updated_at = ?
   WHERE id = ? AND ((status = 'sealing' AND seal_owner = ?) OR (status = 'complete' AND artifact_sha = ?))`;
+const HOLDS_LEASE = `((status = 'active' AND owner = ?) OR (status = 'sealing' AND seal_owner = ?))`;
 const ABANDON_SQL = `UPDATE runs SET status = 'abandoned', attribution_json = ?, updated_at = ?
-  WHERE id = ? AND status = 'active' AND owner = ?`;
+  WHERE id = ? AND ${HOLDS_LEASE}`;
 const RELEASE_SQL = `UPDATE runs SET status = 'waiting', owner = NULL, heartbeat_at = NULL, attribution_json = ?,
-  updated_at = ? WHERE id = ? AND status = 'active' AND owner = ?`;
+  updated_at = ? WHERE id = ? AND ${HOLDS_LEASE}`;
 const APPEND_SQL = `INSERT INTO run_events (run_id, seq, type, data_json, at)
-  SELECT ?, COALESCE(MAX(seq), 0) + 1, ?, ?, ? FROM run_events WHERE run_id = ? RETURNING seq`;
+  SELECT id, (SELECT COALESCE(MAX(seq), 0) + 1 FROM run_events WHERE run_id = ?), ?, ?, ?
+  FROM runs WHERE id = ? AND ${HOLDS_LEASE} RETURNING seq`;
 
 /**
  * Resolves the database URL: `CARTRIDGE_DB_URL`, or `file:.data/cartridge.db` made absolute so two
@@ -225,6 +227,7 @@ export class LibSqlRunStore implements RunStore {
       this.#clock.now(),
       id,
       owner,
+      owner,
     ]);
   }
 
@@ -239,11 +242,16 @@ export class LibSqlRunStore implements RunStore {
       this.#clock.now(),
       id,
       owner,
+      owner,
     ]);
   }
 
   /** @inheritdoc */
-  async appendEvent(id: string, event: ProgressEvent): Promise<number> {
+  async appendEvent(
+    id: string,
+    owner: string,
+    event: ProgressEvent,
+  ): Promise<number | null> {
     const parsed = ProgressEvent.parse(event);
     const result = await this.#client.execute({
       sql: APPEND_SQL,
@@ -253,9 +261,12 @@ export class LibSqlRunStore implements RunStore {
         JSON.stringify(parsed.data),
         this.#clock.now(),
         id,
+        owner,
+        owner,
       ],
     });
-    return Number(result.rows[0]?.seq);
+    const [row] = result.rows;
+    return row ? Number(row.seq) : null;
   }
 
   /** @inheritdoc */

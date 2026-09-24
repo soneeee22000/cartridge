@@ -13,6 +13,11 @@ import type {
  * A `Map`-backed run store. Every method checks and writes synchronously inside one call, so there
  * is no `await` between a guard and its write (§5.3).
  */
+function holdsLease(row: RunRow, owner: string): boolean {
+  if (row.status === "active") return row.owner === owner;
+  return row.status === "sealing" && row.sealOwner === owner;
+}
+
 export class MemoryRunStore implements RunStore {
   readonly #rows = new Map<string, RunRow>();
   readonly #events = new Map<string, StoredEvent[]>();
@@ -129,7 +134,7 @@ export class MemoryRunStore implements RunStore {
   ): Promise<boolean> {
     const won = this.#update(
       id,
-      (row) => row.status === "active" && row.owner === owner,
+      (row) => holdsLease(row, owner),
       () => ({ status: "abandoned", attribution }),
     );
     return Promise.resolve(won);
@@ -143,7 +148,7 @@ export class MemoryRunStore implements RunStore {
   ): Promise<boolean> {
     const won = this.#update(
       id,
-      (row) => row.status === "active" && row.owner === owner,
+      (row) => holdsLease(row, owner),
       () => ({
         status: "waiting",
         owner: null,
@@ -155,7 +160,13 @@ export class MemoryRunStore implements RunStore {
   }
 
   /** @inheritdoc */
-  appendEvent(id: string, event: ProgressEvent): Promise<number> {
+  appendEvent(
+    id: string,
+    owner: string,
+    event: ProgressEvent,
+  ): Promise<number | null> {
+    const row = this.#rows.get(id);
+    if (!row || !holdsLease(row, owner)) return Promise.resolve(null);
     const events = this.#events.get(id) ?? [];
     const seq = events.length + 1;
     events.push({

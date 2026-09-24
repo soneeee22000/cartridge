@@ -50,15 +50,15 @@ async function setup(): Promise<{ store: MemoryRunStore; clock: ManualClock }> {
     maxClaims: 2,
   });
   await store.claim(RUN_ID, "driver-a", clock.now());
-  await store.appendEvent(RUN_ID, {
+  await store.appendEvent(RUN_ID, "driver-a", {
     kind: "run.claimed",
     data: { claimAttempt: 1 },
   });
-  await store.appendEvent(RUN_ID, {
+  await store.appendEvent(RUN_ID, "driver-a", {
     kind: "step.start",
     data: { step: "plan" },
   });
-  await store.appendEvent(RUN_ID, {
+  await store.appendEvent(RUN_ID, "driver-a", {
     kind: "step.result",
     data: { step: "plan", status: "success" },
   });
@@ -163,7 +163,7 @@ describe("SSE relay (§6.2)", () => {
           clock.advance(ms);
           polls += 1;
           if (polls === 1)
-            await store.appendEvent(RUN_ID, {
+            await store.appendEvent(RUN_ID, "driver-a", {
               kind: "step.start",
               data: { step: "build-cycle" },
             });

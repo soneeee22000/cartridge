@@ -51,7 +51,8 @@ export interface CompleteResult {
 
 /**
  * Run table plus event log (§5.3). Every transition is one conditional write; the boolean says
- * whether this caller's write won.
+ * whether this caller's write won. `abandon` and `release` succeed for the `active` owner or the
+ * `sealing` seal owner, so a failed commit can still settle its row.
  */
 export interface RunStore {
   create(input: CreateRunInput): Promise<RunRow>;
@@ -74,6 +75,15 @@ export interface RunStore {
     owner: string,
     attribution: Attribution,
   ): Promise<boolean>;
-  appendEvent(id: string, event: ProgressEvent): Promise<number>;
+  /**
+   * Appends to the run's event log only while `owner` holds the lease (the `active` owner or the
+   * `sealing` seal owner), so a driver that lost its claim cannot write into the next claim's log.
+   * @returns the new seq, or null when the caller does not hold the lease
+   */
+  appendEvent(
+    id: string,
+    owner: string,
+    event: ProgressEvent,
+  ): Promise<number | null>;
   listEvents(id: string, afterSeq: number): Promise<StoredEvent[]>;
 }

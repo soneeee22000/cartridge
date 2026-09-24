@@ -224,21 +224,23 @@ describe.each(implementations)(
         prompt: "x",
         maxClaims: 1,
       });
+      await store.claim("run-1", "driver-a", clock.now());
+      await store.claim("run-2", "driver-a", clock.now());
       expect(
-        await store.appendEvent("run-1", {
+        await store.appendEvent("run-1", "driver-a", {
           kind: "run.claimed",
           data: { claimAttempt: 1 },
         }),
       ).toBe(1);
       clock.advance(5);
       expect(
-        await store.appendEvent("run-1", {
+        await store.appendEvent("run-1", "driver-a", {
           kind: "step.start",
           data: { step: "plan" },
         }),
       ).toBe(2);
       expect(
-        await store.appendEvent("run-2", {
+        await store.appendEvent("run-2", "driver-a", {
           kind: "step.start",
           data: { step: "plan" },
         }),
@@ -253,6 +255,42 @@ describe.each(implementations)(
       expect(
         (await store.listEvents("run-1", 1)).map((stored) => stored.seq),
       ).toEqual([2]);
+    });
+
+    it("fences the event log to the current lease holder", async () => {
+      const { store, clock } = await harness(make);
+      const event = { kind: "step.start", data: { step: "plan" } } as const;
+      expect(await store.appendEvent("run-1", "driver-a", event)).toBeNull();
+      await store.claim("run-1", "driver-a", clock.now());
+      expect(await store.appendEvent("run-1", "driver-b", event)).toBeNull();
+      expect(await store.appendEvent("run-1", "driver-a", event)).toBe(1);
+      clock.advance(STALE_ACTIVE_MS + 1);
+      await store.claim("run-1", "driver-b", clock.now());
+      expect(await store.appendEvent("run-1", "driver-a", event)).toBeNull();
+      await store.beginSeal("run-1", "driver-b", clock.now());
+      expect(await store.appendEvent("run-1", "driver-b", event)).toBe(2);
+      await store.completeSeal("run-1", "driver-b", RESULT);
+      expect(await store.appendEvent("run-1", "driver-b", event)).toBeNull();
+      expect(
+        (await store.listEvents("run-1", 0)).map((stored) => stored.seq),
+      ).toEqual([1, 2]);
+    });
+
+    it("lets the seal owner back out of sealing with abandon or release", async () => {
+      const { store, clock } = await harness(make);
+      const crash = driverAttribution("engine-crashed", "commit failed");
+      await store.claim("run-1", "driver-a", clock.now());
+      await store.beginSeal("run-1", "driver-a", clock.now());
+      expect(await store.abandon("run-1", "driver-b", crash)).toBe(false);
+      expect(await store.release("run-1", "driver-a", crash)).toBe(true);
+      expect(await store.get("run-1")).toMatchObject({
+        status: "waiting",
+        attribution: crash,
+      });
+      await store.claim("run-1", "driver-c", clock.now());
+      await store.beginSeal("run-1", "driver-c", clock.now());
+      expect(await store.abandon("run-1", "driver-c", crash)).toBe(true);
+      expect((await store.get("run-1"))?.status).toBe("abandoned");
     });
   },
 );

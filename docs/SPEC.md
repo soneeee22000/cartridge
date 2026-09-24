@@ -16,7 +16,7 @@ The repo makes no deployment or real-user claims. The public page is labelled a 
 
 | Rule            | Consequence                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clean room      | Every game type, event name, card, rule text, prompt, dataset item, identifier, label and threshold here is newly authored. No number measured on, or used by, any other system appears here. `npm run check:clean-room` scans the tree for a hashed denylist of client terms (§12.3).                                                                                                                                                       |
+| Clean room      | Every game type, event name, card, rule text, prompt, dataset item, identifier, label and threshold here is newly authored. No measured result or tuned threshold from any other system appears here; generic values such as a public model id or a small retry cap can coincide with values used elsewhere and are not taken from another system's results. `npm run check:clean-room` scans the tree for a hashed denylist of client terms (§12.3).                                                                                                                                                       |
 | Runtime         | Node 24.x (`"engines": { "node": "24.x" }`), ESM (`"type": "module"`), a single package with no workspaces.                                                                                                                                                                                                                                                                                                                                  |
 | TypeScript      | `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `erasableSyntaxOnly`, `allowImportingTsExtensions`, `noEmit`. Relative imports carry the `.ts` extension so that `node file.ts` runs without a build step. No enums, namespaces or constructor parameter properties (Node strip-only rejects them; see research `mastra-api.md` §0). How `.ts` specifiers reach Vercel is settled in S1 (§13.3). |
 | Dependencies    | Exact versions only (no `^`/`~`). Before any library API is used, it is checked against the installed `.d.ts` or context7 docs. Starting pins are in §13.1.                                                                                                                                                                                                                                                                                  |
@@ -24,12 +24,12 @@ The repo makes no deployment or real-user claims. The public page is labelled a 
 | Tests           | Vitest, test-first. Coverage ≥ 80 % lines on `src/engine/**` and `src/eval/**`, enforced by `vitest.config.ts` thresholds.                                                                                                                                                                                                                                                                                                                   |
 | Code shape      | Functions ≤ 30 lines where practical, JSDoc on every export, guard clauses, max nesting 3, named constants (no magic numbers), no TODO comments.                                                                                                                                                                                                                                                                                             |
 | Starting values | Every numeric constant in this spec is a **starting value**, not a tuned result, unless the table says otherwise. Each constant's source comment says either "arbitrary cap" or "replaced by measured value from <run/report>" once that happens.                                                                                                                                                                                            |
-| Secrets         | `ANTHROPIC_API_KEY` lives only in a git-ignored `.env`. No public endpoint can reach a live model (§6.3, §13.3). gitleaks runs in CI.                                                                                                                                                                                                                                                                                                        |
+| Secrets         | `ANTHROPIC_API_KEY` lives only in a git-ignored `.env`. No public endpoint can reach a live model (§6.3, §13.3). A gitleaks job (`secrets`, §13.2) is configured in CI; it first runs when the repo is pushed.                                                                                                                                                                                                                                                                                                        |
 | Git             | Conventional commits, files added by name, one commit per slice step or more. No AI attribution lines. Never push or deploy without Seon's explicit approval.                                                                                                                                                                                                                                                                                |
 
 ### 0.1 Claims discipline
 
-- **Words.** The repo never claims real users, a deployed live service or a key-backed deployment. `claims.test.ts` scans `README.md`, `docs/**`, `site/**` and `reports/**` for a short list of overclaim words. The list is stored as sha256 hashes with the same tokeniser as §12.3, so the test file does not itself contain the words.
+- **Words.** The repo never claims real users, a deployed live service or a key-backed deployment. **Planned for S5 (not built yet):** `claims.test.ts` scans `README.md`, `docs/**`, `site/**` and `reports/**` for a short list of overclaim words. The list is stored as sha256 hashes with the same tokeniser as §12.3, so the test file does not itself contain the words.
 - **Detector claims.** Any README or site statement about E2 says "demonstrated on N hand-authored fixtures (thresholds tuned on the same set)", with the holdout result stated next to it (§9.3). It never states a detection rate, recall or accuracy.
 - **No borrowed results.** No result from any other system is cited anywhere in the repo: no defect counts from an earlier audit, no calibration corpus size, no detector accuracy figure. Only numbers produced by this repo's own commands appear.
 - **Prices.** USD figures are always labelled "estimate from list prices; not an invoice".
@@ -389,6 +389,8 @@ The four kinds are disjoint, budgets sum all four, and §11.4 prices each kind s
 
 Token counts come from our own sum of each agent call's `totalUsage`. Mastra's workflow-level usage read zero in the probe (research `mastra-api.md` §4), so it is never trusted.
 
+_(After the S4 review: the budgets are also checked inside a builder call. `budgetStop(state)` is passed as the agent's `stopWhen` next to `maxSteps` (Mastra 1.70.0 combines the two, per `agent.types.d.ts` and the agent loop), and it stops the call after the first agent step that brings the run or the repair passes to its budget. A pass can therefore overshoot a budget by at most one agent step, not by a whole pass.)_
+
 ### 4.5 Failure attribution (`src/engine/attribution.ts`)
 
 `Attribution = { step: "plan" | "generate" | "verify-static" | "finalize" | "driver", code: FailureCode, buildAttempt: number, ruleIds: string[], message: string, retryable: boolean }`
@@ -447,8 +449,11 @@ stateDiagram-v2
   active --> waiting: stream-cut / retryable failure AND claims < MAX_CLAIMS
   active --> abandoned: claims == MAX_CLAIMS
   active --> active: stale heartbeat → reclaimed by another driver
+  active --> abandoned: stale heartbeat AND no claims left (sweep reaps it, lease-lost)
   sealing --> complete: commit under seal lease
   sealing --> sealing: seal lease expired → reclaimed, idempotent re-seal
+  sealing --> abandoned: commit threw (seal owner settles) or lease expired with no claims left (reaped)
+  sealing --> waiting: commit threw with a retryable error and claims left
   complete --> [*]
   abandoned --> [*]
 ```
@@ -472,6 +477,9 @@ All values are starting values and arbitrary caps, not tuned.
 5. **Eval runs use `MAX_CLAIMS_EVAL = 1`**, so each dataset item's cost and outcome belongs to exactly one generation.
 6. **Terminal state lives on the row only.** `complete` and `abandoned` are read from the run row, never inferred from the stream (§6).
 7. **A lost lease stops the run.** When `heartbeat()` returns `false`, the driver cancels the workflow run, stops appending events, discards the result and records nothing further (§5.4).
+8. **Every write is fenced to one claim.** _(Added after the S4 review.)_ Each `driveRun` call mints its own lease id (`<owner>/<uuid>`) and passes it as `owner` to `claim`, `heartbeat`, the seal calls, `release`, `abandon` and `appendEvent`. `appendEvent` only writes while that id holds the row (the `active` owner or the `sealing` seal owner), so a driver that lost its claim, even one in the same process, cannot write into the next claim's log or after the terminal state; a refused append stops the driver at once. `release` and `abandon` also accept the seal owner, so a commit that throws after `beginSeal` settles the row instead of leaving it `sealing`.
+9. **No row stays open for good.** _(Added after the S4 review.)_ `canReap(row, now)` is true for a stale `active` row or an expired `sealing` row whose claims are used up; `reap` abandons it with `lease-lost`. The dev server sweeps the open rows at start and every `SWEEP_INTERVAL_MS = 30_000` (arbitrary): it reaps what `canReap` accepts and queues what `canClaim` accepts, and its queue drives a `released` run again.
+10. **One open run per run key.** _(Added after the S4 review.)_ `create` throws `RunKeyBusyError` while the run key has a `waiting`, `active` or `sealing` row (a partial unique index in libSQL), so two runs never share `games/<runKey>/` or its cassettes; `POST /runs` answers 409.
 
 ### 5.3 Store interface (`src/engine/run-store/types.ts`)
 
@@ -507,6 +515,8 @@ interface RunStore {
 }
 ```
 
+_(After the S4 review: `appendEvent(id, owner, event)` returns `number | null`, null when `owner` does not hold the lease; `reap(id, now, attribution)` and `listOpen()` were added; `create` throws `RunKeyBusyError` for a second open run of one run key. See §5.2 invariants 8 to 10.)_
+
 - **`RunRow`:** `{ id, runKey, prompt, status, claims, maxClaims, owner, heartbeatAt, sealOwner, sealUntil, spec, artifact, e1Score, attribution, createdAt, updatedAt }`.
 - **`MemoryRunStore`:** a `Map`. Each method runs its check and write synchronously inside one call, so there is no `await` between the check and the write.
 - **`LibSqlRunStore`:** `@libsql/client`, with tables `runs` and `run_events(run_id, seq, type, data_json, at, PRIMARY KEY(run_id, seq))`. Every transition is one `UPDATE … WHERE` statement. The URL comes from `CARTRIDGE_DB_URL` (default `file:.data/cartridge.db`, absolute-resolved). It is never imported from `api/**` (§14 S5).
@@ -525,7 +535,7 @@ interface RunStore {
 6. Then run `beginSeal → completeSeal`, `abandon` or `release`, using the `Attribution` from the reject output, or the driver's own code (`stream-cut`, `lease-lost`, `engine-crashed`, or `model-error`/`cassette-miss` when the error reached the driver).
 7. **Cancellation.** `driveRun` accepts an `AbortSignal`. When it fires, the driver calls `cancel()` and releases the run with `stream-cut`. `/api/replay` passes `request.signal`, so a client disconnect stops both the run and the relay loop (§6.3).
 
-The local dev server runs drivers in-process through a small queue (`DRIVER_CONCURRENCY = 2`, arbitrary cap). No external queue is needed.
+The local dev server runs drivers in-process through a small queue (`DRIVER_CONCURRENCY = 2`, arbitrary cap). No external queue is needed. _(After the S4 review: the queue holds a run id once, queued or running, and queues a `released` run again; the dev server sweeps open rows at start and on a timer (§5.2 invariant 9). The heartbeat timer beats on every tick, ignores a heartbeat that throws, and stops renewing once sealing has begun.)_
 
 ---
 
@@ -781,13 +791,13 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
 | `feedback-on-input`  | does a player input produce a visible change within the same handler or the next drawn frame? | `immediate`, `indirect`, `none`  |
 | `fail-state-clarity` | when play ends, does the game show why it ended and how to play again? (`n/a` for `toy-box`)  | `explained`, `abrupt`, `missing` |
 
-- **Output schema:** one nullable slot per dimension, `{ [dimension]: { label, evidence: { line: number, quote: string }[], rationale: string } | null }`, so constrained decoding cannot emit a dimension twice. _(S4 change: the first schema was a `findings` array. In the paid smoke runs Haiku 4.5 twice repeated the four dimensions until the judge output cap truncated the answer; a prompt instruction alone did not stop it. `null` means the judge could not cite a line.)_
+- **Output schema:** one nullable slot per dimension, `{ [dimension]: { label, evidence: { line: number, quote: string }[], rationale: string } | null }`, so constrained decoding cannot emit a dimension twice. _(S4 change: the first schema was a `findings` array. In the paid S4 runs Haiku 4.5 twice repeated the four dimensions until the judge output cap truncated the answer; a prompt instruction alone did not stop it. `null` means the judge could not cite a line.)_
 - **Validation (`validate.ts`, pure):** a finding is discarded when
   - `evidence` is empty;
   - `line` falls outside `[1, lineCount]`;
   - the whitespace-normalised `quote` (≥ `E3_MIN_QUOTE_CHARS = 6`) is not found on `line ± E3_LINE_TOLERANCE (1)`;
   - the rationale contains a numeric claim (`E3_NUMERIC_CLAIM` regex: a number followed by `%`, `/n`, "out of", "points", "fps" or "ms").
-- **Null, not zero:** a dimension with no surviving finding is `null` (not measured), never the worst label. `n/a` (does not apply to this type) is reported separately from `null`. An unparseable response makes every dimension `null` and records `judgeError`.
+- **Null, not zero:** a dimension with no surviving finding is `null` (not measured), never the worst label. `n/a` (does not apply to this type) is reported separately from `null`. An unparseable response makes every dimension `null` and records `judgeError`. _(After the S4 review: reports count every dimension of a game with a `judgeError` as `judge-error`, not `null`, and list those games in the failures section, so a crashed judge is never read as "nothing survived validation".)_
 - **Reports** show the label distribution and the null count per length band. They never convert labels to numbers and never average them.
 - _(S4 notes: a finding is also discarded when its label is not one of its dimension's labels (`unknown-label`), and when **any** of its evidence items fails a check. A judge call that fails becomes `judgeError`; a cassette miss is recorded as the fixed text `judge cassette missing`, with no path or key, so a rescore on another machine produces the same bytes. The judge has no tools, runs with `maxSteps: 1`, and sends no thinking option (Haiku 4.5 runs without thinking when none is set). Its instructions are built in `rubric.ts` from the dimension table and contain no digits.)_
 
@@ -854,7 +864,7 @@ Checks on the whole dataset:
 - **Cost guard:** before any paid call, the CLI prints an estimate (`items × EST_TOKENS_PER_ITEM`, priced with §11.4). After `sample` has run, `EST_TOKENS_PER_ITEM` is replaced by the measured `sample` mean, and that source is written next to the constant.
 - **`full` needs flags:** it refuses to start without `--yes` and `--max-usd <n>`. It aborts before the next item once the running estimate passes `--max-usd`.
 - **Seon approves `full`** after seeing the estimate (plan A3).
-- _(S4 notes: `ONE_ITEM_ID = "kite-over-roofs"`; `SAMPLE_ITEM_IDS = ["bubble-pop", "kite-over-roofs", "maze-de-haies", "phare-long"]` (one per band and per type, two EN and two FR). The plan's names are accepted as aliases: `smoke1` → `one`, `smoke` → `sample`. `EST_TOKENS_PER_ITEM` became `EST_ITEM_USAGE`, a per-model `Usage` guess (generator and judge), so the estimate prices each kind at its own rate; it is an unmeasured starting guess until `sample` has run. The run command stops before the next item once the priced **actual** usage so far passes `--max-usd`.)_
+- _(S4 notes: `ONE_ITEM_ID = "kite-over-roofs"`; `SAMPLE_ITEM_IDS = ["bubble-pop", "kite-over-roofs", "maze-de-haies", "phare-long"]` (one per band and per type, two EN and two FR). `EST_TOKENS_PER_ITEM` became `EST_ITEM_USAGE`, a per-model `Usage` guess (generator and judge), so the estimate prices each kind at its own rate; it is an unmeasured starting guess until `sample` has run. The run command stops before the next item once the priced **actual** usage so far passes `--max-usd`.)_
 
 ### 11.3 Report (`src/eval/report/`)
 
@@ -920,9 +930,7 @@ _(S4 note: on 2026-09-24 all four rates per model were checked against the offic
 | `eval:sample`      | `node --env-file-if-exists=.env src/eval/cli.ts run --tier sample`                                  |
 | `eval:full`        | `node --env-file-if-exists=.env src/eval/cli.ts run --tier full` (plus `-- --yes --max-usd <n>`)    |
 | `eval:rescore`     | `node src/eval/cli.ts score --games games --json reports/committed/full.json` ($0, no key)          |
-| `eval:smoke1`      | alias of `eval:one` (`run --tier smoke1`) (S4)                                                      |
-| `eval:smoke`       | alias of `eval:sample` (`run --tier smoke`) (S4)                                                    |
-| `eval:score-only`  | `node src/eval/cli.ts score --games games` (prints the report JSON; `-- --tier <t>` to narrow) (S4) |
+| `eval:score`       | `node src/eval/cli.ts score --games games` (prints the report JSON; `-- --tier <t>` to narrow) (S4) |
 | `eval:matrix`      | `node src/eval/cli.ts matrix --json reports/committed/matrix.json`                                  |
 | `record:demo`      | `node --env-file-if-exists=.env scripts/record-demo.ts`                                             |
 | `build:vercel`     | `node scripts/build-vercel.ts` (§13.3)                                                              |
@@ -933,7 +941,7 @@ _(S4 note: on 2026-09-24 all four rates per model were checked against the offic
 - `run --tier <t> [--mode live|record|replay] [--label <s>] [--json <path>]`. The default mode for `run` is `record`, so every paid call leaves a cassette. It prints the cost estimate first.
 - **Persistence:** after each item it writes `games/<runKey>/…`, `run.json` (usage, wall ms, outcome, attribution) and the E2 file, before moving to the next item.
 - **Timeouts:** each item has `ITEM_TIMEOUT_MS = 12 * 60_000`, an arbitrary starting cap; after the `sample` tier it is replaced by a multiple of the measured slowest item, with the source noted. A timeout is a harness failure, not a model failure.
-- _(S4 note: after the paid `sample` runs, `ITEM_TIMEOUT_MS = 3 × SLOWEST_MEASURED_ITEM_MS` (143,177 ms, `bubble-pop` with four build attempts), and `EST_ITEM_USAGE` is the rounded per-item mean of `reports/committed/sample.json`, which a test enforces. Details: `docs/research/s4-smoke-runs.md`.)_
+- _(S4 note: after the paid `sample` runs, `ITEM_TIMEOUT_MS = 3 × SLOWEST_MEASURED_ITEM_MS` (143,177 ms, `bubble-pop` with four build attempts), and `EST_ITEM_USAGE` is the rounded per-item mean of `reports/committed/sample.json`, which a test enforces. Details: `docs/research/s4-paid-runs.md`.)_
 - **Exit codes:** 0 when the run completes, whatever the quality, and 1 on a harness failure in `one`/`sample` (the pre-flight gate before `full`).
 - _(S4 notes: `run` also takes `--skip-e2`, and `--mode mock` runs the whole pipeline at $0 with the dev server's mock models and no E3. Bad usage, an unchecked price table or a missing key in a paid mode exit 2. `score --games <dir>` takes `--tier` (default `full`), `--label`, `--json` and `--rerun-e2`, and exits 1 if an item of the tier has no `run.json`. Every collaborator (models, probe, clock, root, git) is injected through `EvalDeps` in `run/deps.ts`, and `cli.ts` imports the run modules lazily so `score --file` stays light.)_
 
@@ -962,10 +970,10 @@ Actions are pinned by SHA (copy the pins from faultline-noc's `ci.yml`). Node is
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `checks`      | `npm ci` → `typecheck` → `lint` → `test:coverage` (thresholds enforced) → `check:clean-room` → `build:vercel` + bundle check (§13.3)                                                                               |
 | `eval-replay` | `npm ci` → `npx playwright install --with-deps chromium` → `eval:matrix` + diff the matrix verdicts → `eval:rescore --json $RUNNER_TEMP/full.json` + `diff -u reports/committed/full.json` (the same for `sample`) |
-| `secrets`     | gitleaks                                                                                                                                                                                                           |
+| `secrets`     | gitleaks (`gitleaks/gitleaks-action` v3.0.0, pinned by SHA, full-history checkout)                                                                                                                                 |
 | `site`        | added in the /polish pass                                                                                                                                                                                          |
 
-CI never deploys and never uses a key. _(S3: the `checks` job also runs `npx playwright install --with-deps chromium` before the tests, because the E2 probe and matrix tests drive a real browser. The `eval-replay` job has its matrix part; its rescore part arrives with S4.)_
+CI never deploys and never uses a key. _(After the S4 review: the `secrets` job was added, and `actions/checkout` moved from v4.4.0 (a `node20` action) to v6.1.0 (`node24`, pinned by SHA) in every job, because the gitleaks action's README says GitHub-hosted runners dropped Node 20 on 2026-09-16. Neither change has run on GitHub yet; the repo has not been pushed.)_ _(S3: the `checks` job also runs `npx playwright install --with-deps chromium` before the tests, because the E2 probe and matrix tests drive a real browser. The `eval-replay` job has its matrix part; its rescore part arrives with S4.)_
 
 ### 13.3 Deploy bundle (settled in S1, used in S5)
 
@@ -1042,7 +1050,7 @@ Acceptance:
 - **E4:** tests cover match, mismatch, and each abstention trigger. The plan step and E4 share `detectLanguage`. Accuracy and abstention rate on `labelled.json` are computed and printed.
 - **Report:** a report built from a fixture run has every §11.3 section. A test asserts there is no cross-band quality mean, and the `--json` output is deterministic (two runs, identical bytes).
 - **Prices re-checked** against the official page before the first paid call (§11.4).
-- **Paid runs:** pre-flight first. `eval:one` runs live and records, then `eval:sample` does the same. Every item's game, cassettes, `run.json` and `e2.json` are committed. The research note records the measured `cacheRead` on repair passes.
+- **Paid runs:** pre-flight first. `eval:one` runs live and records, then `eval:sample` does the same. Every item's game, cassettes, `run.json` and `e2.json` are committed. _(Not met for the first `one` run: its game and cassettes were overwritten by the first `sample` run before either was committed, so only its report survives, in `reports/one/run-1/`. Every later run is complete in git history. See `docs/research/s4-paid-runs.md`.)_ The research note records the measured `cacheRead` on repair passes.
 - **Before `full`:** stop and ask Seon for approval, with a cost estimate computed from the measured `sample` mean.
 - **After `full` (if approved):** `reports/committed/full.json` regenerates byte for byte with `eval:rescore` using no key, and CI diffs it.
 
@@ -1056,6 +1064,7 @@ Acceptance:
 - **Local replay:** `GET /api/replay?promptId=<id>` on the dev server streams `plan … verify.verdict (fail) … repair.start … verify.verdict (ok) … terminal(complete)` for the repair prompt.
 - **Deterministic replay:** two replays give identical event sequences. A reconnect with `Last-Event-ID` resumes without duplicates, and one at or past the terminal id gets 204.
 - **Disconnect:** aborting the request stops the run and the relay (test with an `AbortController`).
+- **Claims test:** `claims.test.ts` (§0.1) exists and passes on `README.md`, `docs/**`, `site/**` and `reports/**`.
 - **Bundle:** `build:vercel` output passes the §13.3 bundle check against a real demo prompt with `ANTHROPIC_API_KEY` unset.
 - **No deploy** without Seon's approval. The site and the /polish pass follow as plan phase A5.
 

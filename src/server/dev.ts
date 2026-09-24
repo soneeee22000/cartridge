@@ -106,7 +106,11 @@ export async function startDevServer(
     }),
   );
   const server = createServer((incoming, outgoing) => {
-    void node(incoming, outgoing);
+    node(incoming, outgoing).catch((error: unknown) => {
+      process.stderr.write(`request failed: ${String(error)}
+`);
+      outgoing.destroy();
+    });
   });
   await new Promise<void>((resolve) =>
     server.listen(options.port ?? DEV_PORT, LOCALHOST, resolve),

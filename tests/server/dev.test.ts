@@ -41,4 +41,17 @@ describe("dev server in mock mode (§14 S2)", () => {
     expect(data.status).toBe("complete");
     expect(data.artifact?.html).toBe(MOCK_GAME_HTML);
   });
+
+  it("answers 400 to a malformed run id and keeps serving", async () => {
+    server = await startDevServer({
+      port: 0,
+      mode: "mock",
+      store: new MemoryRunStore(systemClock),
+      env: {},
+    });
+    const bad = await fetch(`${server.url}/runs/%E0/events`);
+    expect(bad.status).toBe(400);
+    const unknown = await fetch(`${server.url}/runs/none/events`);
+    expect(unknown.status).toBe(404);
+  });
 });

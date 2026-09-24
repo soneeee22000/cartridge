@@ -70,6 +70,14 @@ describe("dev handlers (§6.3)", () => {
       (await handler(new Request("http://localhost/elsewhere"))).status,
     ).toBe(404);
   });
+
+  it("answers 400 to a run id with malformed percent-encoding", async () => {
+    const { handler } = setup();
+    const response = await handler(
+      new Request("http://localhost/runs/%E0/events"),
+    );
+    expect(response.status).toBe(400);
+  });
 });
 
 describe("driver queue", () => {

@@ -6,6 +6,7 @@ export type WebHandler = (request: Request) => Response | Promise<Response>;
 
 const FALLBACK_HOST = "localhost";
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
+const HTTP_INTERNAL_ERROR = 500;
 
 function toRequest(incoming: IncomingMessage, signal: AbortSignal): Request {
   const host = incoming.headers.host ?? FALLBACK_HOST;
@@ -28,10 +29,43 @@ function toRequest(incoming: IncomingMessage, signal: AbortSignal): Request {
   });
 }
 
+async function respond(
+  handler: WebHandler,
+  request: Request,
+): Promise<Response> {
+  try {
+    return await handler(request);
+  } catch {
+    return Response.json(
+      { error: "internal error" },
+      { status: HTTP_INTERNAL_ERROR },
+    );
+  }
+}
+
+function pipeBody(
+  body: ReadableStream<Uint8Array>,
+  outgoing: ServerResponse,
+): Promise<void> {
+  const source = Readable.fromWeb(body);
+  source.pipe(outgoing);
+  return new Promise<void>((resolve) => {
+    outgoing.on("close", () => {
+      source.destroy();
+      resolve();
+    });
+    source.on("error", () => {
+      outgoing.destroy();
+      resolve();
+    });
+  });
+}
+
 /**
  * Wraps a Web handler as a Node `(req, res)` handler, streaming the response body as it is produced.
  * A client that disconnects before the response finishes aborts `request.signal`, so relays and
- * drivers stop with it.
+ * drivers stop with it. The returned promise never rejects: a handler that throws answers 500, and
+ * a body stream that errors mid-response closes the connection.
  * @param handler Web-standard handler
  */
 export function toNodeHandler(
@@ -42,20 +76,15 @@ export function toNodeHandler(
     outgoing.on("close", () => {
       if (!outgoing.writableFinished) disconnect.abort();
     });
-    const response = await handler(toRequest(incoming, disconnect.signal));
+    const response = await respond(
+      handler,
+      toRequest(incoming, disconnect.signal),
+    );
     outgoing.writeHead(response.status, Object.fromEntries(response.headers));
     if (!response.body) {
       outgoing.end();
       return;
     }
-    const body = Readable.fromWeb(response.body);
-    body.pipe(outgoing);
-    await new Promise<void>((resolve, reject) => {
-      outgoing.on("close", () => {
-        body.destroy();
-        resolve();
-      });
-      body.on("error", reject);
-    });
+    await pipeBody(response.body, outgoing);
   };
 }

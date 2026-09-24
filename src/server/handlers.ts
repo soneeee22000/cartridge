@@ -66,6 +66,14 @@ async function createRun(
   return Response.json({ runId }, { status: HTTP_ACCEPTED });
 }
 
+function decodeRunId(raw: string): string | null {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * The dev server's routes (§6.3): `POST /runs` and `GET /runs/:id/events`.
  * @param deps run store, queue and optional relay timing
@@ -76,14 +84,20 @@ export function createDevHandler(deps: DevHandlerDeps): WebHandler {
     if (request.method === "POST" && pathname === "/runs")
       return createRun(request, deps);
     const events = EVENTS_ROUTE.exec(pathname);
-    if (request.method === "GET" && events?.[1])
-      return relayRun({
-        ...deps.relay,
-        store: deps.store,
-        runId: decodeURIComponent(events[1]),
-        lastEventId: lastEventIdOf(request),
-        signal: request.signal,
-      });
-    return Response.json({ error: "not found" }, { status: HTTP_NOT_FOUND });
+    if (request.method !== "GET" || !events?.[1])
+      return Response.json({ error: "not found" }, { status: HTTP_NOT_FOUND });
+    const runId = decodeRunId(events[1]);
+    if (runId === null)
+      return Response.json(
+        { error: "malformed run id" },
+        { status: HTTP_BAD_REQUEST },
+      );
+    return relayRun({
+      ...deps.relay,
+      store: deps.store,
+      runId,
+      lastEventId: lastEventIdOf(request),
+      signal: request.signal,
+    });
   };
 }

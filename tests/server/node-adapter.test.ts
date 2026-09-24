@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { toNodeHandler } from "../../src/server/node-adapter.ts";
 
 let server: Server | null = null;
+const unhandled: unknown[] = [];
 const SSE_HELLO = "data: hi\n\n";
 
 async function serve(
@@ -11,7 +12,9 @@ async function serve(
 ): Promise<string> {
   const node = toNodeHandler(handler);
   server = createServer((incoming, outgoing) => {
-    void node(incoming, outgoing);
+    node(incoming, outgoing).catch((error: unknown) => {
+      unhandled.push(error);
+    });
   });
   await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
@@ -19,6 +22,7 @@ async function serve(
 }
 
 afterEach(async () => {
+  unhandled.splice(0);
   const running = server;
   server = null;
   if (!running) return;
@@ -80,6 +84,43 @@ describe("toNodeHandler", () => {
     client.abort();
     await vi.waitFor(() => {
       expect(signal?.aborted).toBe(true);
+    });
+  });
+
+  it("answers 500 instead of rejecting when the handler throws", async () => {
+    const base = await serve(() => {
+      throw new Error("handler bug");
+    });
+    const response = await fetch(base);
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "internal error" });
+    expect(unhandled).toEqual([]);
+  });
+
+  it("answers 500 instead of rejecting when the handler rejects", async () => {
+    const base = await serve(() => Promise.reject(new Error("store down")));
+    const response = await fetch(base);
+    expect(response.status).toBe(500);
+    expect(unhandled).toEqual([]);
+  });
+
+  it("ends the response without rejecting when the body stream errors", async () => {
+    const base = await serve(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(SSE_HELLO));
+          controller.error(new Error("relay broke"));
+        },
+      });
+      return new Response(body, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    });
+    await fetch(base)
+      .then((response) => response.text())
+      .catch(() => "");
+    await vi.waitFor(() => {
+      expect(unhandled).toEqual([]);
     });
   });
 });

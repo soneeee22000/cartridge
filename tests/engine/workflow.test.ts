@@ -281,6 +281,21 @@ describe("every failure code is attributed (§4.5)", () => {
     expect(reject.history).toHaveLength(1);
   });
 
+  it("stops the builder mid-pass at the first step that spends the budget", async () => {
+    const reject = await rejected({
+      builderTurns: [
+        saveTurn(BROKEN_GAME_HTML, { input: RUN_TOKEN_BUDGET, output: 1 }),
+        saveTurn(BROKEN_GAME_HTML, { input: 7, output: 1 }),
+        doneTurn,
+      ],
+    });
+    expect(reject.attribution).toMatchObject({ code: "budget-exhausted" });
+    expect(reject.history[0]?.usage).toMatchObject({
+      input: RUN_TOKEN_BUDGET,
+      output: 1,
+    });
+  });
+
   it("verifier-crashed when E1 throws", async () => {
     const reject = await rejected({
       verify: () => {

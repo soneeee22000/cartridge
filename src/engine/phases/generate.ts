@@ -7,6 +7,7 @@ import {
   GENERATE_MAX_STEPS,
 } from "../budgets.ts";
 import { builderMessage } from "../prompts/index.ts";
+import { budgetStop } from "../stop-rules.ts";
 import type {
   ArtifactRef,
   AttemptRec,
@@ -41,6 +42,7 @@ async function callBuilder(
       {
         requestContext: deps.requestContext,
         maxSteps: GENERATE_MAX_STEPS,
+        stopWhen: budgetStop(state),
         modelSettings: { maxOutputTokens: BUILDER_MAX_OUTPUT_TOKENS },
         providerOptions: { anthropic: BUILDER_THINKING },
       },

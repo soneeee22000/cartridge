@@ -1,9 +1,10 @@
 import type { Usage } from "../engine/usage.ts";
 
 /**
- * Price table version (§11.4). Input and output rates match the claude-api skill's model table
- * (cached 2026-06-24), read on 2026-09-24; cache rates come from research `deploy-and-models.md`
- * §2.2. A price change means a new version string; old reports keep the version they were priced with.
+ * Price table version (§11.4). All four rates per model (base input, 5-minute cache write, cache
+ * hit, output) were checked on 2026-09-24 against platform.claude.com/docs/en/about-claude/pricing,
+ * which lists Sonnet 5 at $2/$10 as the standard price. A price change means a new version string;
+ * old reports keep the version they were priced with.
  */
 export const PRICE_TABLE_VERSION = "2026-09-24";
 
@@ -11,7 +12,7 @@ export const PRICE_TABLE_VERSION = "2026-09-24";
  * Date the table was re-checked against the official Anthropic pricing page, or `null` if it has
  * not been. The eval CLI refuses paid modes (`record`, `live`) while this is `null` (§11.4, §14 S4).
  */
-export const PRICES_CHECKED_ON_OFFICIAL_PAGE: string | null = null;
+export const PRICES_CHECKED_ON_OFFICIAL_PAGE: string | null = "2026-09-24";
 
 /** Every USD figure carries this label (§0.1). */
 export const USD_LABEL = "estimate from list prices; not an invoice";

@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { FsArtifactStore } from "../../engine/artifacts/fs.ts";
@@ -131,6 +131,18 @@ async function probeSafely(
   }
 }
 
+/**
+ * A recording is one run: stale drafts, `versions.json` entries and cassette index keys from an
+ * earlier recording of the same item must not survive into the new one.
+ */
+function clearItemRecording(root: string, itemId: string): void {
+  for (const dir of [
+    join(root, "games", itemId),
+    join(root, "cassettes", itemId),
+  ])
+    rmSync(dir, { recursive: true, force: true });
+}
+
 async function runOneItem(
   item: DatasetItem,
   options: RunOptions,
@@ -138,6 +150,7 @@ async function runOneItem(
   io: Io,
 ): Promise<ItemRecord> {
   const gamesDir = join(deps.root, "games");
+  if (options.mode === "record") clearItemRecording(deps.root, item.id);
   const record = await generateItem(item, {
     models: deps.generatorModels(options.mode, item.id),
     artifacts: new FsArtifactStore(gamesDir),

@@ -1,4 +1,10 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -229,6 +235,39 @@ describe("cli run (§12.2)", () => {
     );
     expect(noKey.code).toBe(2);
     expect(noKey.err).toContain("ANTHROPIC_API_KEY");
+  });
+
+  it("starts a record run from an empty game and cassette directory for the item", async () => {
+    const { deps } = harness({
+      pricesChecked: "2026-09-24",
+      env: { ANTHROPIC_API_KEY: "test-key" },
+    });
+    const gameDir = join(deps.root, "games", ONE_ITEM_ID);
+    const cassetteDir = join(deps.root, "cassettes", ONE_ITEM_ID);
+    mkdirSync(gameDir, { recursive: true });
+    mkdirSync(cassetteDir, { recursive: true });
+    writeFileSync(join(gameDir, "a3.html"), "stale");
+    writeFileSync(join(cassetteDir, "index.json"), '{"keys":["stale"]}\n');
+    const { code } = await capture(
+      ["run", "--tier", "one", "--mode", "record", "--skip-e2"],
+      deps,
+    );
+    expect(code).toBe(0);
+    expect(existsSync(join(gameDir, "a3.html"))).toBe(false);
+    expect(existsSync(join(cassetteDir, "index.json"))).toBe(false);
+    expect(existsSync(join(gameDir, "a1.html"))).toBe(true);
+  });
+
+  it("never clears recordings outside record mode", async () => {
+    const { deps } = harness();
+    const cassetteDir = join(deps.root, "cassettes", ONE_ITEM_ID);
+    mkdirSync(cassetteDir, { recursive: true });
+    writeFileSync(join(cassetteDir, "index.json"), '{"keys":[]}\n');
+    await capture(
+      ["run", "--tier", "one", "--mode", "mock", "--skip-e2"],
+      deps,
+    );
+    expect(existsSync(join(cassetteDir, "index.json"))).toBe(true);
   });
 
   it("refuses the full tier without --yes and --max-usd", async () => {

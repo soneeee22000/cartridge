@@ -56,13 +56,13 @@
           "explained": 1
         },
         "feedback-on-input": {
-          "null": 1
+          "immediate": 1
         },
         "goal-legibility": {
           "stated": 1
         },
         "prompt-coverage": {
-          "null": 1
+          "covered": 1
         }
       },
       "e4": {
@@ -84,8 +84,11 @@
         "min": 1
       },
       "e2": {
-        "detectorFails": {},
-        "passed": 1,
+        "detectorFails": {
+          "console-error": 1,
+          "tap-unresponsive": 1
+        },
+        "passed": 0,
         "probed": 1
       },
       "e3": {
@@ -93,13 +96,13 @@
           "explained": 1
         },
         "feedback-on-input": {
-          "immediate": 1
+          "null": 1
         },
         "goal-legibility": {
           "stated": 1
         },
         "prompt-coverage": {
-          "covered": 1
+          "null": 1
         }
       },
       "e4": {
@@ -121,22 +124,25 @@
         "min": 1
       },
       "e2": {
-        "detectorFails": {},
-        "passed": 1,
+        "detectorFails": {
+          "console-error": 1,
+          "tap-unresponsive": 1
+        },
+        "passed": 0,
         "probed": 1
       },
       "e3": {
         "fail-state-clarity": {
-          "explained": 1
+          "null": 1
         },
         "feedback-on-input": {
-          "immediate": 1
+          "null": 1
         },
         "goal-legibility": {
           "stated": 1
         },
         "prompt-coverage": {
-          "covered": 1
+          "null": 1
         }
       },
       "e4": {
@@ -152,31 +158,31 @@
     }
   ],
   "cost": {
-    "estUsd": 0.653,
+    "estUsd": 0.641,
     "repairCacheRead": 0,
     "repairTokens": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 30250,
-      "output": 5268
+      "input": 29872,
+      "output": 5009
     },
     "tokens": {
       "generator": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 124984,
-        "output": 35553
+        "input": 122358,
+        "output": 34791
       },
       "judge": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 34312,
-        "output": 2608
+        "input": 34040,
+        "output": 2847
       }
     },
     "usdLabel": "estimate from list prices; not an invoice",
-    "wallMsMedian": 68821.5,
-    "wallMsTotal": 282284
+    "wallMsMedian": 68955,
+    "wallMsTotal": 275774
   },
   "e4Labelled": {
     "abstentionRate": 0,
@@ -215,12 +221,12 @@
         },
         "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 20.7,
-          "distinctColours": 4627,
+          "bootMs": 16.7,
+          "distinctColours": 410,
           "firstEndSeconds": null,
-          "idleMotionRatio": 0.125,
-          "lumaStddev": 37.794,
-          "tapMotionRatio": 0.226
+          "idleMotionRatio": 0.002,
+          "lumaStddev": 28.315,
+          "tapMotionRatio": 0.146
         }
       },
       "e3": {
@@ -236,10 +242,9 @@
       "e4": {
         "evidence": [
           "Pop the Bubbles",
-          "POPS:",
-          "Clear",
-          "POP THE BUBBLES",
-          "TAP TO BEGIN"
+          "Pops:",
+          "Clear Table",
+          "Tap to begin"
         ],
         "htmlLang": "en",
         "promptLang": "en",
@@ -259,24 +264,24 @@
       "repairUsage": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 30250,
-        "output": 5268
+        "input": 29872,
+        "output": 5009
       },
       "usage": {
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 50907,
-          "output": 10548
+          "input": 50932,
+          "output": 10269
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 6432,
-          "output": 485
+          "input": 6325,
+          "output": 516
         }
       },
-      "wallMs": 81192
+      "wallMs": 80880
     },
     {
       "buildAttempts": 1,
@@ -291,45 +296,33 @@
           "idle-static": "pass",
           "tap-unresponsive": "pass"
         },
-        "longestPlaySeconds": 6.169,
+        "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 19,
-          "distinctColours": 1272,
-          "firstEndSeconds": 1.218,
-          "idleMotionRatio": 0.021,
-          "lumaStddev": 11.57,
-          "tapMotionRatio": 0.255
+          "bootMs": 26.9,
+          "distinctColours": 558,
+          "firstEndSeconds": 1.086,
+          "idleMotionRatio": 0.017,
+          "lumaStddev": 36.254,
+          "tapMotionRatio": 0.042
         }
       },
       "e3": {
         "dimensions": {
           "fail-state-clarity": "explained",
-          "feedback-on-input": null,
+          "feedback-on-input": "immediate",
           "goal-legibility": "stated",
-          "prompt-coverage": null
+          "prompt-coverage": "covered"
         },
-        "discarded": [
-          {
-            "dimension": "prompt-coverage",
-            "reason": "quote-not-found"
-          },
-          {
-            "dimension": "feedback-on-input",
-            "reason": "quote-not-found"
-          }
-        ],
+        "discarded": [],
         "judgeError": null
       },
       "e4": {
         "evidence": [
-          "Kite Above the Rooftops",
-          "Score",
+          "Kite Over the Rooftops",
+          "use strict",
           "Tap to begin",
-          "Tap to rise, dodge chimneys, catch ribbons",
-          "Crashed!",
-          "Score:",
-          "Tap to fly again",
-          "Paused"
+          "Flight over! Ribbons:",
+          "Tap to fly again"
         ],
         "htmlLang": "en",
         "promptLang": "en",
@@ -354,64 +347,254 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 22883,
-          "output": 7849
+          "input": 19785,
+          "output": 6980
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 8828,
-          "output": 713
+          "input": 8192,
+          "output": 687
         }
       },
-      "wallMs": 65546
+      "wallMs": 56984
     },
     {
       "buildAttempts": 1,
       "e1Score": 1,
       "e2": {
-        "consoleErrors": [],
+        "consoleErrors": [
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable",
+          "error: Uncaught TypeError: pick is not iterable"
+        ],
         "detectors": {
           "blank-frame": "pass",
           "boot-handshake": "pass",
-          "console-error": "pass",
+          "console-error": "fail",
           "idle-death": "pass",
           "idle-static": "n/a",
-          "tap-unresponsive": "pass"
+          "tap-unresponsive": "fail"
         },
         "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 17.5,
-          "distinctColours": 2813,
+          "bootMs": 30.2,
+          "distinctColours": 1428,
           "firstEndSeconds": null,
           "idleMotionRatio": 0,
-          "lumaStddev": 28.675,
-          "tapMotionRatio": 0.504
+          "lumaStddev": 43.284,
+          "tapMotionRatio": 0
         }
       },
       "e3": {
         "dimensions": {
           "fail-state-clarity": "explained",
-          "feedback-on-input": "immediate",
+          "feedback-on-input": null,
           "goal-legibility": "stated",
-          "prompt-coverage": "covered"
+          "prompt-coverage": null
         },
-        "discarded": [],
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          }
+        ],
         "judgeError": null
       },
       "e4": {
         "evidence": [
           "Le Labyrinthe du Hérisson",
-          "use strict",
-          "Glissez pour déplacer le hérisson",
-          "Niveau",
-          "Score:",
-          "Pas:",
-          "Touchez ou appuyez sur Entrée pour jouer",
-          "Bravo ! Sortie atteinte",
-          "Bloqué ! Plus de pas",
+          "Sortie atteinte !",
+          "Plus de pas possibles.",
+          "Le Labyrinthe",
+          "du Hérisson",
+          "Glissez ou touchez pour jouer",
+          "Guidez le hérisson vers la sortie",
+          "Bravo !",
+          "Coincé !",
           "Score final:",
-          "Touchez pour revenir au titre"
+          "Toucher pour rejouer"
         ],
         "htmlLang": "fr",
         "promptLang": "fr",
@@ -436,65 +619,84 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 25882,
-          "output": 9114
+          "input": 26292,
+          "output": 9532
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 9971,
-          "output": 714
+          "input": 10239,
+          "output": 896
         }
       },
-      "wallMs": 72097
+      "wallMs": 73084
     },
     {
       "buildAttempts": 1,
       "e1Score": 1,
       "e2": {
-        "consoleErrors": [],
+        "consoleErrors": [
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined",
+          "error: Uncaught ReferenceError: backToTitle is not defined"
+        ],
         "detectors": {
           "blank-frame": "pass",
           "boot-handshake": "pass",
-          "console-error": "pass",
+          "console-error": "fail",
           "idle-death": "pass",
           "idle-static": "pass",
-          "tap-unresponsive": "pass"
+          "tap-unresponsive": "fail"
         },
-        "longestPlaySeconds": 8.815,
+        "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 12.2,
-          "distinctColours": 5733,
+          "bootMs": 46.7,
+          "distinctColours": 2140,
           "firstEndSeconds": null,
-          "idleMotionRatio": 0.068,
-          "lumaStddev": 28.493,
-          "tapMotionRatio": 0.119
+          "idleMotionRatio": 0.001,
+          "lumaStddev": 41.148,
+          "tapMotionRatio": 0.002
         }
       },
       "e3": {
         "dimensions": {
-          "fail-state-clarity": "explained",
-          "feedback-on-input": "immediate",
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
           "goal-legibility": "stated",
-          "prompt-coverage": "covered"
+          "prompt-coverage": null
         },
-        "discarded": [],
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "feedback-on-input",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "fail-state-clarity",
+            "reason": "quote-not-found"
+          }
+        ],
         "judgeError": null
       },
       "e4": {
         "evidence": [
           "Le Gardien du Phare",
-          "— Faites rentrer",
-          "LE GARDIEN",
-          "DU PHARE",
-          "Glissez pour tourner le faisceau",
-          "et guidez les bateaux au port",
-          "TOUCHEZ POUR COMMENCER",
-          "Phase",
-          "Score",
-          "NUIT SAUVÉE !",
-          "Score final :",
-          "Touchez pour recommencer"
+          ": guidez",
+          "au port",
+          "Phare",
+          "• Sauvés:",
+          "Touchez et glissez pour tourner le faisceau",
+          "Préparez-vous...",
+          "terminé !",
+          "Prochain phare...",
+          "Toutes les nuits sont sauves !",
+          "Vous avez gagné",
+          "Un bateau a heurté les rochers...",
+          "Nuit perdue"
         ],
         "htmlLang": "fr",
         "promptLang": "fr",
@@ -519,17 +721,17 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 25312,
-          "output": 8042
+          "input": 25349,
+          "output": 8010
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 9081,
-          "output": 696
+          "input": 9284,
+          "output": 748
         }
       },
-      "wallMs": 63449
+      "wallMs": 64826
     }
   ],
   "judgeErrors": [],
@@ -559,7 +761,7 @@
   },
   "totals": {
     "contractFailed": 0,
-    "estUsd": 0.653,
+    "estUsd": 0.641,
     "games": 4,
     "harnessFailures": 0,
     "n": 4,

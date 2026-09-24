@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, type Browser } from "playwright";
+import type { Browser } from "playwright";
 import { z } from "zod";
 import { GameType } from "../contract/game-types.ts";
 import { scoreGame } from "./e1/score.ts";
@@ -231,6 +231,7 @@ async function probeOne(
 export async function probeFixtures(
   fixtures: readonly MatrixFixture[],
 ): Promise<FixtureRun[]> {
+  const { chromium } = await import("playwright");
   const browser = await chromium.launch();
   try {
     const runs: FixtureRun[] = [];

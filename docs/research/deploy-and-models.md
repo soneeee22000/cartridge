@@ -335,3 +335,21 @@ Practical notes:
 - Headless Chromium renders WebGL through a software rasteriser, so it is slower. Keep the probe canvas small
   and the frame gap fixed.
 - In CI, `npx playwright install --with-deps chromium` is the only extra step; pngjs adds no native build.
+
+---
+
+## 4. Deploy bundle settled at S1 (2026-09-24)
+
+- **Runtime id:** `nodejs24.x` in each `.vc-config.json`. It is listed as a supported runtime id on the
+  [duration page](https://vercel.com/docs/functions/configuring-functions/duration); the
+  [primitives page](https://vercel.com/docs/build-output-api/primitives) example still shows `nodejs22.x`.
+- **Handler shape:** the primitives page documents `launcherType: "Nodejs"` (plus optional `shouldAddHelpers`,
+  `shouldAddSourcemapSupport`, `awsLambdaHandler`) but does not say whether the raw launcher accepts a
+  Web-standard export. So each bundle's default export is a Node `(req, res)` handler produced by
+  `toNodeHandler()` (`src/server/node-adapter.ts`), and the Web-standard `GET` is exported alongside it for
+  the dev server and for the bundle test. This is checked locally only; the first `vercel build` /
+  `vercel deploy --prebuilt` (S5, with Seon's approval) is the real confirmation.
+- **Bundle check:** `tests/scripts/build-vercel.test.ts` builds into a temp directory, then imports
+  `replay.func/index.mjs` in a child `node` process whose cwd is the OS temp dir, with
+  `CARTRIDGE_ASSET_ROOT` and `ANTHROPIC_API_KEY` unset. The placeholder handler reads the `bridge` card from
+  the copied `src/cards/` next to the bundle.

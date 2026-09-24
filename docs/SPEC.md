@@ -95,6 +95,8 @@ cartridge/
     server/
       dev.ts                    node:http dev server that mounts the same handlers as api/
       handlers.ts               Web Request → Response handlers shared by dev server and api/
+      node-adapter.ts           Web handler → Node (req, res) adapter used by the deploy bundle (§13.3)
+  tests/                        vitest suites mirroring src/, api/ and scripts/
   fixtures/
     known-bad/*.html  known-bad/fixtures.json    hand-authored games used for tuning (§9.1)
     holdout/*.html    holdout/fixtures.json      hand-authored games never used for tuning (§9.3)
@@ -167,13 +169,13 @@ This table lives in exactly one place (`src/contract/game-types.ts`) as `GAME_TY
 
 ### 2.3 E1 rule list (the contract scorer)
 
-E1 is a set of pure, deterministic functions `(html: string, ctx: { spec?: GameSpec }) → RuleResult`. There is no I/O.
+E1 is a set of pure, deterministic functions `(html: string, ctx: { spec?: GameSpec }) → RuleResult`. There is no I/O. *(S1 note: the page is parsed once by `parseGame(html, ctx)` in `src/eval/e1/document.ts`, and each rule is a pure `check(parsed) → { status, message? }` over that parse; `scoreGame(html, ctx)` and `evaluateRule(id, html, ctx)` keep the `(html, ctx)` entry point. Parsing once avoids re-lexing the scripts 24 times.)*
 
 - **Severity:** `hard` rules are gating, `soft` rules are scored but not gating, and `metric` rules are reported and never scored.
 - **Score:** `passed / applicable` over hard and soft rules. A rule that does not apply to the declared type is `n/a` and leaves the denominator.
 - **Verdict:** `ok = (hard failures === 0)`. The `verify` tool and the build-cycle's verify phase use this same verdict (§4).
 - **Fix hints:** each rule carries a prescriptive `fix` string (for example "Emit `CARTRIDGE.send("start")` when play begins"). This string is exactly what the repair prompt receives.
-- **Citations:** each rule declares `{ card, anchor }`. The anchor is an HTML comment `<!-- rule:E1-nn -->` at the end of the card line that states the rule. The loader resolves it to `cards/<card>.md:<line>`, and reports print that form. A test fails if any rule has zero anchors or more than one, or if an anchor names an unknown rule. Line numbers are therefore always computed and never typed by hand.
+- **Citations:** each rule declares `{ card, anchor }`. The anchor is an HTML comment `<!-- rule:E1-nn -->` at the end of the card line that states the rule. The loader resolves it to `cards/<card>.md:<line>`, and reports print that form. A test fails if any rule has zero anchors or more than one, or if an anchor names an unknown rule. Line numbers are therefore always computed and never typed by hand. *(S1 note: rules cited by "type card" (E1-15, E1-16, E1-17) have exactly one anchor in **each** of the four type cards, and E1-22 has exactly one in each of the three input cards; the citation resolves in the card for the declared type or input. `resolveAnchor(ruleId, card?)` takes the card for these rules. Every other rule has exactly one anchor in the whole card set.)*
 - **Payload scan:** call sites are found with `CARTRIDGE.send("<type>"` and the payload object literal is extracted by a balanced-brace scanner that knows about strings, template literals and comments (`src/eval/e1/scan.ts`). Canvas text such as `ctx.fillText("Level 2", x, y)` is never mistaken for a `level` call site or payload.
 - **Syntax check:** each classic inline `<script>` is compiled with `new vm.Script(source, { filename })` and never executed. `type="module"` scripts are forbidden by the contract (E1-09), so no subprocess and no timeout are needed.
 
@@ -899,7 +901,7 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 
 ### 12.3 Clean-room scan
 
-`scripts/clean-room-scan.ts` walks every tracked file (`git ls-files`). It lowercases the text, tokenises it on `[a-z0-9]+`, and compares the sha256 of each token (and of each pair of adjacent tokens) against `CLEAN_ROOM_DENYLIST_SHA256`. Only the hashes are committed, never the terms, so the scan itself leaks nothing. It exits 1 on any hit. Seon supplies the term list once, locally; the script's `--hash` helper prints the digests.
+`scripts/clean-room-scan.ts` walks every tracked file plus every untracked, non-ignored file (`git ls-files --cached --others --exclude-standard`), so a term is caught before it is committed. Binary files are skipped. `--root <dir>` scans another checkout and `--deny <sha256>` adds a digest (the test uses both). It lowercases the text, tokenises it on `[a-z0-9]+`, and compares the sha256 of each token (and of each pair of adjacent tokens) against `CLEAN_ROOM_DENYLIST_SHA256`. Only the hashes are committed, never the terms, so the scan itself leaks nothing. It exits 1 on any hit. Seon supplies the term list once, locally; the script's `--hash` helper prints the digests.
 
 ---
 
@@ -909,6 +911,7 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 
 - **Dependencies:** `@mastra/core@1.70.0`, `@libsql/client@0.18.0` (confirm it satisfies `@mastra/core`'s peer range, if any), `zod@4.6.5`, `@ai-sdk/anthropic@4.0.62`.
 - **devDependencies:** `typescript@5.9.3`, `vitest@5.0.0` + `@vitest/coverage-v8@5.0.0`, `ai@7.0.113` (for `ai/test`), `playwright@1.63.0`, `pngjs@7.0.0`, `@types/pngjs@6.0.5`, `@types/node` (24.x), `esbuild` (current exact), `eslint` + `typescript-eslint` (current exact). `@ai-sdk/provider@3.0.14` is added only if the §7.2 fallback is ever needed.
+- **Pinned at S1 (confirmed with `npm view` on 2026-09-24):** `zod@4.6.5`; dev `typescript@5.9.3` (typescript-eslint 8.70.1 requires `<6.1.0`, so TS 7 is not an option yet), `vitest@5.0.0`, `@vitest/coverage-v8@5.0.0`, `@types/node@24.13.6`, `esbuild@0.28.2`, `eslint@10.11.0`, `@eslint/js@10.0.1`, `typescript-eslint@8.70.1`. The model, storage and probe packages (`@mastra/core`, `@libsql/client`, `@ai-sdk/anthropic`, `ai`, `playwright`, `pngjs`) are added in the slice that first imports them (S2/S3), at the pins above, so S1 installs nothing it does not use.
 - `@mastra/libsql` is not needed. Mastra storage is `InMemoryStore`, and our run table uses `@libsql/client` directly (§5.3).
 
 ### 13.2 CI (`.github/workflows/ci.yml`)
@@ -928,7 +931,7 @@ CI never deploys and never uses a key.
 
 Relative `.ts` import specifiers and runtime file reads (`fs` on cards, prompts, cassettes and the dataset) are both risky under Vercel's zero-config TS compile and file tracing. The primary path is therefore our own bundle via the Build Output API, decided now rather than discovered in S5:
 
-- `scripts/build-vercel.ts` uses esbuild (which resolves `.ts` specifiers) to bundle each `api/*.ts` into `.vercel/output/functions/api/<name>.func/index.mjs`, with a `.vc-config.json` (`runtime: "nodejs24.x"` or the current Node 24 id checked against Vercel docs at S1, `handler: "index.mjs"`, `launcherType: "Nodejs"`, `maxDuration: 300` for `replay`).
+- `scripts/build-vercel.ts` uses esbuild (which resolves `.ts` specifiers) to bundle each `api/*.ts` into `.vercel/output/functions/api/<name>.func/index.mjs`, with a `.vc-config.json` (`runtime: "nodejs24.x"` or the current Node 24 id checked against Vercel docs at S1, `handler: "index.mjs"`, `launcherType: "Nodejs"`, `maxDuration: 300` for `replay`). *(S1: runtime `nodejs24.x`. Each `api/*.ts` exports a Web-standard `GET(request) → Response` and a default Node `(req, res)` handler built by `toNodeHandler` in `src/server/node-adapter.ts`, because the Build Output API primitives page does not document a Web-standard export for the raw `Nodejs` launcher. Recorded in `docs/research/deploy-and-models.md` §4.)*
 - It copies `src/cards/**`, `src/engine/prompts/**`, `cassettes/**` and `dataset/**` into each function directory, and the bundle sets `CARTRIDGE_ASSET_ROOT` to that directory. Nothing at runtime relies on file tracing.
 - **Bundle check (CI and S1):** a test imports the built `replay.func/index.mjs` in plain Node, calls its handler with a `Request` for a committed demo prompt, and asserts that the stream resolves a card, finds a cassette and ends with `terminal` — with `ANTHROPIC_API_KEY` unset. In S1 (before cassettes exist) the check runs against a one-line handler that reads one card, so the bundling path is proven before any engine code depends on it.
 - Deploying uses `vercel deploy --prebuilt`, and only with Seon's approval.

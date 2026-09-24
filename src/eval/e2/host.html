@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>cartridge probe host</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+      }
+      iframe {
+        display: block;
+        border: 0;
+        width: {{WIDTH}}px;
+        height: {{HEIGHT}}px;
+      }
+    </style>
+    <script>
+      window.__probe = {
+        loadedAt: performance.now(),
+        messages: [],
+        errors: [],
+      };
+      window.addEventListener("message", function (event) {
+        var data = event.data;
+        if (!data || typeof data !== "object") return;
+        var t = performance.now();
+        if (data.source === "cartridge")
+          window.__probe.messages.push({ t: t, data: data });
+        if (data.source === "cartridge-probe")
+          window.__probe.errors.push({
+            t: t,
+            kind: String(data.kind),
+            message: String(data.message),
+          });
+      });
+      window.__probeSend = function (type) {
+        var frame = document.getElementById("game");
+        frame.contentWindow.postMessage(
+          { source: "cartridge-host", type: type },
+          "*",
+        );
+      };
+    </script>
+  </head>
+  <body>
+    <iframe
+      id="game"
+      title="game under probe"
+      sandbox="allow-scripts"
+      srcdoc="{{SRCDOC}}"
+    ></iframe>
+  </body>
+</html>

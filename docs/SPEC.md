@@ -91,7 +91,7 @@ cartridge/
       mock-game.ts              MOCK_SPEC and MOCK_GAME_HTML for the dev server's mock mode
     eval/
       e1/                       contract scorer: rules/*.ts, scan.ts (payload parser), score.ts (§2.3)
-      e2/                       runtime probe: probe.ts, host.html, instrument.ts, metrics.ts, detectors.ts, thresholds.ts, bot.ts (§8)
+      e2/                       runtime probe: probe.ts, host.html, instrument.ts, metrics.ts, detectors.ts, thresholds.ts, bot.ts, types.ts (§8)
       e3/                       cited categorical judge: rubric.ts, validate.ts, judge.ts (§10.1)
       e4/                       language match: detect.ts, extract-ui-strings.ts, words-en.ts, words-fr.ts, labelled.json (§10.2)
       dataset/schema.ts  dataset/privacy-guard.ts (§11.1)
@@ -667,7 +667,7 @@ E2 uses Playwright Chromium and `pngjs`. It is not run on Vercel, where the page
 
 - `host.html` embeds the game as `<iframe sandbox="allow-scripts" srcdoc=…>` at `PROBE_VIEWPORT = { width: 360, height: 640 }`. This matches the demo page's sandbox, so storage and same-origin mistakes surface here too.
 - The host records every `message` with `source: "cartridge"` along with a `performance.now()` timestamp.
-- **Instrumentation:** the probe injects one `<script>` (`instrument.ts`) into the srcdoc **immediately after the opening `<head…>` tag**, or immediately after the opening `<html…>` tag when there is no `<head>`. It is never prepended before `<!doctype html>`, which would put the page in quirks mode and change the layout E2 measures. It is the only change made to the game. It forwards `error`, `unhandledrejection` and `console.error` to the host as `{ source: "cartridge-probe", kind, message }`. This avoids depending on Playwright surfacing errors from sandboxed child frames. S3 checks whether `page.on("pageerror")` also sees them and records the answer in `docs/research`. Tests: the instrumented document still starts with the doctype, and `document.compatMode` in the probed frame is `"CSS1Compat"`.
+- **Instrumentation:** the probe injects one `<script>` (`instrument.ts`) into the srcdoc **immediately after the opening `<head…>` tag**, or immediately after the opening `<html…>` tag when there is no `<head>`. It is never prepended before `<!doctype html>`, which would put the page in quirks mode and change the layout E2 measures. It is the only change made to the game. It forwards `error`, `unhandledrejection` and `console.error` to the host as `{ source: "cartridge-probe", kind, message }`. This avoids depending on Playwright surfacing errors from sandboxed child frames. S3 checks whether `page.on("pageerror")` also sees them and records the answer in `docs/research`. _(S3 answer, `docs/research/e2-calibration.md`: with Playwright 1.63.0 `pageerror` does see uncaught exceptions and unhandled rejections from the sandboxed frame, and `console.error` arrives only as a `console` event. The probe keeps its own forwarder; a test pins both observations.)_ Tests: the instrumented document still starts with the doctype, and `document.compatMode` in the probed frame is `"CSS1Compat"`.
 - **Frames:** a frame is `iframe.screenshot()`, which captures composited pixels. Fixtures cover DOM and 2D canvas games; WebGL is a non-goal (§15) and is not claimed.
 - **Metrics (`metrics.ts`, pure, tested with in-memory PNGs):**
   - luma stddev
@@ -693,7 +693,11 @@ E2 uses Playwright Chromium and `pngjs`. It is not run on Vercel, where the page
 
 `longestPlaySeconds` is **reported only** and never gates. E2 passes when every applicable detector passes.
 
+_(S3 notes on the sequence: in step 2 the probe taps only if `start` has not already arrived; if `start` never arrives, the idle window is timed from the tap. Frame A is taken `IDLE_FRAME_DELAY_MS` after `start`. Step 4 waits `RESET_SETTLE_MS` after `reset` before the "before" frame and does not require a second `start`, because a `toy-box` game has no pre-`start` screen to return to. Detectors are pure functions of an `Observation` value (`types.ts`), so the matrix can re-evaluate one browser run under different registries.)_
+
 ### 8.3 Thresholds (`thresholds.ts`)
+
+_(S3: frozen. Every value below was kept; `docs/research/e2-calibration.md` gives the margins. `thresholds.ts` also exports four harness constants that are not thresholds: `IDLE_FRAME_DELAY_MS = 400`, `RESET_SETTLE_MS = 300`, `BOT_TAP_GAP_MIN_MS = 120` and `BOT_TAP_GAP_MAX_MS = 700`, all arbitrary and listed in the same note.)_
 
 These are the starting values. S3 tunes them on this repo's own `fixtures/good` and `fixtures/known-bad` and then freezes them. `docs/research/e2-calibration.md` records the measured metric for every fixture next to each threshold, so a reader can see the margin, and gives, for each threshold, the reason for its final value in terms of those measurements only. `IDLE_DEATH_MIN_SECONDS` in particular starts at 4 as an unmeasured guess; its frozen value is whatever the fixture calibration supports, and the calibration note states that derivation.
 
@@ -735,7 +739,7 @@ Every fixture is hand-authored. It **scores E1 = 1.000 (all hard and soft rules 
 | `kb-06-late-throw.html`                                                                        | puzzle-board | a `TypeError` in the update loop shortly after start                           | `console-error`    |
 | `good-arcade-run.html`, `good-stage-clear.html`, `good-puzzle-board.html`, `good-toy-box.html` | each         | none                                                                           | none               |
 
-`fixtures/known-bad/fixtures.json` is Zod-validated: `{ id, file, gameType, expectedDetector, allowedCoFires: DetectorId[] }[]`. `allowedCoFires` is normally empty. Any entry must carry a one-line reason (for example: a single-frame game also looks unresponsive to taps).
+`fixtures/known-bad/fixtures.json` is Zod-validated: `{ id, file, gameType, expectedDetector, allowedCoFires: DetectorId[], coFireReason?: string }[]`. `allowedCoFires` is normally empty. Any entry must carry a one-line reason in `coFireReason` (for example: a single-frame game also looks unresponsive to taps). _(S3: the only co-fire is on `kb-02-ink-on-ink`, which also trips `idle-static` and `tap-unresponsive`, because a page drawn in one colour cannot show motion. Good controls have no manifest; the matrix finds them as `fixtures/good/good-<gameType>.html`.)_
 
 ### 9.2 Matrix check (`npm run eval:matrix`)
 
@@ -749,7 +753,7 @@ The check fails with exit 1 if any of these hold for the tuning fixtures:
 
 Test (`matrix.test.ts`, mutant-style): for each detector id, running the matrix with `--disable <id>` must exit 1. With nothing disabled it must exit 0.
 
-The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), with `tuning` and `holdout` sections. CI re-runs it and diffs the verdicts. Raw metrics are excluded from the diff, because frame timing in headless Chromium is not byte-stable.
+The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), with `tuning` and `holdout` sections. _(S3: the matrix probes with the random-tap bot skipped, since it reads verdicts only and the bot never gates; it probes `MATRIX_CONCURRENCY = 3` fixtures at a time in one Chromium. `longestPlaySeconds` is still produced by `probeGame` whenever a bot budget is passed, as the S4 run path will. The stdout lists each fixture's raw metrics for the calibration note. Because the probe is async, `cli.ts` gains an async `main()` that dispatches `matrix` and falls back to the synchronous `runCli` for `score`.)_ CI re-runs it and diffs the verdicts. Raw metrics are excluded from the diff, because frame timing in headless Chromium is not byte-stable.
 
 ### 9.3 Holdout fixtures
 
@@ -931,6 +935,7 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 - **devDependencies:** `typescript@5.9.3`, `vitest@5.0.0` + `@vitest/coverage-v8@5.0.0`, `ai@7.0.113` (for `ai/test`), `playwright@1.63.0`, `pngjs@7.0.0`, `@types/pngjs@6.0.5`, `@types/node` (24.x), `esbuild` (current exact), `eslint` + `typescript-eslint` (current exact). `@ai-sdk/provider@3.0.14` is added only if the §7.2 fallback is ever needed.
 - **Pinned at S1 (confirmed with `npm view` on 2026-09-24):** `zod@4.6.5`; dev `typescript@5.9.3` (typescript-eslint 8.70.1 requires `<6.1.0`, so TS 7 is not an option yet), `vitest@5.0.0`, `@vitest/coverage-v8@5.0.0`, `@types/node@24.13.6`, `esbuild@0.28.2`, `eslint@10.11.0`, `@eslint/js@10.0.1`, `typescript-eslint@8.70.1`. The model, storage and probe packages (`@mastra/core`, `@libsql/client`, `@ai-sdk/anthropic`, `ai`, `playwright`, `pngjs`) are added in the slice that first imports them (S2/S3), at the pins above, so S1 installs nothing it does not use.
 - **Added at S2 (2026-09-24):** `@mastra/core@1.70.0`, `@libsql/client@0.18.0`, `@ai-sdk/anthropic@4.0.62`, `@ai-sdk/provider@4.0.18` (dependency) and `ai@7.0.113` (devDependency). `@ai-sdk/provider@4.0.18` is the version `@ai-sdk/anthropic@4.0.62` already depends on; it is declared so `attribution.ts` can import `APICallError` for `isInstance` and the mock can use the V4 types. The 3.0.14 pin above stays reserved for the §7.2 fallback, which was not needed.
+- **Added at S3 (2026-09-24):** `playwright@1.63.0`, `pngjs@7.0.0` and `@types/pngjs@6.0.5` as devDependencies, at the pins above (confirmed with `npm view`). Chromium comes from `npx playwright install chromium`.
 - `@mastra/libsql` is not needed. Mastra storage is `InMemoryStore`, and our run table uses `@libsql/client` directly (§5.3).
 
 ### 13.2 CI (`.github/workflows/ci.yml`)
@@ -944,7 +949,7 @@ Actions are pinned by SHA (copy the pins from faultline-noc's `ci.yml`). Node is
 | `secrets`     | gitleaks                                                                                                                                                                                                           |
 | `site`        | added in the /polish pass                                                                                                                                                                                          |
 
-CI never deploys and never uses a key.
+CI never deploys and never uses a key. _(S3: the `checks` job also runs `npx playwright install --with-deps chromium` before the tests, because the E2 probe and matrix tests drive a real browser. The `eval-replay` job has its matrix part; its rescore part arrives with S4.)_
 
 ### 13.3 Deploy bundle (settled in S1, used in S5)
 

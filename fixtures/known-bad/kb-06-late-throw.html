@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lamp Lattice</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100dvh;
+        overflow: hidden;
+        background: #22223b;
+      }
+      canvas {
+        display: block;
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="board"></canvas>
+    <script>
+      const CARTRIDGE = {
+        send(type, payload = {}) {
+          window.parent.postMessage(
+            { source: "cartridge", v: 1, type, payload },
+            "*",
+          );
+        },
+      };
+      const canvas = document.getElementById("board");
+      const ctx = canvas.getContext("2d");
+      const SIZE = 4;
+      const GAP = 8;
+      const MAX_MOVES = 40;
+      const HINT_DELAY_MS = 900;
+      const hints = {};
+      let hintAt = Infinity,
+        hintShown = false;
+      const OPENING = [
+        [0, 1],
+        [2, 2],
+        [3, 0],
+      ];
+      const COLOURS = {
+        back: "#22223b",
+        lit: "#f2e9e4",
+        dark: "#4a4e69",
+        ink: "#c9ada7",
+        panel: "#9a8c98",
+        text: "#22223b",
+      };
+      let mode = "waiting",
+        paused = false,
+        cells = [],
+        moves = 0;
+      function fit() {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      }
+      function cellSize() {
+        return (
+          (Math.min(canvas.width, canvas.height) - GAP * (SIZE + 1)) / SIZE
+        );
+      }
+      function origin() {
+        const span = cellSize() * SIZE + GAP * (SIZE - 1);
+        return { x: (canvas.width - span) / 2, y: (canvas.height - span) / 2 };
+      }
+      function flip(row, col) {
+        if (row >= 0 && row < SIZE && col >= 0 && col < SIZE)
+          cells[row][col] = !cells[row][col];
+      }
+      function press(row, col) {
+        flip(row, col);
+        flip(row - 1, col);
+        flip(row + 1, col);
+        flip(row, col - 1);
+        flip(row, col + 1);
+      }
+      function layout() {
+        cells = Array.from({ length: SIZE }, () =>
+          Array.from({ length: SIZE }, () => false),
+        );
+        for (const [row, col] of OPENING) press(row, col);
+        moves = 0;
+      }
+      function begin() {
+        layout();
+        mode = "play";
+        hintAt = performance.now() + HINT_DELAY_MS;
+        hintShown = false;
+        CARTRIDGE.send("start");
+      }
+      function backToWaiting() {
+        layout();
+        mode = "waiting";
+      }
+      function solved() {
+        return cells.every((row) => row.every((lit) => !lit));
+      }
+      function afterMove() {
+        moves += 1;
+        CARTRIDGE.send("score", { value: moves });
+        if (solved()) {
+          mode = "done";
+          CARTRIDGE.send("end", { reason: "win", value: moves });
+          return;
+        }
+        if (moves >= MAX_MOVES) {
+          mode = "done";
+          CARTRIDGE.send("end", { reason: "stuck", value: moves });
+        }
+      }
+      function onTap(event) {
+        if (mode !== "play") {
+          begin();
+          return;
+        }
+        const box = canvas.getBoundingClientRect();
+        const at = origin();
+        const step = cellSize() + GAP;
+        const col = Math.floor((event.clientX - box.left - at.x) / step);
+        const row = Math.floor((event.clientY - box.top - at.y) / step);
+        if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) return;
+        press(row, col);
+        afterMove();
+      }
+      function drawPanel(lines) {
+        ctx.fillStyle = COLOURS.panel;
+        ctx.fillRect(
+          canvas.width * 0.08,
+          canvas.height * 0.34,
+          canvas.width * 0.84,
+          canvas.height * 0.24,
+        );
+        ctx.fillStyle = COLOURS.text;
+        ctx.font = "bold 22px sans-serif";
+        ctx.textAlign = "center";
+        lines.forEach((line, i) =>
+          ctx.fillText(line, canvas.width / 2, canvas.height * 0.44 + i * 32),
+        );
+        ctx.textAlign = "left";
+      }
+      function draw() {
+        ctx.fillStyle = COLOURS.back;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const at = origin();
+        const size = cellSize();
+        for (let row = 0; row < SIZE; row += 1)
+          for (let col = 0; col < SIZE; col += 1) {
+            ctx.fillStyle = cells[row][col] ? COLOURS.lit : COLOURS.dark;
+            ctx.fillRect(
+              at.x + col * (size + GAP),
+              at.y + row * (size + GAP),
+              size,
+              size,
+            );
+          }
+        ctx.fillStyle = COLOURS.ink;
+        ctx.font = "18px sans-serif";
+        ctx.fillText("Moves: " + moves + " · switch every tile off", 12, 28);
+        if (mode === "waiting") drawPanel(["Lamp Lattice", "Tap to begin"]);
+        if (mode === "done")
+          drawPanel([
+            solved() ? "All quiet" : "Out of moves",
+            "Tap to play again",
+          ]);
+      }
+      function frame(now) {
+        requestAnimationFrame(frame);
+        if (mode === "play" && !hintShown && now > hintAt) {
+          hintShown = true;
+          press(hints.next.row, hints.next.col);
+        }
+        if (!paused) draw();
+      }
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || data.source !== "cartridge-host") return;
+        if (data.type === "pause") paused = true;
+        if (data.type === "resume") paused = false;
+        if (data.type === "reset") backToWaiting();
+      });
+      canvas.addEventListener("pointerdown", onTap);
+      addEventListener("resize", fit);
+      fit();
+      layout();
+      draw();
+      CARTRIDGE.send("boot", {
+        title: "Lamp Lattice",
+        gameType: "puzzle-board",
+        lang: "en",
+      });
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

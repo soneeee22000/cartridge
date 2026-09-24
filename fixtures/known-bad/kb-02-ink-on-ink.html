@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vendanges</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100dvh;
+        overflow: hidden;
+        background: #fefae0;
+      }
+      canvas {
+        display: block;
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="verger"></canvas>
+    <script>
+      const CARTRIDGE = {
+        send(type, payload = {}) {
+          window.parent.postMessage(
+            { source: "cartridge", v: 1, type, payload },
+            "*",
+          );
+        },
+      };
+      const canvas = document.getElementById("verger");
+      const ctx = canvas.getContext("2d");
+      const STAGE_COUNT = 3;
+      const FRUITS_PER_STAGE = 3;
+      const STAGE_SECONDS = 20;
+      const FRUIT_RADIUS = 26;
+      const FRUIT_SPEED = 90;
+      const HIT_SLACK = 12;
+      const COLOURS = {
+        grass: "#fefae0",
+        leaf: "#fefae0",
+        fruit: "#fefae0",
+        ink: "#fefae0",
+        panel: "#fefae0",
+        over: "#fefae0",
+        paper: "#fefae0",
+      };
+      let mode = "titre",
+        paused = false,
+        stage = 1,
+        picked = 0,
+        clock = 0,
+        fruits = [],
+        last = 0,
+        drift = 0;
+      function fit() {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      }
+      function seedFruits() {
+        fruits = Array.from({ length: FRUITS_PER_STAGE }, (_, i) => ({
+          x: canvas.width * (0.2 + 0.3 * i),
+          y: canvas.height * (0.25 + 0.2 * i),
+          vx: (i % 2 === 0 ? 1 : -1) * FRUIT_SPEED * (1 + stage * 0.3),
+          vy: FRUIT_SPEED * 0.6,
+        }));
+      }
+      function enterStage(next) {
+        stage = next;
+        picked = 0;
+        clock = STAGE_SECONDS;
+        seedFruits();
+        CARTRIDGE.send("level", { index: stage });
+      }
+      function begin() {
+        mode = "jeu";
+        CARTRIDGE.send("start");
+        enterStage(1);
+      }
+      function backToTitle() {
+        mode = "titre";
+        stage = 1;
+        picked = 0;
+        fruits = [];
+      }
+      function finish(won) {
+        mode = won ? "gagne" : "perdu";
+        CARTRIDGE.send("end", { reason: won ? "win" : "lose", value: stage });
+      }
+      function pick(x, y) {
+        const index = fruits.findIndex(
+          (fruit) =>
+            Math.hypot(fruit.x - x, fruit.y - y) < FRUIT_RADIUS + HIT_SLACK,
+        );
+        if (index < 0) return;
+        fruits.splice(index, 1);
+        picked += 1;
+        CARTRIDGE.send("score", {
+          value: (stage - 1) * FRUITS_PER_STAGE + picked,
+        });
+        if (picked < FRUITS_PER_STAGE) return;
+        if (stage === STAGE_COUNT) finish(true);
+        else enterStage(stage + 1);
+      }
+      function onTap(event) {
+        if (mode !== "jeu") {
+          begin();
+          return;
+        }
+        const box = canvas.getBoundingClientRect();
+        pick(event.clientX - box.left, event.clientY - box.top);
+      }
+      function bounce(fruit, dt) {
+        fruit.x += fruit.vx * dt;
+        fruit.y += fruit.vy * dt;
+        if (fruit.x < FRUIT_RADIUS || fruit.x > canvas.width - FRUIT_RADIUS)
+          fruit.vx *= -1;
+        if (fruit.y < FRUIT_RADIUS || fruit.y > canvas.height - FRUIT_RADIUS)
+          fruit.vy *= -1;
+      }
+      function update(dt) {
+        clock -= dt;
+        for (const fruit of fruits) bounce(fruit, dt);
+        if (clock <= 0) finish(false);
+      }
+      function drawLeaves(dt) {
+        drift += dt * 30;
+        ctx.fillStyle = COLOURS.leaf;
+        for (let i = 0; i < 12; i += 1)
+          ctx.fillRect(
+            ((i * 61 + drift) % (canvas.width + 40)) - 20,
+            (i * 97) % canvas.height,
+            22,
+            10,
+          );
+      }
+      function drawPanel(colour, lines) {
+        ctx.fillStyle = colour;
+        ctx.fillRect(
+          canvas.width * 0.1,
+          canvas.height * 0.32,
+          canvas.width * 0.8,
+          canvas.height * 0.26,
+        );
+        ctx.fillStyle = COLOURS.paper;
+        ctx.font = "bold 22px sans-serif";
+        ctx.textAlign = "center";
+        lines.forEach((line, i) =>
+          ctx.fillText(line, canvas.width / 2, canvas.height * 0.43 + i * 32),
+        );
+        ctx.textAlign = "left";
+      }
+      function draw(dt) {
+        ctx.fillStyle = COLOURS.grass;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawLeaves(dt);
+        ctx.fillStyle = COLOURS.fruit;
+        for (const fruit of fruits) {
+          ctx.beginPath();
+          ctx.arc(fruit.x, fruit.y, FRUIT_RADIUS, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = COLOURS.ink;
+        ctx.font = "18px sans-serif";
+        ctx.fillText(
+          "Étape " +
+            stage +
+            " · cueillis " +
+            picked +
+            " · temps " +
+            Math.max(0, Math.ceil(clock)),
+          12,
+          28,
+        );
+        if (mode === "titre")
+          drawPanel(COLOURS.panel, ["Vendanges", "Touchez pour commencer"]);
+        if (mode === "gagne")
+          drawPanel(COLOURS.leaf, ["Verger complet", "Touchez pour rejouer"]);
+        if (mode === "perdu")
+          drawPanel(COLOURS.over, [
+            "Le temps est écoulé",
+            "Touchez pour rejouer",
+          ]);
+      }
+      function frame(now) {
+        const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+        last = now;
+        if (mode === "jeu" && !paused) update(dt);
+        draw(paused ? 0 : dt);
+        requestAnimationFrame(frame);
+      }
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || data.source !== "cartridge-host") return;
+        if (data.type === "pause") paused = true;
+        if (data.type === "resume") paused = false;
+        if (data.type === "reset") backToTitle();
+      });
+      canvas.addEventListener("pointerdown", onTap);
+      addEventListener("resize", fit);
+      fit();
+      draw(0);
+      CARTRIDGE.send("boot", {
+        title: "Vendanges",
+        gameType: "stage-clear",
+        lang: "fr",
+      });
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

@@ -22,9 +22,28 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: Install Chromium for the E2 probe tests
+        run: npx playwright install --with-deps chromium
       - name: Test with coverage thresholds
         run: npm run test:coverage
       - name: Clean-room scan
         run: npm run check:clean-room
       - name: Build the Vercel bundle
         run: npm run build:vercel
+
+  eval-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Detection matrix
+        run: node src/eval/cli.ts matrix --json "$RUNNER_TEMP/matrix.json"
+      - name: Diff the matrix verdicts against the committed file
+        run: diff -u reports/committed/matrix.json "$RUNNER_TEMP/matrix.json"

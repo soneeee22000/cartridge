@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meteor Alley</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100dvh;
+        overflow: hidden;
+        background: #14213d;
+      }
+      canvas {
+        display: block;
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="sky"></canvas>
+    <script>
+      const CARTRIDGE = {
+        send(type, payload = {}) {
+          window.parent.postMessage(
+            { source: "cartridge", v: 1, type, payload },
+            "*",
+          );
+        },
+      };
+      const canvas = document.getElementById("sky");
+      const ctx = canvas.getContext("2d");
+      const LANE_COUNT = 3;
+      const START_LANE = 1;
+      const ROCK_SPEED = 260;
+      const ROCK_SIZE = 34;
+      const SPAWN_EVERY = 0.7;
+      const SPAWN_LANES = [0, 2, 0, 2, 1];
+      const PLAYER_RADIUS = 16;
+      const PLAYER_LIFT = 80;
+      const STAR_COUNT = 40;
+      const STAR_SPEED = 40;
+      const COLOURS = {
+        sky: "#14213d",
+        star: "#e5e5e5",
+        rock: "#fca311",
+        ship: "#8ecae6",
+        title: "#2a9d8f",
+        over: "#9d0208",
+        ink: "#ffffff",
+      };
+      let mode = "title",
+        paused = false,
+        lane = START_LANE,
+        score = 0,
+        rocks = [],
+        spawnClock = 0,
+        spawned = 0,
+        last = 0;
+      const stars = Array.from({ length: STAR_COUNT }, (_, i) => ({
+        x: (i * 97) % 360,
+        y: (i * 53) % 640,
+        r: 1 + (i % 3),
+      }));
+      function fit() {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      }
+      function laneX(index) {
+        return (canvas.width / LANE_COUNT) * (index + 0.5);
+      }
+      function playerY() {
+        return canvas.height - PLAYER_LIFT;
+      }
+      function resetRun() {
+        lane = START_LANE;
+        score = 0;
+        rocks = [{ lane: START_LANE, y: playerY() }];
+        spawnClock = 0;
+        spawned = 0;
+      }
+      function begin() {
+        resetRun();
+        mode = "play";
+        CARTRIDGE.send("start");
+      }
+      function backToTitle() {
+        resetRun();
+        mode = "title";
+      }
+      function crash() {
+        mode = "over";
+        CARTRIDGE.send("end", { reason: "lose", value: score });
+      }
+      function onTap() {
+        if (mode === "play") {
+          lane = (lane + 1) % LANE_COUNT;
+          return;
+        }
+        begin();
+      }
+      function spawn() {
+        const next = SPAWN_LANES[spawned % SPAWN_LANES.length];
+        rocks.push({ lane: next, y: -ROCK_SIZE });
+        spawned += 1;
+      }
+      function update(dt) {
+        spawnClock += dt;
+        while (spawnClock >= SPAWN_EVERY) {
+          spawnClock -= SPAWN_EVERY;
+          spawn();
+        }
+        for (const rock of rocks) rock.y += ROCK_SPEED * dt;
+        const hit = rocks.some(
+          (rock) =>
+            rock.lane === lane &&
+            Math.abs(rock.y - playerY()) < ROCK_SIZE / 2 + PLAYER_RADIUS,
+        );
+        if (hit) {
+          crash();
+          return;
+        }
+        const before = rocks.length;
+        rocks = rocks.filter((rock) => rock.y < canvas.height + ROCK_SIZE);
+        if (rocks.length < before) {
+          score += before - rocks.length;
+          CARTRIDGE.send("score", { value: score });
+        }
+      }
+      function drawStars(dt) {
+        ctx.fillStyle = COLOURS.star;
+        for (const star of stars) {
+          star.y = (star.y + STAR_SPEED * dt * star.r) % canvas.height;
+          ctx.fillRect(star.x % canvas.width, star.y, star.r * 2, star.r * 2);
+        }
+      }
+      function drawPanel(colour, lines) {
+        ctx.fillStyle = colour;
+        ctx.fillRect(
+          canvas.width * 0.1,
+          canvas.height * 0.3,
+          canvas.width * 0.8,
+          canvas.height * 0.3,
+        );
+        ctx.fillStyle = COLOURS.ink;
+        ctx.font = "bold 22px sans-serif";
+        ctx.textAlign = "center";
+        lines.forEach((line, i) =>
+          ctx.fillText(line, canvas.width / 2, canvas.height * 0.42 + i * 32),
+        );
+        ctx.textAlign = "left";
+      }
+      function draw(dt) {
+        ctx.fillStyle = COLOURS.sky;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawStars(dt);
+        ctx.fillStyle = COLOURS.rock;
+        for (const rock of rocks)
+          ctx.fillRect(
+            laneX(rock.lane) - ROCK_SIZE / 2,
+            rock.y - ROCK_SIZE / 2,
+            ROCK_SIZE,
+            ROCK_SIZE,
+          );
+        ctx.fillStyle = COLOURS.ship;
+        ctx.beginPath();
+        ctx.arc(laneX(lane), playerY(), PLAYER_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = COLOURS.ink;
+        ctx.font = "18px sans-serif";
+        ctx.fillText("Dodged: " + score, 16, 30);
+        if (mode === "title")
+          drawPanel(COLOURS.title, ["Meteor Alley", "Tap to launch"]);
+        if (mode === "over")
+          drawPanel(COLOURS.over, ["Hit by a comet", "Tap to fly again"]);
+      }
+      function frame(now) {
+        const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+        last = now;
+        if (mode === "play" && !paused) update(dt);
+        draw(paused ? 0 : dt);
+        requestAnimationFrame(frame);
+      }
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || data.source !== "cartridge-host") return;
+        if (data.type === "pause") paused = true;
+        if (data.type === "resume") paused = false;
+        if (data.type === "reset") backToTitle();
+      });
+      canvas.addEventListener("pointerdown", onTap);
+      addEventListener("resize", fit);
+      fit();
+      draw(0);
+      CARTRIDGE.send("boot", {
+        title: "Meteor Alley",
+        gameType: "arcade-run",
+        lang: "en",
+      });
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

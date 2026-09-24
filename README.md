@@ -15,7 +15,11 @@ Slice S1 is in place:
 - the E1 contract scorer: 24 deterministic rules and 4 metrics (`src/eval/e1/`);
 - the clean-room scan and the Vercel bundle path with a placeholder handler (`scripts/`).
 
-The workflow graph, model layer, runtime probe and replay demo arrive in later slices.
+Slice S2 added the workflow graph, model layer, run store and SSE relay (`src/engine/`, `src/models/`, `src/server/`).
+
+Slice S3 adds the E2 runtime probe (`src/eval/e2/`, Playwright Chromium), hand-authored fixtures (`fixtures/`) and the detection matrix (`src/eval/matrix.ts`). The thresholds are calibrated on this repo's own fixtures; `docs/research/e2-calibration.md` lists every measurement.
+
+The dataset, judge, reports and replay demo arrive in later slices.
 
 ## Commands
 
@@ -25,6 +29,8 @@ npm run typecheck
 npm run lint
 npm test
 node src/eval/cli.ts score --file path/to/game.html
+npx playwright install chromium
+npm run eval:matrix
 npm run check:clean-room
 npm run build:vercel
 ```

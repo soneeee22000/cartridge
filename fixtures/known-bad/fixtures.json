@@ -1,0 +1,45 @@
+[
+  {
+    "id": "kb-01-dead-boot",
+    "file": "kb-01-dead-boot.html",
+    "gameType": "arcade-run",
+    "expectedDetector": "boot-handshake",
+    "allowedCoFires": []
+  },
+  {
+    "id": "kb-02-ink-on-ink",
+    "file": "kb-02-ink-on-ink.html",
+    "gameType": "stage-clear",
+    "expectedDetector": "blank-frame",
+    "allowedCoFires": ["idle-static", "tap-unresponsive"],
+    "coFireReason": "a page drawn entirely in its background colour shows no pixel change, idle or after a tap"
+  },
+  {
+    "id": "kb-03-single-frame",
+    "file": "kb-03-single-frame.html",
+    "gameType": "arcade-run",
+    "expectedDetector": "idle-static",
+    "allowedCoFires": []
+  },
+  {
+    "id": "kb-04-wrong-target",
+    "file": "kb-04-wrong-target.html",
+    "gameType": "toy-box",
+    "expectedDetector": "tap-unresponsive",
+    "allowedCoFires": []
+  },
+  {
+    "id": "kb-05-spawn-kill",
+    "file": "kb-05-spawn-kill.html",
+    "gameType": "arcade-run",
+    "expectedDetector": "idle-death",
+    "allowedCoFires": []
+  },
+  {
+    "id": "kb-06-late-throw",
+    "file": "kb-06-late-throw.html",
+    "gameType": "puzzle-board",
+    "expectedDetector": "console-error",
+    "allowedCoFires": []
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "name": "cartridge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agentic generator for single-file HTML5 mini-games, with an explicit workflow graph and a two-tier evaluator",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "build:vercel": "node scripts/build-vercel.ts",
+    "check:clean-room": "node scripts/clean-room-scan.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.6",
+    "@vitest/coverage-v8": "5.0.0",
+    "esbuild": "0.28.2",
+    "eslint": "10.11.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.0"
+  }
+}

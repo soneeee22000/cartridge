@@ -19,6 +19,7 @@ import {
 } from "../../src/eval/matrix.ts";
 
 const PROBE_BUDGET_MS = 300_000;
+const COMMITTED = join(REPO_ROOT, "reports", "committed", "matrix.json");
 
 const clean: Observation = {
   staticType: "arcade-run",
@@ -211,6 +212,8 @@ describe("eval:matrix on the committed fixtures (§9.2, mutant-style)", () => {
     >;
     expect(Object.keys(written)).toEqual(["holdout", "tuning"]);
     expect(JSON.stringify(written)).not.toContain("lumaStddev");
+    const committed: unknown = JSON.parse(readFileSync(COMMITTED, "utf8"));
+    expect(written).toEqual(committed);
   });
 
   it.each(DETECTOR_IDS.map((id) => [id]))(

@@ -46,3 +46,23 @@ window.addEventListener("message", (event) => {
 ```
 
 Keep the clear control visible at all times and at least 44 CSS pixels tall.
+
+## Loop skeleton
+
+```js
+const pieces = [];
+let tally = 0,
+  paused = false;
+function place(x, y) {
+  pieces.push({ x, y });
+  tally += 1;
+  CARTRIDGE.send("score", { value: tally });
+}
+function frame() {
+  if (!paused) settle(pieces);
+  draw();
+  requestAnimationFrame(frame);
+}
+CARTRIDGE.send("start");
+requestAnimationFrame(frame);
+```

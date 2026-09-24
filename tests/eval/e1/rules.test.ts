@@ -443,6 +443,18 @@ describe("E1-24 toy-box clear-the-table", () => {
       ),
     ).toBe("fail");
   });
+  it("fails when the control calls a different function than reset", () => {
+    const otherControl = game("toy-box", {
+      extra: [
+        "function clearTable() { score = 0; }",
+        "function spawnToy() { score += 1; }",
+        'document.getElementById("clear").addEventListener("click", spawnToy);',
+        'window.addEventListener("keydown", clearTable);',
+      ].join("\n"),
+    });
+    expect(status("E1-24", otherControl)).toBe("fail");
+  });
+
   it("is n/a for other types", () => {
     expect(status("E1-24", game())).toBe("n/a");
   });

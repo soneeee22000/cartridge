@@ -156,6 +156,12 @@ describe("type cards restate GAME_TYPE_RULES (§2.2)", () => {
     expect(readContractRow(gameType)).toEqual(expectedRow(gameType));
   });
 
+  it.each(GAME_TYPES)("%s card includes a loop skeleton (§3)", (gameType) => {
+    expect(getCard(gameType).body).toMatch(
+      /^## Loop skeleton\n\n```js\n[\s\S]+?\n```$/m,
+    );
+  });
+
   it("the toy-box card states the hard reset requirement", () => {
     expect(resolveAnchor("E1-24").card).toBe("toy-box");
     expect(getCard("toy-box").body).toMatch(/clear-the-table/i);

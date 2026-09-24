@@ -43,14 +43,14 @@ export const EndPayload = z.object({
 });
 
 /** Any game-to-host message, discriminated on `type` (§2.1). */
-export const GameEnvelope = z.discriminatedUnion("type", [
+export const GameEvent = z.discriminatedUnion("type", [
   envelopeOf("boot", BootPayload),
   envelopeOf("start", StartPayload),
   envelopeOf("score", ScorePayload),
   envelopeOf("level", LevelPayload),
   envelopeOf("end", EndPayload),
 ]);
-export type GameEnvelope = z.infer<typeof GameEnvelope>;
+export type GameEvent = z.infer<typeof GameEvent>;
 
 /** Host-to-game command names. */
 export const HOST_COMMANDS = ["pause", "resume", "reset"] as const;

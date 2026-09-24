@@ -1,7 +1,7 @@
 {
   "artifact": {
-    "bytes": 13546,
-    "sha256": "0092653caee40cecb6e3cda903fa177499d24d867d0846295d72a52ea3b81887",
+    "bytes": 13994,
+    "sha256": "14c49bc8a37dc7f1ff75ef5924c41286671b3e495bcb08805c2df3316a20e7dd",
     "version": "a0"
   },
   "buildAttempts": 1,
@@ -18,7 +18,7 @@
     "gameType": "arcade-run",
     "input": "tap-anywhere",
     "lang": "en",
-    "loop": "Tap to make the paper kite rise on the wind, dodging rooftop chimneys and collecting ribbons as the breeze speeds up. Hitting a chimney ends the flight and shows your ribbon count.",
+    "loop": "Tap to lift the paper kite, dodging chimneys and collecting ribbons as the wind speeds up. Hitting a chimney ends the run; your ribbon count is the score.",
     "slug": "kite-on-the-wind",
     "style": "paper-cut",
     "title": "Kite on the Wind"
@@ -28,14 +28,14 @@
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 15748,
-      "output": 6992
+      "input": 16077,
+      "output": 7327
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 7867,
-      "output": 386
+      "input": 4282,
+      "output": 229
     },
     "repair": {
       "cacheRead": 0,
@@ -44,5 +44,5 @@
       "output": 0
     }
   },
-  "wallMs": 57513
+  "wallMs": 58231
 }

@@ -1,0 +1,555 @@
+{
+  "bands": [
+    {
+      "band": "terse",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {},
+        "passed": 1,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "n/a": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 2,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "short-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "idle-death": 1
+        },
+        "passed": 0,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "full-brief",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {},
+        "passed": 1,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "null": 1
+        },
+        "feedback-on-input": {
+          "null": 1
+        },
+        "goal-legibility": {
+          "null": 1
+        },
+        "prompt-coverage": {
+          "null": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    },
+    {
+      "band": "edge",
+      "contractFailed": 0,
+      "e1": {
+        "mean": 1,
+        "min": 1
+      },
+      "e2": {
+        "detectorFails": {
+          "idle-static": 1
+        },
+        "passed": 0,
+        "probed": 1
+      },
+      "e3": {
+        "fail-state-clarity": {
+          "explained": 1
+        },
+        "feedback-on-input": {
+          "immediate": 1
+        },
+        "goal-legibility": {
+          "stated": 1
+        },
+        "prompt-coverage": {
+          "covered": 1
+        }
+      },
+      "e4": {
+        "abstain": 0,
+        "match": 1,
+        "mismatch": 0
+      },
+      "games": 1,
+      "harnessFailures": 0,
+      "medianBuildAttempts": 1,
+      "n": 1,
+      "refusals": 0
+    }
+  ],
+  "cost": {
+    "estUsd": 0.667,
+    "repairCacheRead": 0,
+    "repairTokens": {
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "input": 30113,
+      "output": 5246
+    },
+    "tokens": {
+      "generator": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 126849,
+        "output": 35018
+      },
+      "judge": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 30791,
+        "output": 6387
+      }
+    },
+    "usdLabel": "estimate from list prices; not an invoice",
+    "wallMsMedian": 70287.5,
+    "wallMsTotal": 282101
+  },
+  "e4Labelled": {
+    "abstentionRate": 0,
+    "accuracy": 1,
+    "bundles": 40,
+    "expectedAbstentionsHit": 1,
+    "note": "measured on 40 authored bundles; the thresholds were set on the same bundles",
+    "wrongLanguage": 0
+  },
+  "failures": {},
+  "format": "cartridge-report/1",
+  "header": {
+    "datasetVersion": "v1",
+    "label": "latest",
+    "models": {
+      "builder": "claude-sonnet-5",
+      "judge": "claude-haiku-4-5",
+      "planner": "claude-sonnet-5"
+    },
+    "priceTableVersion": "2026-09-24",
+    "tier": "sample"
+  },
+  "items": [
+    {
+      "buildAttempts": 2,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 37.8,
+          "distinctColours": 8389,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0.073,
+          "lumaStddev": 53.705,
+          "tapMotionRatio": 0.059
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "n/a",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Pop the Bubbles",
+          "POPS:",
+          "Clear",
+          "TAP TO BEGIN",
+          "POP THE BUBBLES"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "toy-box",
+      "id": "bubble-pop",
+      "intendedType": "toy-box",
+      "lang": "en",
+      "lengthBand": "terse",
+      "outcome": "game",
+      "repairRules": [
+        "E1-24"
+      ],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 30113,
+        "output": 5246
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 51159,
+          "output": 10522
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 5699,
+          "output": 651
+        }
+      },
+      "wallMs": 83295
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "fail",
+          "idle-static": "pass",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 4.612,
+        "metrics": {
+          "bootMs": 29.8,
+          "distinctColours": 541,
+          "firstEndSeconds": 0.935,
+          "idleMotionRatio": 0.018,
+          "lumaStddev": 24.715,
+          "tapMotionRatio": 0.137
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Kite on the Wind",
+          "Tap to begin",
+          "Run Over",
+          "Tap to try again"
+        ],
+        "htmlLang": "en",
+        "promptLang": "en",
+        "uiLang": "en",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "arcade-run",
+      "id": "kite-over-roofs",
+      "intendedType": "arcade-run",
+      "lang": "en",
+      "lengthBand": "short-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 20359,
+          "output": 7556
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 7973,
+          "output": 761
+        }
+      },
+      "wallMs": 58231
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "n/a",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 23,
+          "distinctColours": 1452,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 21.584,
+          "tapMotionRatio": 0.418
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": null,
+          "prompt-coverage": null
+        },
+        "discarded": [],
+        "judgeError": "judge call failed: Structured output was truncated because the model finished with reason \"length\"."
+      },
+      "e4": {
+        "evidence": [
+          "Le Hérisson des Haies",
+          "Glissez pour déplacer le hérisson (haut / bas / gauche / droite)",
+          "Pas:",
+          "Sortie atteinte !",
+          "Plus de pas...",
+          "Score:",
+          "Touchez pour recommencer",
+          "Glissez pour guider le hérisson à travers les haies et ramasser des pommes.",
+          "Jouer"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "puzzle-board",
+      "id": "maze-de-haies",
+      "intendedType": "puzzle-board",
+      "lang": "fr",
+      "lengthBand": "full-brief",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 25147,
+          "output": 8356
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8410,
+          "output": 4000
+        }
+      },
+      "wallMs": 68321
+    },
+    {
+      "buildAttempts": 1,
+      "e1Score": 1,
+      "e2": {
+        "consoleErrors": [],
+        "detectors": {
+          "blank-frame": "pass",
+          "boot-handshake": "pass",
+          "console-error": "pass",
+          "idle-death": "pass",
+          "idle-static": "fail",
+          "tap-unresponsive": "pass"
+        },
+        "longestPlaySeconds": 25,
+        "metrics": {
+          "bootMs": 20.5,
+          "distinctColours": 2348,
+          "firstEndSeconds": null,
+          "idleMotionRatio": 0,
+          "lumaStddev": 27.36,
+          "tapMotionRatio": 0.367
+        }
+      },
+      "e3": {
+        "dimensions": {
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
+          "prompt-coverage": "covered"
+        },
+        "discarded": [],
+        "judgeError": null
+      },
+      "e4": {
+        "evidence": [
+          "Le Gardien du Phare",
+          "Sauvez bateaux",
+          "Glissez autour de la tour pour tourner le faisceau et sauver les bateaux des rochers.",
+          "Touchez pour commencer",
+          "Score:",
+          "Étape",
+          "réussie !",
+          "Préparez-vous pour la suite...",
+          "Toutes les nuits sont sauvées !",
+          "Un bateau a coulé...",
+          "Score final:",
+          "Touchez pour recommencer",
+          "Pause"
+        ],
+        "htmlLang": "fr",
+        "promptLang": "fr",
+        "uiLang": "fr",
+        "verdict": "match"
+      },
+      "failure": null,
+      "gameType": "stage-clear",
+      "id": "phare-long",
+      "intendedType": "stage-clear",
+      "lang": "fr",
+      "lengthBand": "edge",
+      "outcome": "game",
+      "repairRules": [],
+      "repairUsage": {
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "input": 0,
+        "output": 0
+      },
+      "usage": {
+        "generator": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 30184,
+          "output": 8584
+        },
+        "judge": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 8709,
+          "output": 975
+        }
+      },
+      "wallMs": 72254
+    }
+  ],
+  "noiseFloor": "One generation per item. With 1 item per band, one item moves a band rate by 100 points. Differences smaller than that are not interpretable.",
+  "notMeasured": [
+    "fun or difficulty",
+    "audio",
+    "accessibility",
+    "real-device performance",
+    "multi-turn edits",
+    "languages other than en/fr",
+    "variance across repeated generations",
+    "E3 agreement with human raters",
+    "E4 accuracy beyond its 40 authored bundles",
+    "E2 detection rates on generated games (the thresholds encode this repo's own fixture-based definitions)",
+    "differences between bands (one item per band)",
+    "differences between game types (one item per type)"
+  ],
+  "repair": {
+    "histogram": {
+      "1": 3,
+      "2": 1
+    },
+    "triggers": {
+      "E1-24": 1
+    }
+  },
+  "totals": {
+    "contractFailed": 0,
+    "estUsd": 0.667,
+    "games": 4,
+    "harnessFailures": 0,
+    "n": 4,
+    "refusals": 0
+  }
+}

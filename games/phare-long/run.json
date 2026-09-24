@@ -1,7 +1,7 @@
 {
   "artifact": {
-    "bytes": 13167,
-    "sha256": "e23c62c093297c2e39b01573436169e0bb6cc276d8721bc4af17ffb42de31de3",
+    "bytes": 16020,
+    "sha256": "1720b714c8cc3018a56c368418a3115d65f19b5da95bf38ef267e26dba89e7b5",
     "version": "a0"
   },
   "buildAttempts": 1,
@@ -18,7 +18,7 @@
     "gameType": "stage-clear",
     "input": "drag-follow",
     "lang": "fr",
-    "loop": "Glissez le doigt autour de la tour pour tourner le faisceau et éclairer les bateaux avant qu'ils touchent les rochers. Ramenez tous les bateaux d'une nuit au port pour passer à la nuit suivante ; un bateau échoué termine la partie.",
+    "loop": "Glissez le doigt autour de la tour pour tourner le faisceau et éclairer les bateaux avant qu'ils touchent les rochers. Faites rentrer tous les bateaux d'une nuit pour gagner la nuit; un bateau qui coule termine la partie.",
     "slug": "le-gardien-du-phare",
     "style": "paper-cut",
     "title": "Le Gardien du Phare"
@@ -28,14 +28,14 @@
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 15780,
-      "output": 6840
+      "input": 17083,
+      "output": 8169
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 8780,
-      "output": 365
+      "input": 13101,
+      "output": 415
     },
     "repair": {
       "cacheRead": 0,
@@ -44,5 +44,5 @@
       "output": 0
     }
   },
-  "wallMs": 59525
+  "wallMs": 72254
 }

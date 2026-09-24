@@ -2,23 +2,13 @@
   "versions": [
     {
       "version": "a0",
-      "sha256": "87f6089f438ba0058e4c748367b0c64d606762bf1c1db5eb6c5f8000065751f4",
-      "bytes": 8179
+      "sha256": "99e213606076a470039ee9b26dfa0ae128a3fdfe47a68c238663a22b7dc2c610",
+      "bytes": 10081
     },
     {
       "version": "a1",
-      "sha256": "0fa59d588f5dfaec88936d9f53d7391d6bd1f8c0e07fb14feb358044b4ed5850",
-      "bytes": 8479
-    },
-    {
-      "version": "a2",
-      "sha256": "c5a61c1b531dfde345102ba7c6482e7de9e298dce7d9ae997a578ce04692e113",
-      "bytes": 8821
-    },
-    {
-      "version": "a3",
-      "sha256": "701cb2072831ce0165a21749d6dd49e68c9726f0a2be03b11189f4162b0f74e5",
-      "bytes": 8749
+      "sha256": "4734e567ef95833edeebe278aa89b75424fa703278f0cffa95019502834dfbdc",
+      "bytes": 10246
     }
   ]
 }

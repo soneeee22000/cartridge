@@ -1,22 +1,20 @@
 {
-  "consoleErrors": [
-    "error: Uncaught TypeError: Cannot read properties of undefined (reading '0')"
-  ],
+  "consoleErrors": [],
   "detectors": {
     "blank-frame": "pass",
-    "boot-handshake": "fail",
-    "console-error": "fail",
+    "boot-handshake": "pass",
+    "console-error": "pass",
     "idle-death": "pass",
     "idle-static": "n/a",
     "tap-unresponsive": "pass"
   },
   "longestPlaySeconds": 25,
   "metrics": {
-    "bootMs": null,
-    "distinctColours": 5021,
+    "bootMs": 23,
+    "distinctColours": 1452,
     "firstEndSeconds": null,
     "idleMotionRatio": 0,
-    "lumaStddev": 41.12517076430982,
-    "tapMotionRatio": 0.9032595486111111
+    "lumaStddev": 21.583651728549253,
+    "tapMotionRatio": 0.4175607638888889
   }
 }

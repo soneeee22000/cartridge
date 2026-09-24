@@ -1,13 +1,11 @@
 {
-  "artifact": null,
-  "buildAttempts": 4,
-  "failure": {
-    "code": "contract-unmet",
-    "ruleIds": [
-      "E1-24"
-    ],
-    "step": "generate"
+  "artifact": {
+    "bytes": 10246,
+    "sha256": "4734e567ef95833edeebe278aa89b75424fa703278f0cffa95019502834dfbdc",
+    "version": "a1"
   },
+  "buildAttempts": 2,
+  "failure": null,
   "format": "cartridge-run/1",
   "itemId": "bubble-pop",
   "models": {
@@ -16,31 +14,37 @@
   },
   "priceTableVersion": "2026-09-24",
   "repairRules": [
-    "E1-24",
-    "E1-24",
     "E1-24"
   ],
-  "spec": null,
-  "status": "abandoned",
+  "spec": {
+    "gameType": "toy-box",
+    "input": "tap-anywhere",
+    "lang": "en",
+    "loop": "Tap floating bubbles to pop them and watch your pop tally rise. Use the clear button anytime to empty the screen and start a fresh batch of bubbles.",
+    "slug": "pop-the-bubbles",
+    "style": "risograph",
+    "title": "Pop the Bubbles"
+  },
+  "status": "complete",
   "usage": {
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 95271,
-      "output": 17760
+      "input": 44116,
+      "output": 10249
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 6586,
-      "output": 236
+      "input": 7043,
+      "output": 273
     },
     "repair": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 82132,
-      "output": 13647
+      "input": 30113,
+      "output": 5246
     }
   },
-  "wallMs": 143177
+  "wallMs": 83295
 }

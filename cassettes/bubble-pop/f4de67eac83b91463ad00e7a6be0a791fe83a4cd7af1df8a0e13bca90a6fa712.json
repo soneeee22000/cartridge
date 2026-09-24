@@ -1,6 +1,6 @@
 {
   "format": "cartridge-cassette/1",
-  "key": "sha256:70b722083f247c306500d590a413fea9ccde9a35913165f2945121b8c3d81ebe",
+  "key": "sha256:f4de67eac83b91463ad00e7a6be0a791fe83a4cd7af1df8a0e13bca90a6fa712",
   "occurrence": 0,
   "role": "planner",
   "model": "claude-sonnet-5",
@@ -98,7 +98,7 @@
           "content": [
             {
               "type": "tool_use",
-              "id": "toolu_01J7Fb2knX5TapyZeNvkC7rB",
+              "id": "toolu_01AqWh9EszF4DkU91AE9VUen",
               "name": "list_cards",
               "input": {
                 "kind": "type"
@@ -114,7 +114,7 @@
           "content": [
             {
               "type": "tool_result",
-              "tool_use_id": "toolu_01J7Fb2knX5TapyZeNvkC7rB",
+              "tool_use_id": "toolu_01AqWh9EszF4DkU91AE9VUen",
               "content": "{\"cards\":[{\"id\":\"arcade-run\",\"kind\":\"type\",\"title\":\"Arcade run\",\"summary\":\"A continuous run with one life where the player survives and collects.\"},{\"id\":\"puzzle-board\",\"kind\":\"type\",\"title\":\"Puzzle board\",\"summary\":\"A turn-based board with no clock pressure, won by solving it.\"},{\"id\":\"stage-clear\",\"kind\":\"type\",\"title\":\"Stage clear\",\"summary\":\"Discrete stages, each with one goal to meet before moving on.\"},{\"id\":\"toy-box\",\"kind\":\"type\",\"title\":\"Toy box\",\"summary\":\"Open play with a visible tally and a clear-the-table replay; nobody loses.\"}]}"
             }
           ]
@@ -184,22 +184,27 @@
   "response": {
     "status": 200,
     "contentType": "text/event-stream",
-    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNhTewNZ245aMkFbUMhg\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1996,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":17,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01SMtE6EM8Laf9K9icd8c2wk\",\"name\":\"get_card\",\"input\":{},\"caller\":{\"type\":\"direct\"}}              }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"id\\\": \\\"toy-box\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":1996,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":50,\"output_tokens_details\":{\"thinking_tokens\":0}}              }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"    }\n\n",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNiXcSmvfPNvAUPkfm9u\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":1996,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":17,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null} }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_0131W8Y2fe6LhEsFaocmRzSw\",\"name\":\"get_card\",\"input\":{},\"caller\":{\"type\":\"direct\"}}}\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"id\\\": \\\"toy-box\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}       }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0              }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_011mEi8xjVdz9NGcNjZJmv6d\",\"name\":\"get_card\",\"input\":{},\"caller\":{\"type\":\"direct\"}}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"id\\\": \\\"tap-anywhere\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}           }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":1996,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":100,\"output_tokens_details\":{\"thinking_tokens\":0}}               }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\" }\n\n",
     "gapsMs": [
       0,
       0,
       0,
       0,
-      190,
-      38,
-      38,
-      38,
-      38
+      419,
+      2,
+      2,
+      2,
+      2,
+      2,
+      85,
+      85,
+      0,
+      0
     ]
   },
   "usage": {
     "input": 1996,
-    "output": 50,
+    "output": 100,
     "cacheRead": 0,
     "cacheWrite": 0
   },

@@ -1,0 +1,312 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:0e2fb19707ed4cd5a27f3c6560b1f0587b427c87ca3fd212713006a2951b846e",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "dimension": {
+                      "enum": [
+                        "prompt-coverage",
+                        "goal-legibility",
+                        "feedback-on-input",
+                        "fail-state-clarity"
+                      ],
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "line": {
+                            "type": "integer"
+                          },
+                          "quote": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "line",
+                          "quote"
+                        ]
+                      }
+                    },
+                    "rationale": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "dimension",
+                    "label",
+                    "evidence",
+                    "rationale"
+                  ]
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "findings"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every finding, give the dimension, one label from that dimension's list, and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nIf you cannot point to a line for a dimension, leave that dimension out rather than guessing."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\npop the bubbles\n\nPlan:\n{\"gameType\":\"toy-box\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap floating bubbles to pop them and watch your pop tally rise. Use the clear button anytime to empty the screen and start a fresh batch of bubbles.\",\"slug\":\"pop-the-bubbles\",\"style\":\"risograph\",\"title\":\"Pop the Bubbles\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Pop the Bubbles</title>\n7| <style>\n8|   html, body {\n9|     margin: 0;\n10|     padding: 0;\n11|     width: 100%;\n12|     height: 100%;\n13|     background: #fbf7ee;\n14|     overflow: hidden;\n15|     font-family: \"Arial Narrow\", Arial, sans-serif;\n16|   }\n17|   #wrap {\n18|     position: relative;\n19|     width: 100vw;\n20|     height: 100dvh;\n21|   }\n22|   canvas {\n23|     display: block;\n24|     width: 100%;\n25|     height: 100%;\n26|     touch-action: none;\n27|   }\n28|   #clearBtn {\n29|     position: absolute;\n30|     top: 14px;\n31|     right: 14px;\n32|     min-height: 48px;\n33|     min-width: 100px;\n34|     padding: 8px 18px;\n35|     background: #ff48b0;\n36|     color: #fbf7ee;\n37|     border: 3px solid #5b3a8c;\n38|     border-radius: 10px;\n39|     font-weight: bold;\n40|     font-size: 16px;\n41|     font-family: inherit;\n42|     letter-spacing: 1px;\n43|     cursor: pointer;\n44|     z-index: 10;\n45|     text-transform: uppercase;\n46|   }\n47|   #clearBtn:active {\n48|     transform: translateY(1px);\n49|   }\n50|   #tally {\n51|     position: absolute;\n52|     top: 14px;\n53|     left: 14px;\n54|     color: #0078bf;\n55|     font-weight: bold;\n56|     font-size: 22px;\n57|     letter-spacing: 1px;\n58|     z-index: 10;\n59|     text-shadow: 1px 1px 0 #ff48b0;\n60|   }\n61| </style>\n62| </head>\n63| <body>\n64| <div id=\"wrap\">\n65|   <canvas id=\"game\"></canvas>\n66|   <div id=\"tally\">POPS: 0</div>\n67|   <button id=\"clearBtn\">Clear</button>\n68| </div>\n69| <script>\n70| // ---- Bridge helper (verbatim) ----\n71| const CARTRIDGE = {\n72|   send(type, payload = {}) {\n73|     window.parent.postMessage(\n74|       { source: \"cartridge\", v: 1, type, payload },\n75|       \"*\",\n76|     );\n77|   },\n78| };\n79| </script>\n80| <script>\n81| (function () {\n82|   const canvas = document.getElementById(\"game\");\n83|   const ctx = canvas.getContext(\"2d\");\n84|   const clearBtn = document.getElementById(\"clearBtn\");\n85|   const tallyEl = document.getElementById(\"tally\");\n86| \n87|   let dpr = Math.max(1, window.devicePixelRatio || 1);\n88|   let W = 0, H = 0;\n89| \n90|   function resize() {\n91|     W = window.innerWidth;\n92|     H = window.innerHeight;\n93|     canvas.width = Math.floor(W * dpr);\n94|     canvas.height = Math.floor(H * dpr);\n95|     canvas.style.width = W + \"px\";\n96|     canvas.style.height = H + \"px\";\n97|     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n98|     if (!grainTile) buildGrain();\n99|   }\n100|   window.addEventListener(\"resize\", resize);\n101| \n102|   // ---- Grain tile (pre-rendered noise) ----\n103|   let grainTile = null;\n104|   function buildGrain() {\n105|     const size = 128;\n106|     const gCanvas = document.createElement(\"canvas\");\n107|     gCanvas.width = size;\n108|     gCanvas.height = size;\n109|     const gctx = gCanvas.getContext(\"2d\");\n110|     const imgData = gctx.createImageData(size, size);\n111|     for (let i = 0; i < imgData.data.length; i += 4) {\n112|       const v = Math.random() * 255;\n113|       imgData.data[i] = v;\n114|       imgData.data[i + 1] = v;\n115|       imgData.data[i + 2] = v;\n116|       imgData.data[i + 3] = 255;\n117|     }\n118|     gctx.putImageData(imgData, 0, 0);\n119|     grainTile = gCanvas;\n120|   }\n121| \n122|   // ---- Colours ----\n123|   const PAPER = \"#fbf7ee\";\n124|   const INK1 = \"#ff48b0\";\n125|   const INK2 = \"#0078bf\";\n126|   const OVERLAP = \"#5b3a8c\";\n127| \n128|   // ---- State ----\n129|   const pieces = []; // bubbles: {x,y,r,vx,vy,color,popped,popT}\n130|   let tally = 0;\n131|   let paused = false;\n132|   let running = false; // becomes true after first tap\n133|   let hintPulse = 0;\n134| \n135|   function rand(a, b) {\n136|     return a + Math.random() * (b - a);\n137|   }\n138| \n139|   function spawnBatch(n) {\n140|     for (let i = 0; i < n; i++) {\n141|       spawnOne();\n142|     }\n143|   }\n144| \n145|   function spawnOne() {\n146|     const r = rand(24, 48);\n147|     const x = rand(r, W - r);\n148|     const y = rand(r, H - r);\n149|     const color = Math.random() < 0.5 ? INK1 : INK2;\n150|     pieces.push({\n151|       x, y, r,\n152|       vx: rand(-18, 18),\n153|       vy: rand(-14, 14),\n154|       color,\n155|       born: performance.now(),\n156|       popped: false,\n157|       popT: 0,\n158|     });\n159|   }\n160| \n161|   function maintainBubbles() {\n162|     // keep a healthy count of live bubbles\n163|     const alive = pieces.filter((p) => !p.popped);\n164|     if (alive.length < 9) {\n165|       spawnOne();\n166|     }\n167|   }\n168| \n169|   function settle(list, dt) {\n170|     for (const p of list) {\n171|       if (p.popped) {\n172|         p.popT += dt;\n173|         continue;\n174|       }\n175|       p.x += p.vx * dt;\n176|       p.y += p.vy * dt;\n177|       if (p.x - p.r < 0) { p.x = p.r; p.vx *= -1; }\n178|       if (p.x + p.r > W) { p.x = W - p.r; p.vx *= -1; }\n179|       if (p.y - p.r < 0) { p.y = p.r; p.vy *= -1; }\n180|       if (p.y + p.r > H) { p.y = H - p.r; p.vy *= -1; }\n181|     }\n182|     // remove fully-popped bubbles after their animation\n183|     for (let i = pieces.length - 1; i >= 0; i--) {\n184|       if (pieces[i].popped && pieces[i].popT > 0.28) {\n185|         pieces.splice(i, 1);\n186|       }\n187|     }\n188|     maintainBubbles();\n189|   }\n190| \n191|   function popAt(x, y) {\n192|     // find topmost unpopped bubble under point\n193|     for (let i = pieces.length - 1; i >= 0; i--) {\n194|       const p = pieces[i];\n195|       if (p.popped) continue;\n196|       const dx = x - p.x, dy = y - p.y;\n197|       if (dx * dx + dy * dy <= p.r * p.r) {\n198|         p.popped = true;\n199|         p.popT = 0;\n200|         tally += 1;\n201|         tallyEl.textContent = \"POPS: \" + tally;\n202|         CARTRIDGE.send(\"score\", { value: tally });\n203|         return true;\n204|       }\n205|     }\n206|     return false;\n207|   }\n208| \n209|   // Single clear-the-table function: used by the visible button AND by\n210|   // the host \"reset\" command. Both call this exact function.\n211|   function clearTable() {\n212|     pieces.length = 0;\n213|     tally = 0;\n214|     running = false;\n215|     tallyEl.textContent = \"POPS: 0\";\n216|     CARTRIDGE.send(\"score\", { value: 0 });\n217|     spawnBatch(10);\n218|     draw();\n219|   }\n220| \n221|   // ---- Drawing ----\n222|   function drawBackground() {\n223|     ctx.fillStyle = PAPER;\n224|     ctx.fillRect(0, 0, W, H);\n225|   }\n226| \n227|   function drawHalftoneShade(cx, cy, r, color) {\n228|     // subtle halftone dots to fake shading on bubble edge\n229|     ctx.save();\n230|     ctx.globalAlpha = 0.35;\n231|     ctx.fillStyle = color;\n232|     const dotCount = 10;\n233|     for (let i = 0; i < dotCount; i++) {\n234|       const ang = (i / dotCount) * Math.PI * 2;\n235|       const dr = r * 0.72;\n236|       const dx = cx + Math.cos(ang) * dr;\n237|       const dy = cy + Math.sin(ang) * dr;\n238|       const rad = Math.max(1, r * 0.06);\n239|       ctx.beginPath();\n240|       ctx.arc(dx, dy, rad, 0, Math.PI * 2);\n241|       ctx.fill();\n242|     }\n243|     ctx.restore();\n244|   }\n245| \n246|   function drawBubble(p) {\n247|     if (p.popped) {\n248|       // pop burst animation: expanding ring fragments\n249|       const t = p.popT / 0.28;\n250|       const alpha = Math.max(0, 1 - t);\n251|       ctx.save();\n252|       ctx.globalAlpha = alpha;\n253|       ctx.strokeStyle = p.color === INK1 ? INK2 : INK1;\n254|       ctx.lineWidth = 3;\n255|       const spokes = 8;\n256|       const dist = p.r * (0.6 + t * 0.9);\n257|       for (let i = 0; i < spokes; i++) {\n258|         const ang = (i / spokes) * Math.PI * 2;\n259|         const x1 = p.x + Math.cos(ang) * p.r * 0.3;\n260|         const y1 = p.y + Math.sin(ang) * p.r * 0.3;\n261|         const x2 = p.x + Math.cos(ang) * dist;\n262|         const y2 = p.y + Math.sin(ang) * dist;\n263|         ctx.beginPath();\n264|         ctx.moveTo(x1, y1);\n265|         ctx.lineTo(x2, y2);\n266|         ctx.stroke();\n267|       }\n268|       ctx.restore();\n269|       return;\n270|     }\n271| \n272|     // misregistration offset layer (second ink offset by 2px)\n273|     const otherColor = p.color === INK1 ? INK2 : INK1;\n274| \n275|     ctx.save();\n276|     ctx.globalAlpha = 0.9;\n277|     ctx.fillStyle = otherColor;\n278|     ctx.beginPath();\n279|     ctx.arc(p.x + 2, p.y + 1.5, p.r, 0, Math.PI * 2);\n280|     ctx.fill();\n281|     ctx.restore();\n282| \n283|     ctx.save();\n284|     ctx.globalAlpha = 0.92;\n285|     ctx.fillStyle = p.color;\n286|     ctx.beginPath();\n287|     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);\n288|     ctx.fill();\n289|     ctx.restore();\n290| \n291|     drawHalftoneShade(p.x, p.y, p.r, otherColor);\n292| \n293|     // outline in overlap ink\n294|     ctx.save();\n295|     ctx.strokeStyle = OVERLAP;\n296|     ctx.lineWidth = 2;\n297|     ctx.beginPath();\n298|     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);\n299|     ctx.stroke();\n300|     ctx.restore();\n301| \n302|     // highlight dot\n303|     ctx.save();\n304|     ctx.fillStyle = PAPER;\n305|     ctx.globalAlpha = 0.85;\n306|     ctx.beginPath();\n307|     ctx.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.18, 0, Math.PI * 2);\n308|     ctx.fill();\n309|     ctx.restore();\n310|   }\n311| \n312|   function drawGrain() {\n313|     if (!grainTile) return;\n314|     ctx.save();\n315|     ctx.globalAlpha = 0.08;\n316|     const pattern = ctx.createPattern(grainTile, \"repeat\");\n317|     ctx.fillStyle = pattern;\n318|     ctx.fillRect(0, 0, W, H);\n319|     ctx.restore();\n320|   }\n321| \n322|   function drawTitleHint() {\n323|     hintPulse += 0.05;\n324|     const alpha = 0.55 + 0.45 * Math.sin(hintPulse);\n325|     ctx.save();\n326|     ctx.globalAlpha = alpha;\n327|     ctx.fillStyle = OVERLAP;\n328|     ctx.font = \"bold \" + Math.min(38, W * 0.08) + \"px 'Arial Narrow', Arial, sans-serif\";\n329|     ctx.textAlign = \"center\";\n330|     ctx.textBaseline = \"middle\";\n331|     ctx.fillText(\"TAP TO BEGIN\", W / 2, H / 2);\n332|     ctx.restore();\n333| \n334|     ctx.save();\n335|     ctx.fillStyle = INK1;\n336|     ctx.font = \"bold \" + Math.min(26, W * 0.06) + \"px 'Arial Narrow', Arial, sans-serif\";\n337|     ctx.textAlign = \"center\";\n338|     ctx.fillText(\"POP THE BUBBLES\", W / 2, H / 2 - 50);\n339|     ctx.restore();\n340|   }\n341| \n342|   function draw() {\n343|     drawBackground();\n344|     for (const p of pieces) drawBubble(p);\n345|     if (!running) drawTitleHint();\n346|     drawGrain();\n347|   }\n348| \n349|   // ---- Loop ----\n350|   let lastTime = performance.now();\n351|   function frame(now) {\n352|     const dt = Math.min(0.05, (now - lastTime) / 1000);\n353|     lastTime = now;\n354|     if (!paused && running) {\n355|       settle(pieces, dt);\n356|     }\n357|     draw();\n358|     requestAnimationFrame(frame);\n359|   }\n360| \n361|   // ---- Input ----\n362|   canvas.style.touchAction = \"none\";\n363|   canvas.addEventListener(\"pointerdown\", (event) => {\n364|     event.preventDefault();\n365|     if (paused) return;\n366|     const rect = canvas.getBoundingClientRect();\n367|     const x = event.clientX - rect.left;\n368|     const y = event.clientY - rect.top;\n369|     if (!running) {\n370|       running = true;\n371|       CARTRIDGE.send(\"start\");\n372|       return;\n373|     }\n374|     popAt(x, y);\n375|   });\n376| \n377|   // Visible in-game control: calls the same clearTable() function used by reset.\n378|   clearBtn.addEventListener(\"click\", (e) => {\n379|     e.stopPropagation();\n380|     clearTable();\n381|   });\n382|   clearBtn.addEventListener(\"pointerdown\", (e) => {\n383|     e.stopPropagation();\n384|   });\n385| \n386|   // ---- Host bridge commands ----\n387|   window.addEventListener(\"message\", (event) => {\n388|     const data = event.data;\n389|     if (!data || data.source !== \"cartridge-host\") return;\n390|     if (data.type === \"pause\") paused = true;\n391|     if (data.type === \"resume\") paused = false;\n392|     if (data.type === \"reset\") clearTable();\n393|   });\n394| \n395|   // ---- Boot ----\n396|   resize();\n397|   spawnBatch(10);\n398|   draw();\n399|   CARTRIDGE.send(\"boot\", { title: \"Pop the Bubbles\", gameType: \"toy-box\", lang: \"en\" });\n400|   requestAnimationFrame(frame);\n401| })();\n402| </script>\n403| </body>\n404| </html>\n405| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNijjYW22qGE2jQjRe3Z\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":5699,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}   }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}        }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"findings\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" [\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"dimension\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"prompt\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"label\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"129\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pieces\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" = [\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"]; //\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bub\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bles:\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"x,\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"y,r,v\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"x,vy,color,po\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pped\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pop\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"T\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 191\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" popAt(x, y) {\\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 198\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"p\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".po\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"pped = true;\\\"}, {\\\"line\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 200\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1;\\\"}, {\\\"line\\\": \"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"211\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Table() {\\\"}, {\\\"line\\\": \"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"217\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"sp\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"awnBatch(10);\\\"},\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 338\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fillText\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"P\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"OP THE BUBBLES\\\\\\\", W\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2, H / 2\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" - 50);\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The code implements\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bub\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bles as\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" objects\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with position and\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" radius\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pop\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" action\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" triggered\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" by tap\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" incre\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ments a t\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally, and a clear button\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" reset\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the screen\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fresh\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bubbles.\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"dimension\\\": \\\"goal\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-leg\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\", \\\"label\\\": \\\"stated\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 338\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"POP THE BUB\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"BLES\\\\\\\", W / 2,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" H / 2 - 50\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 331\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"TAP TO BEGIN\\\\\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", W / 2, H /\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2);\\\"}, {\\\"line\\\":\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 66\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"<div id\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"=\\\\\\\"tally\\\\\\\">\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"P\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"OPS\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 0</div>\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"The\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays on\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"screen text\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stating\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the goal\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"P\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"OP THE BUBBLES\\\\\\\" and shows\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a tally counter labeled\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\\\\\"POPS\\\\\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" each successful\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pop.\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"dimension\\\": \\\"feedback\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"label\\\": \\\"immediate\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 191\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" popAt(x, y) {\\\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 198, \\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"quote\\\": \\\"p.popped =\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" true;\\\"}, {\\\"line\\\": 200\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"tally +=\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 1;\\\"}, {\\\"line\\\": \"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"201\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"tal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"lyEl\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".textContent = \\\\\\\"\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"POPS: \\\\\\\" + t\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ally;\\\"}, {\\\"line\\\": 246\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function draw\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"B\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ubble(p) {\\\"}, {\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"line\\\": 247\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"if\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (p.popped) {\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"When\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a bubble is t\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"apped, the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" pop\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"At function immediately\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" marks\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" it as popped,\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" incre\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ments the tally,\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" updates\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the DOM\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" text, and the\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" next\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame renders\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the pop\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" animation.\\\"}, {\\\"dimension\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"fail\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"label\\\": \\\"missing\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [],\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"The game\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" is\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" toy-\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"box with\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" fail\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" state\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" it\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" continues\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" indefin\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"itely with\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bub\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bles resp\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"awning and\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" can\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" clear\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" at\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" any time.\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}]}\"}      }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0         }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":5699,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":651}        }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      133,
+      133,
+      133,
+      133,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      42,
+      2,
+      142,
+      142,
+      142,
+      142,
+      142,
+      14,
+      30,
+      26,
+      28,
+      22,
+      27,
+      27,
+      62,
+      62,
+      17,
+      33,
+      20,
+      25,
+      28,
+      27,
+      29,
+      24,
+      27,
+      29,
+      24,
+      26,
+      27,
+      26,
+      26,
+      27,
+      32,
+      21,
+      26,
+      32,
+      26,
+      23,
+      25,
+      37,
+      15,
+      28,
+      28,
+      25,
+      25,
+      27,
+      29,
+      38,
+      14,
+      24,
+      27,
+      29,
+      24,
+      25,
+      27,
+      25,
+      26,
+      27,
+      27,
+      28,
+      24,
+      26,
+      26,
+      27,
+      27,
+      25,
+      26,
+      27,
+      26,
+      26,
+      27,
+      26,
+      27,
+      26,
+      26,
+      26,
+      26,
+      28,
+      26,
+      26,
+      27,
+      28,
+      26,
+      25,
+      26,
+      27,
+      26,
+      26,
+      27,
+      32,
+      23,
+      53,
+      24,
+      26,
+      27,
+      25,
+      26,
+      30,
+      23,
+      26,
+      30,
+      24,
+      25,
+      26,
+      26,
+      30,
+      23,
+      0,
+      26,
+      29,
+      24,
+      292,
+      90,
+      3,
+      3,
+      0,
+      1,
+      3,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      29,
+      25,
+      28,
+      23,
+      40,
+      13,
+      26,
+      27,
+      27,
+      26,
+      29,
+      23,
+      29,
+      27,
+      26,
+      26,
+      24,
+      27,
+      27,
+      26,
+      37,
+      16,
+      26,
+      25,
+      27,
+      26,
+      26,
+      28,
+      25,
+      26,
+      30,
+      24,
+      25,
+      26,
+      29,
+      29,
+      22,
+      25,
+      29,
+      24,
+      29,
+      46,
+      15,
+      19,
+      26,
+      26,
+      32,
+      17,
+      27,
+      26,
+      31,
+      22,
+      27,
+      25,
+      27,
+      26,
+      28,
+      28,
+      49,
+      1,
+      1
+    ]
+  },
+  "usage": {
+    "input": 5699,
+    "output": 651,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

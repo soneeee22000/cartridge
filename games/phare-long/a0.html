@@ -7,17 +7,20 @@
 <style>
   html, body {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    overflow: hidden; background: #f4ecd8;
+    background: #f4ecd8;
+    overflow: hidden;
     touch-action: none;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   }
-  canvas { display: block; touch-action: none; }
+  #wrap { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 </style>
 </head>
 <body>
+<div id="wrap">
 <canvas id="game"></canvas>
+</div>
 <script>
-// ---- Bridge helper (verbatim) ----
 const CARTRIDGE = {
   send(type, payload = {}) {
     window.parent.postMessage(
@@ -26,504 +29,528 @@ const CARTRIDGE = {
     );
   },
 };
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
 
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.source !== "cartridge-host") return;
-  if (data.type === "pause") paused = true;
-  if (data.type === "resume") paused = false;
-  if (data.type === "reset") backToTitle();
-});
-
-// ---- Setup ----
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-let W = 0, H = 0, DPR = 1;
-function resize() {
-  DPR = window.devicePixelRatio || 1;
-  W = window.innerWidth;
-  H = window.innerHeight;
-  canvas.width = Math.round(W * DPR);
-  canvas.height = Math.round(H * DPR);
-  canvas.style.width = W + "px";
-  canvas.style.height = H + "px";
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-}
-window.addEventListener("resize", resize);
-resize();
-
-// ---- Palette ----
-const COL_BG = "#f4ecd8";
-const COL_LAYER = "#e07a5f";
-const COL_ACCENT = "#3d405b";
-const COL_HILITE = "#81b29a";
-
-// ---- Seeded jitter helper for paper-cut edges ----
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const jitterRand = mulberry32(1337);
-function jitterPoly(points, amt) {
-  return points.map(p => [p[0] + (jitterRand() - 0.5) * amt, p[1] + (jitterRand() - 0.5) * amt]);
-}
-
-function drawPaperPath(pathPoints, fillColor, opts) {
-  opts = opts || {};
-  ctx.save();
-  ctx.shadowColor = "rgba(61,64,91,0.35)";
-  ctx.shadowBlur = 6;
-  ctx.shadowOffsetY = 3;
-  ctx.fillStyle = fillColor;
-  ctx.beginPath();
-  pathPoints.forEach((p, i) => {
-    if (i === 0) ctx.moveTo(p[0], p[1]);
-    else ctx.lineTo(p[0], p[1]);
-  });
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-function roundRectPoints(x, y, w, h, r) {
-  return [
-    [x + r, y], [x + w - r, y], [x + w, y + r],
-    [x + w, y + h - r], [x + w - r, y + h], [x + r, y + h],
-    [x, y + h - r], [x, y + r]
-  ];
-}
-
-// ---- Game state ----
-let paused = false;
-let screen = "title"; // title, playing, stageIntro, gameover, win
-let stage = 0;
-let score = 0;
-let beamAngle = 0; // radians
-let beamTarget = 0;
-let held = false;
-let graceTimer = 0;
-let introTimer = 0;
-let ships = [];
-let shipsToSave = 0;
-let shipsSaved = 0;
-let lastTime = 0;
-let stageGoalText = "";
-
-const STAGES = [
-  { count: 3, speed: 0.10, spawnGap: 2600 },
-  { count: 4, speed: 0.13, spawnGap: 2200 },
-  { count: 5, speed: 0.16, spawnGap: 1900 },
-  { count: 6, speed: 0.19, spawnGap: 1600 },
-  { count: 7, speed: 0.22, spawnGap: 1400 }
-];
-
-const lighthouseCenter = () => ({ x: W / 2, y: H / 2 });
-const towerRadius = () => Math.min(W, H) * 0.10;
-const rockRadius = () => Math.min(W, H) * 0.46;
-const portRadius = () => Math.min(W, H) * 0.14;
-
-function backToTitle() {
-  screen = "title";
-  stage = 0;
-  score = 0;
-  ships = [];
-}
-
-function enterStage(next) {
-  stage = next;
-  const cfg = STAGES[stage - 1];
-  shipsToSave = cfg.count;
-  shipsSaved = 0;
-  ships = [];
-  spawnTimerAcc = 0;
-  spawnGap = cfg.spawnGap;
-  shipSpeed = cfg.speed;
-  stageGoalText = "Sauvez " + shipsToSave + " bateau" + (shipsToSave > 1 ? "x" : "");
-  screen = "stageIntro";
-  introTimer = 2.2;
-  CARTRIDGE.send("level", { index: stage });
-}
-
-let spawnTimerAcc = 0;
-let spawnGap = 2000;
-let shipSpeed = 0.1;
-
-function spawnShip() {
-  const angle = Math.random() * Math.PI * 2;
-  const r = rockRadius() + 40;
-  const c = lighthouseCenter();
-  ships.push({
-    angle: angle,
-    dist: r,
-    speed: shipSpeed + Math.random() * 0.03,
-    lit: false,
-    id: Math.random()
-  });
-}
-
-function onGoalMet() {
-  if (stage === STAGES.length) {
-    CARTRIDGE.send("score", { value: score });
-    CARTRIDGE.send("end", { reason: "win" });
-    screen = "win";
-  } else {
-    enterStage(stage + 1);
+  function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-}
+  window.addEventListener('resize', resize);
+  resize();
 
-function onStageFailed() {
-  CARTRIDGE.send("score", { value: score });
-  CARTRIDGE.send("end", { reason: "lose" });
-  screen = "gameover";
-}
+  // ---------- palette ----------
+  const COL_BG = '#f4ecd8';
+  const COL_LAYER = '#e07a5f';
+  const COL_ACCENT = '#3d405b';
+  const COL_HILITE = '#81b29a';
 
-// ---- Input (drag-follow style, adapted to rotate beam) ----
-function toCanvas(evt) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: evt.clientX - rect.left,
-    y: evt.clientY - rect.top
-  };
-}
-
-function angleFromCenter(pt) {
-  const c = lighthouseCenter();
-  return Math.atan2(pt.y - c.y, pt.x - c.x);
-}
-
-canvas.addEventListener("pointerdown", (event) => {
-  if (screen === "title") {
-    startGame();
-    return;
+  // ---------- seeded jitter helper ----------
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
   }
-  if (screen === "gameover" || screen === "win") {
-    backToTitle();
-    return;
-  }
-  held = true;
-  const p = toCanvas(event);
-  beamTarget = angleFromCenter(p);
-  canvas.setPointerCapture(event.pointerId);
-});
-canvas.addEventListener("pointermove", (event) => {
-  if (held) {
-    const p = toCanvas(event);
-    beamTarget = angleFromCenter(p);
-  }
-});
-function releasePointer() { held = false; }
-canvas.addEventListener("pointerup", releasePointer);
-canvas.addEventListener("pointercancel", releasePointer);
-
-function startGame() {
-  screen = "stageIntro";
-  score = 0;
-  CARTRIDGE.send("start");
-  enterStage(1);
-}
-
-// ---- Update ----
-function angleDiff(a, b) {
-  let d = (b - a) % (Math.PI * 2);
-  if (d > Math.PI) d -= Math.PI * 2;
-  if (d < -Math.PI) d += Math.PI * 2;
-  return d;
-}
-
-function update(dt) {
-  if (screen === "stageIntro") {
-    introTimer -= dt;
-    if (introTimer <= 0) {
-      screen = "playing";
-      graceTimer = 2.5;
-    }
-    return;
-  }
-  if (screen !== "playing") return;
-
-  // ease beam angle towards target
-  const diff = angleDiff(beamAngle, beamTarget);
-  beamAngle += diff * Math.min(1, dt * 8);
-
-  if (graceTimer > 0) graceTimer -= dt;
-
-  spawnTimerAcc += dt * 1000;
-  if (spawnTimerAcc > spawnGap && ships.length < shipsToSave - shipsSaved + 2) {
-    spawnTimerAcc = 0;
-    if (ships.length + shipsSaved < shipsToSave) spawnShip();
+  const jitterRand = mulberry32(1337);
+  function jitterPoint(x, y, seedOffset){
+    const r1 = mulberry32(1337 + seedOffset * 2)();
+    const r2 = mulberry32(1337 + seedOffset * 2 + 1)();
+    return [x + (r1 - 0.5) * 3, y + (r2 - 0.5) * 3];
   }
 
-  const c = lighthouseCenter();
-  const beamWidth = 0.32;
-
-  for (let i = ships.length - 1; i >= 0; i--) {
-    const s = ships[i];
-    // check if lit
-    const ad = Math.abs(angleDiff(beamAngle, s.angle));
-    s.lit = ad < beamWidth;
-
-    if (s.lit) {
-      // move inward towards port
-      s.dist -= s.speed * 60 * dt * 0.6;
-    } else {
-      // drift towards rocks
-      s.dist -= s.speed * 60 * dt * 0.15;
-      // wobble angle a bit
-      s.angle += Math.sin(performance.now() / 900 + s.id * 10) * 0.0015;
-    }
-
-    if (s.dist <= portRadius()) {
-      ships.splice(i, 1);
-      shipsSaved++;
-      score += 10;
-      CARTRIDGE.send("score", { value: score });
-      continue;
-    }
-
-    if (s.dist <= towerRadius() + 6 && graceTimer <= 0) {
-      // hit rocks near tower means wrecked (too close without being saved through port logic distance)
-    }
-
-    if (graceTimer <= 0 && s.dist <= towerRadius() * 1.4 && !s.lit) {
-      // wrecked on rocks (rocks ring visually near tower not edge; use inner threshold when unlit for too long)
-    }
-  }
-
-  // Wreck detection: if unlit ship distance falls to rock-ring band while not making progress to port
-  for (let i = ships.length - 1; i >= 0; i--) {
-    const s = ships[i];
-    if (graceTimer <= 0 && !s.lit && s.dist < rockRadius() * 0.5) {
-      // shipwreck!
-      ships.splice(i, 1);
-      onStageFailed();
-      return;
-    }
-  }
-
-  if (shipsSaved >= shipsToSave && ships.length === 0) {
-    onGoalMet();
-  }
-}
-
-// ---- Draw ----
-function drawBackground() {
-  ctx.fillStyle = COL_BG;
-  ctx.fillRect(0, 0, W, H);
-  // subtle stars
-  ctx.fillStyle = "rgba(61,64,91,0.15)";
-  for (let i = 0; i < 40; i++) {
-    const sx = (i * 97.3) % W;
-    const sy = (i * 53.7) % H;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function drawRocks() {
-  const c = lighthouseCenter();
-  const r = rockRadius();
-  ctx.save();
-  const n = 22;
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    const rr = r + (jitterRand() - 0.5) * 14;
-    pts.push([c.x + Math.cos(a) * rr, c.y + Math.sin(a) * rr]);
-  }
-  drawPaperPath(pts, "#c98a6b");
-  ctx.restore();
-}
-
-function drawPort() {
-  const c = lighthouseCenter();
-  const r = portRadius();
-  const n = 16;
-  let pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    pts.push([c.x + Math.cos(a) * r, c.y + Math.sin(a) * r]);
-  }
-  pts = jitterPoly(pts, 3);
-  drawPaperPath(pts, COL_HILITE);
-}
-
-function drawBeam() {
-  const c = lighthouseCenter();
-  const len = rockRadius() + 60;
-  const spread = 0.32;
-  ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = "#f2e9c9";
-  ctx.beginPath();
-  ctx.moveTo(c.x, c.y);
-  ctx.arc(c.x, c.y, len, beamAngle - spread, beamAngle + spread);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawTower() {
-  const c = lighthouseCenter();
-  const r = towerRadius();
-  let pts = roundRectPoints(c.x - r * 0.6, c.y - r * 1.3, r * 1.2, r * 2.2, 6);
-  pts = jitterPoly(pts, 2);
-  drawPaperPath(pts, COL_LAYER);
-
-  // top cap
-  let capPts = [
-    [c.x - r * 0.75, c.y - r * 1.3],
-    [c.x + r * 0.75, c.y - r * 1.3],
-    [c.x + r * 0.4, c.y - r * 1.7],
-    [c.x - r * 0.4, c.y - r * 1.7]
-  ];
-  capPts = jitterPoly(capPts, 2);
-  drawPaperPath(capPts, COL_ACCENT);
-
-  // lamp dot
-  ctx.save();
-  ctx.fillStyle = "#f2e9c9";
-  ctx.shadowColor = "rgba(242,233,201,0.8)";
-  ctx.shadowBlur = 12;
-  ctx.beginPath();
-  ctx.arc(c.x, c.y - r * 1.4, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawShip(s) {
-  const c = lighthouseCenter();
-  const x = c.x + Math.cos(s.angle) * s.dist;
-  const y = c.y + Math.sin(s.angle) * s.dist;
-  const size = 16;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(s.angle + Math.PI / 2);
-  let hull = [
-    [-size * 0.5, size * 0.4],
-    [size * 0.5, size * 0.4],
-    [size * 0.35, -size * 0.4],
-    [-size * 0.35, -size * 0.4]
-  ];
-  hull = jitterPoly(hull, 1.5);
-  drawPaperPath(hull, s.lit ? COL_HILITE : COL_ACCENT);
-  ctx.restore();
-}
-
-function drawUI() {
-  ctx.fillStyle = COL_ACCENT;
-  ctx.font = "bold 18px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("Nuit " + stage, 16, 30);
-  ctx.fillText("Score: " + score, 16, 54);
-  ctx.fillText("Sauvés: " + shipsSaved + "/" + shipsToSave, 16, 78);
-}
-
-function drawTitle() {
-  drawBackground();
-  drawRocks();
-  drawPort();
-  drawTower();
-  ctx.save();
-  ctx.fillStyle = COL_ACCENT;
-  ctx.textAlign = "center";
-  ctx.font = "bold 34px sans-serif";
-  ctx.fillText("Le Gardien du Phare", W / 2, H * 0.28);
-  ctx.font = "18px sans-serif";
-  ctx.fillText("Glissez le doigt pour tourner le faisceau", W / 2, H * 0.35);
-  ctx.fillText("Guidez chaque bateau au port avant les rochers", W / 2, H * 0.40);
-  ctx.font = "bold 22px sans-serif";
-  ctx.fillText("Touchez pour commencer", W / 2, H * 0.55);
-  ctx.restore();
-}
-
-function drawStageIntro() {
-  drawBackground();
-  drawRocks();
-  drawPort();
-  drawTower();
-  ctx.save();
-  ctx.fillStyle = COL_ACCENT;
-  ctx.textAlign = "center";
-  ctx.font = "bold 30px sans-serif";
-  ctx.fillText("Nuit " + stage, W / 2, H * 0.4);
-  ctx.font = "22px sans-serif";
-  ctx.fillText(stageGoalText, W / 2, H * 0.48);
-  ctx.restore();
-}
-
-function drawGameOver(msg) {
-  drawBackground();
-  drawRocks();
-  drawPort();
-  drawTower();
-  ctx.save();
-  ctx.fillStyle = COL_ACCENT;
-  ctx.textAlign = "center";
-  ctx.font = "bold 30px sans-serif";
-  ctx.fillText(msg, W / 2, H * 0.4);
-  ctx.font = "20px sans-serif";
-  ctx.fillText("Score final: " + score, W / 2, H * 0.48);
-  ctx.font = "bold 20px sans-serif";
-  ctx.fillText("Touchez pour recommencer", W / 2, H * 0.56);
-  ctx.restore();
-}
-
-function draw() {
-  if (screen === "title") {
-    drawTitle();
-    return;
-  }
-  if (screen === "stageIntro") {
-    drawStageIntro();
-    return;
-  }
-  if (screen === "gameover") {
-    drawGameOver("Bateau échoué !");
-    return;
-  }
-  if (screen === "win") {
-    drawGameOver("Toutes les nuits éclairées !");
-    return;
-  }
-  drawBackground();
-  drawRocks();
-  drawPort();
-  drawBeam();
-  drawTower();
-  ships.forEach(drawShip);
-  drawUI();
-
-  if (graceTimer > 0) {
+  function paperPolygon(ctx, pts, fill, seedBase){
     ctx.save();
-    ctx.fillStyle = COL_ACCENT;
-    ctx.textAlign = "center";
-    ctx.font = "18px sans-serif";
-    ctx.fillText("Préparez-vous...", W / 2, H * 0.15);
+    ctx.shadowColor = 'rgba(61,64,91,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const [jx, jy] = jitterPoint(p[0], p[1], seedBase + i);
+      if (i === 0) ctx.moveTo(jx, jy);
+      else ctx.lineTo(jx, jy);
+    });
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
     ctx.restore();
   }
-}
 
-// ---- Main loop ----
-function frame(t) {
-  const dt = Math.min(0.05, (t - lastTime) / 1000 || 0);
-  lastTime = t;
-  if (!paused) {
-    update(dt);
+  function paperRoundRect(ctx, x, y, w, h, r, fill, seedBase){
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    const [jx, jy] = jitterPoint(x, y, seedBase);
+    ctx.beginPath();
+    ctx.moveTo(jx + r, jy);
+    ctx.arcTo(jx + w, jy, jx + w, jy + h, r);
+    ctx.arcTo(jx + w, jy + h, jx, jy + h, r);
+    ctx.arcTo(jx, jy + h, jx, jy, r);
+    ctx.arcTo(jx, jy, jx + w, jy, r);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.restore();
   }
-  draw();
-  requestAnimationFrame(frame);
-}
 
-// Boot: draw first frame, then send boot
-draw();
-CARTRIDGE.send("boot", { title: "Le Gardien du Phare", gameType: "stage-clear", lang: "fr" });
-requestAnimationFrame(frame);
+  function paperCircle(ctx, cx, cy, r, fill, seedBase){
+    ctx.save();
+    ctx.shadowColor = 'rgba(61,64,91,0.35)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    const [jx, jy] = jitterPoint(cx, cy, seedBase);
+    ctx.beginPath();
+    ctx.arc(jx, jy, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ---------- game state ----------
+  const STATE = { TITLE: 'title', PLAYING: 'playing', STAGE_CLEAR: 'stage_clear', END: 'end' };
+  let state = STATE.TITLE;
+  let paused = false;
+
+  let stage = 0;
+  const STAGES = [
+    { boats: 3, speed: 0.10, spawnGap: 3.2, goalText: "Sauvez 3 bateaux" },
+    { boats: 4, speed: 0.13, spawnGap: 2.8, goalText: "Sauvez 4 bateaux" },
+    { boats: 5, speed: 0.16, spawnGap: 2.4, goalText: "Sauvez 5 bateaux" },
+    { boats: 6, speed: 0.19, spawnGap: 2.0, goalText: "Sauvez 6 bateaux" },
+    { boats: 7, speed: 0.22, spawnGap: 1.8, goalText: "Sauvez 7 bateaux" },
+  ];
+
+  let score = 0;
+  let beamAngle = 0; // radians
+  let boats = [];
+  let spawned = 0;
+  let saved = 0;
+  let spawnTimer = 0;
+  let graceTimer = 0;
+  let stageMsgTimer = 0;
+  let endReason = null;
+  let lastTime = null;
+  let held = null; // pointer drag state
+  let towerCenter = { x: 0, y: 0 };
+  let towerRadius = 40;
+
+  function toCanvas(evt){
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - rect.left),
+      y: (evt.clientY - rect.top)
+    };
+  }
+
+  function backToTitle(){
+    state = STATE.TITLE;
+    paused = false;
+    stage = 0;
+    score = 0;
+    boats = [];
+    held = null;
+  }
+
+  function enterStage(next){
+    stage = next;
+    boats = [];
+    spawned = 0;
+    saved = 0;
+    spawnTimer = 0;
+    graceTimer = 2.5; // grace period
+    stageMsgTimer = 2.5;
+    state = STATE.PLAYING;
+    CARTRIDGE.send("level", { index: stage });
+  }
+
+  function onGoalMet(){
+    if (stage === STAGES.length){
+      endReason = 'win';
+      state = STATE.END;
+      CARTRIDGE.send("end", { reason: "win", value: score });
+    } else {
+      state = STATE.STAGE_CLEAR;
+      stageMsgTimer = 1.8;
+    }
+  }
+
+  function onStageFailed(){
+    endReason = 'lose';
+    state = STATE.END;
+    CARTRIDGE.send("end", { reason: "lose", value: score });
+  }
+
+  function startGame(){
+    score = 0;
+    CARTRIDGE.send("start");
+    CARTRIDGE.send("score", { value: score });
+    enterStage(1);
+  }
+
+  // ---------- boats ----------
+  function spawnBoat(cfg){
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.min(W, H) * 0.55;
+    boats.push({
+      angle: angle,
+      dist: dist,
+      speed: cfg.speed * (0.85 + Math.random() * 0.3),
+      lit: false,
+      wobble: Math.random() * Math.PI * 2,
+      id: Math.random()
+    });
+  }
+
+  function updateBoats(dt, cfg){
+    for (let i = boats.length - 1; i >= 0; i--){
+      const b = boats[i];
+      b.wobble += dt * 2;
+      // Check if lit by beam
+      let diff = Math.abs(((b.angle - beamAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      const beamHalfWidth = 0.28;
+      b.lit = diff < beamHalfWidth;
+
+      if (b.lit){
+        // pushed back to safety, then removed (saved)
+        b.dist += dt * 60;
+        if (b.dist > Math.min(W, H) * 0.62){
+          boats.splice(i, 1);
+          saved++;
+          score += 10;
+          CARTRIDGE.send("score", { value: score });
+          if (saved >= cfg.boats && spawned >= cfg.boats){
+            onGoalMet();
+            return;
+          }
+        }
+      } else {
+        b.dist -= b.speed * dt * 60;
+        if (b.dist <= towerRadius + 18){
+          onStageFailed();
+          return;
+        }
+      }
+    }
+  }
+
+  // ---------- input: rotate beam by dragging around tower ----------
+  canvas.addEventListener('pointerdown', (event) => {
+    if (state === STATE.TITLE){
+      startGame();
+      return;
+    }
+    if (state === STATE.END){
+      backToTitle();
+      return;
+    }
+    if (state !== STATE.PLAYING) return;
+    const p = toCanvas(event);
+    held = { pointerId: event.pointerId };
+    canvas.setPointerCapture(event.pointerId);
+    updateBeamFromPoint(p);
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!held) return;
+    const p = toCanvas(event);
+    updateBeamFromPoint(p);
+  });
+  function endHold(){ held = null; }
+  canvas.addEventListener('pointerup', endHold);
+  canvas.addEventListener('pointercancel', endHold);
+
+  function updateBeamFromPoint(p){
+    const dx = p.x - towerCenter.x;
+    const dy = p.y - towerCenter.y;
+    beamAngle = Math.atan2(dy, dx);
+  }
+
+  // ---------- host messages ----------
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") backToTitle();
+  });
+
+  // ---------- drawing ----------
+  function drawBackground(){
+    ctx.fillStyle = COL_BG;
+    ctx.fillRect(0, 0, W, H);
+    // sea layer (rocks ring)
+    const cx = towerCenter.x, cy = towerCenter.y;
+    const seaR = Math.min(W, H) * 0.62;
+    paperCircle(ctx, cx, cy, seaR, '#cfe3da', 500);
+    // rocks ring near tower
+    const rockR = towerRadius + 14;
+    ctx.save();
+    for (let i = 0; i < 14; i++){
+      const a = (i / 14) * Math.PI * 2;
+      const rx = cx + Math.cos(a) * rockR;
+      const ry = cy + Math.sin(a) * rockR;
+      paperCircle(ctx, rx, ry, 7, COL_ACCENT, 600 + i);
+    }
+    ctx.restore();
+  }
+
+  function drawBeam(){
+    const cx = towerCenter.x, cy = towerCenter.y;
+    const len = Math.min(W, H) * 0.62;
+    const halfWidth = 0.28;
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, len, beamAngle - halfWidth, beamAngle + halfWidth);
+    ctx.closePath();
+    ctx.fillStyle = COL_HILITE;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTower(){
+    const cx = towerCenter.x, cy = towerCenter.y;
+    // base
+    paperRoundRect(ctx, cx - towerRadius, cy - towerRadius, towerRadius * 2, towerRadius * 2, 12, COL_LAYER, 10);
+    // stripes
+    paperRoundRect(ctx, cx - towerRadius * 0.6, cy - towerRadius * 0.9, towerRadius * 1.2, towerRadius * 0.4, 6, COL_ACCENT, 20);
+    // lamp room
+    paperCircle(ctx, cx, cy, towerRadius * 0.42, COL_HILITE, 30);
+    // small light dot pointing beam direction
+    const lx = cx + Math.cos(beamAngle) * towerRadius * 0.6;
+    const ly = cy + Math.sin(beamAngle) * towerRadius * 0.6;
+    paperCircle(ctx, lx, ly, 6, COL_ACCENT, 40);
+  }
+
+  function drawBoat(b){
+    const cx = towerCenter.x + Math.cos(b.angle) * b.dist;
+    const cy = towerCenter.y + Math.sin(b.angle) * b.dist;
+    const wob = Math.sin(b.wobble) * 3;
+    const col = b.lit ? COL_HILITE : COL_LAYER;
+    ctx.save();
+    ctx.translate(cx, cy + wob);
+    const hullPts = [
+      [-16, 6], [16, 6], [11, 14], [-11, 14]
+    ];
+    paperPolygon(ctx, hullPts, col, Math.floor(b.id * 1000));
+    // sail
+    const sailPts = [
+      [0, 6], [0, -20], [13, 5]
+    ];
+    paperPolygon(ctx, sailPts, COL_ACCENT, Math.floor(b.id * 1000) + 5);
+    ctx.restore();
+  }
+
+  function drawTitle(){
+    drawBackground();
+    drawTower();
+    // title card
+    const cardW = Math.min(W * 0.86, 480);
+    const cardH = 260;
+    const cx = W / 2 - cardW / 2;
+    const cy = H / 2 - cardH / 2;
+    paperRoundRect(ctx, cx, cy, cardW, cardH, 18, '#fffaf0', 900);
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('Le Gardien du Phare', W / 2, cy + 60);
+    ctx.font = '16px sans-serif';
+    wrapText(ctx, "Glissez autour de la tour pour tourner le faisceau et sauver les bateaux des rochers.", W / 2, cy + 100, cardW - 60, 22);
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = COL_LAYER;
+    ctx.fillText('Touchez pour commencer', W / 2, cy + cardH - 40);
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = text.split(' ');
+    let line = '';
+    let yy = y;
+    for (let n = 0; n < words.length; n++){
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0){
+        ctx.fillText(line, x, yy);
+        line = words[n] + ' ';
+        yy += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, yy);
+  }
+
+  function drawHUD(){
+    // score plate
+    paperRoundRect(ctx, 12, 12, 150, 44, 10, '#fffaf0', 950);
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('Score: ' + score, 24, 40);
+
+    // stage plate
+    const cfg = STAGES[stage - 1];
+    if (cfg){
+      const plateW = Math.min(W * 0.7, 320);
+      paperRoundRect(ctx, W / 2 - plateW / 2, 12, plateW, 44, 10, '#fffaf0', 960);
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('Étape ' + stage + ': ' + saved + '/' + cfg.boats + ' sauvés', W / 2, 40);
+    }
+
+    if (stageMsgTimer > 0 && cfg){
+      const cardW = Math.min(W * 0.8, 420);
+      const cardH = 90;
+      const cx = W / 2 - cardW / 2;
+      const cy = H * 0.28;
+      paperRoundRect(ctx, cx, cy, cardW, cardH, 16, '#fffaf0', 970);
+      ctx.fillStyle = COL_ACCENT;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('Étape ' + stage, W / 2, cy + 35);
+      ctx.font = '16px sans-serif';
+      ctx.fillText(cfg.goalText, W / 2, cy + 65);
+    }
+  }
+
+  function drawStageClearOverlay(){
+    const cardW = Math.min(W * 0.8, 420);
+    const cardH = 140;
+    const cx = W / 2 - cardW / 2;
+    const cy = H / 2 - cardH / 2;
+    paperRoundRect(ctx, cx, cy, cardW, cardH, 16, '#fffaf0', 980);
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('Étape ' + stage + ' réussie !', W / 2, cy + 55);
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Préparez-vous pour la suite...', W / 2, cy + 90);
+  }
+
+  function drawEndOverlay(){
+    const cardW = Math.min(W * 0.8, 440);
+    const cardH = 200;
+    const cx = W / 2 - cardW / 2;
+    const cy = H / 2 - cardH / 2;
+    paperRoundRect(ctx, cx, cy, cardW, cardH, 18, '#fffaf0', 990);
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 28px sans-serif';
+    if (endReason === 'win'){
+      ctx.fillText('Toutes les nuits sont sauvées !', W / 2, cy + 60);
+    } else {
+      ctx.fillText('Un bateau a coulé...', W / 2, cy + 60);
+    }
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Score final: ' + score, W / 2, cy + 100);
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillStyle = COL_LAYER;
+    ctx.fillText('Touchez pour recommencer', W / 2, cy + cardH - 30);
+  }
+
+  // ---------- main loop ----------
+  function step(ts){
+    requestAnimationFrame(step);
+    if (lastTime === null) lastTime = ts;
+    let dt = (ts - lastTime) / 1000;
+    lastTime = ts;
+    if (dt > 0.05) dt = 0.05;
+
+    towerCenter.x = W / 2;
+    towerCenter.y = H / 2;
+    towerRadius = Math.max(36, Math.min(W, H) * 0.07);
+
+    if (paused){
+      render();
+      return;
+    }
+
+    if (state === STATE.PLAYING){
+      const cfg = STAGES[stage - 1];
+      if (graceTimer > 0) graceTimer -= dt;
+      if (stageMsgTimer > 0) stageMsgTimer -= dt;
+
+      spawnTimer -= dt;
+      if (graceTimer <= 0 && spawnTimer <= 0 && spawned < cfg.boats){
+        spawnBoat(cfg);
+        spawned++;
+        spawnTimer = cfg.spawnGap;
+      }
+      if (graceTimer <= 0){
+        updateBoats(dt, cfg);
+      } else {
+        // still allow gentle wobble during grace
+        boats.forEach(b => b.wobble += dt * 2);
+      }
+    } else if (state === STATE.STAGE_CLEAR){
+      stageMsgTimer -= dt;
+      if (stageMsgTimer <= 0){
+        enterStage(stage + 1);
+      }
+    }
+
+    render();
+  }
+
+  function render(){
+    ctx.clearRect(0, 0, W, H);
+    if (state === STATE.TITLE){
+      drawTitle();
+    } else if (state === STATE.PLAYING){
+      drawBackground();
+      drawBeam();
+      boats.forEach(drawBoat);
+      drawTower();
+      drawHUD();
+    } else if (state === STATE.STAGE_CLEAR){
+      drawBackground();
+      boats.forEach(drawBoat);
+      drawTower();
+      drawHUD();
+      drawStageClearOverlay();
+    } else if (state === STATE.END){
+      drawBackground();
+      boats.forEach(drawBoat);
+      drawTower();
+      drawHUD();
+      drawEndOverlay();
+    }
+    if (paused){
+      ctx.save();
+      ctx.fillStyle = 'rgba(61,64,91,0.5)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#fffaf0';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.fillText('Pause', W / 2, H / 2);
+      ctx.restore();
+    }
+  }
+
+  // ---------- boot ----------
+  towerCenter.x = W / 2;
+  towerCenter.y = H / 2;
+  requestAnimationFrame((ts) => {
+    lastTime = ts;
+    render();
+    CARTRIDGE.send("boot", { title: "Le Gardien du Phare", gameType: "stage-clear", lang: "fr" });
+    requestAnimationFrame(step);
+  });
+})();
 </script>
 </body>
 </html>

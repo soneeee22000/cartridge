@@ -15,8 +15,7 @@
     font-family: "Arial Narrow", Arial, sans-serif;
   }
   #wrap {
-    position: fixed;
-    inset: 0;
+    position: relative;
     width: 100vw;
     height: 100dvh;
   }
@@ -27,265 +26,341 @@
     touch-action: none;
   }
   #clearBtn {
-    position: fixed;
-    top: max(10px, env(safe-area-inset-top));
-    right: 12px;
-    z-index: 10;
-    min-height: 44px;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    min-height: 48px;
     min-width: 100px;
-    padding: 8px 16px;
-    background: #fbf7ee;
-    border: 3px solid #0078bf;
-    color: #0078bf;
-    font-weight: 900;
+    padding: 8px 18px;
+    background: #ff48b0;
+    color: #fbf7ee;
+    border: 3px solid #5b3a8c;
+    border-radius: 10px;
+    font-weight: bold;
     font-size: 16px;
-    letter-spacing: 0.5px;
-    font-family: "Arial Narrow", Arial, sans-serif;
-    border-radius: 8px;
+    font-family: inherit;
+    letter-spacing: 1px;
     cursor: pointer;
-    touch-action: manipulation;
+    z-index: 10;
+    text-transform: uppercase;
   }
   #clearBtn:active {
-    background: #0078bf;
-    color: #fbf7ee;
+    transform: translateY(1px);
+  }
+  #tally {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    color: #0078bf;
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 1px;
+    z-index: 10;
+    text-shadow: 1px 1px 0 #ff48b0;
   }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="game"></canvas>
+  <div id="tally">POPS: 0</div>
+  <button id="clearBtn">Clear</button>
 </div>
-<button id="clearBtn" type="button">CLEAR</button>
 <script>
-  const CARTRIDGE = {
-    send(type, payload = {}) {
-      window.parent.postMessage(
-        { source: "cartridge", v: 1, type, payload },
-        "*",
-      );
-    },
-  };
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
 </script>
 <script>
-(function() {
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const clearBtn = document.getElementById('clearBtn');
+(function () {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const clearBtn = document.getElementById("clearBtn");
+  const tallyEl = document.getElementById("tally");
+
   let dpr = Math.max(1, window.devicePixelRatio || 1);
   let W = 0, H = 0;
 
-  let running = false;
-  let paused = false;
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (!grainTile) buildGrain();
+  }
+  window.addEventListener("resize", resize);
 
-  // ---- grain tile (pre-rendered once) ----
-  let grainCanvas = document.createElement('canvas');
+  // ---- Grain tile (pre-rendered noise) ----
+  let grainTile = null;
   function buildGrain() {
     const size = 128;
-    grainCanvas.width = size;
-    grainCanvas.height = size;
-    const gctx = grainCanvas.getContext('2d');
+    const gCanvas = document.createElement("canvas");
+    gCanvas.width = size;
+    gCanvas.height = size;
+    const gctx = gCanvas.getContext("2d");
     const imgData = gctx.createImageData(size, size);
     for (let i = 0; i < imgData.data.length; i += 4) {
-      const v = Math.floor(Math.random() * 255);
+      const v = Math.random() * 255;
       imgData.data[i] = v;
       imgData.data[i + 1] = v;
       imgData.data[i + 2] = v;
       imgData.data[i + 3] = 255;
     }
     gctx.putImageData(imgData, 0, 0);
+    grainTile = gCanvas;
   }
-  buildGrain();
 
-  function resize() {
-    dpr = Math.max(1, window.devicePixelRatio || 1);
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  // ---- Colours ----
+  const PAPER = "#fbf7ee";
+  const INK1 = "#ff48b0";
+  const INK2 = "#0078bf";
+  const OVERLAP = "#5b3a8c";
 
-  // ---- bubbles (pieces) ----
-  const bubbles = [];
+  // ---- State ----
+  const pieces = []; // bubbles: {x,y,r,vx,vy,color,popped,popT}
   let tally = 0;
-  const INKS = ['#ff48b0', '#0078bf'];
+  let paused = false;
+  let running = false; // becomes true after first tap
+  let hintPulse = 0;
 
-  function rand(a, b) { return a + Math.random() * (b - a); }
+  function rand(a, b) {
+    return a + Math.random() * (b - a);
+  }
 
-  function spawnBubble() {
-    const r = rand(28, 52);
-    const x = rand(r + 4, W - r - 4);
-    const y = H + r + rand(0, 200);
-    bubbles.push({
+  function spawnBatch(n) {
+    for (let i = 0; i < n; i++) {
+      spawnOne();
+    }
+  }
+
+  function spawnOne() {
+    const r = rand(24, 48);
+    const x = rand(r, W - r);
+    const y = rand(r, H - r);
+    const color = Math.random() < 0.5 ? INK1 : INK2;
+    pieces.push({
       x, y, r,
-      vy: -rand(18, 40) / 60,
-      wobble: rand(0, Math.PI * 2),
-      wobbleSpeed: rand(0.01, 0.03),
-      ink: INKS[Math.floor(Math.random() * INKS.length)],
-      pop: 0 // pop animation progress, 0 = alive
+      vx: rand(-18, 18),
+      vy: rand(-14, 14),
+      color,
+      born: performance.now(),
+      popped: false,
+      popT: 0,
     });
   }
 
-  function ensureBubbles() {
-    const target = Math.min(9, 5 + Math.floor(tally / 10));
-    while (bubbles.filter(b => b.pop === 0).length < target) {
-      spawnBubble();
+  function maintainBubbles() {
+    // keep a healthy count of live bubbles
+    const alive = pieces.filter((p) => !p.popped);
+    if (alive.length < 9) {
+      spawnOne();
     }
   }
 
-  function settle(list) {
-    for (let i = list.length - 1; i >= 0; i--) {
-      const b = list[i];
-      if (b.pop > 0) {
-        b.pop += 0.08;
-        if (b.pop >= 1) {
-          list.splice(i, 1);
-        }
+  function settle(list, dt) {
+    for (const p of list) {
+      if (p.popped) {
+        p.popT += dt;
         continue;
       }
-      b.y += b.vy;
-      b.wobble += b.wobbleSpeed;
-      b.x += Math.sin(b.wobble) * 0.3;
-      if (b.y < -b.r - 20) {
-        list.splice(i, 1);
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.x - p.r < 0) { p.x = p.r; p.vx *= -1; }
+      if (p.x + p.r > W) { p.x = W - p.r; p.vx *= -1; }
+      if (p.y - p.r < 0) { p.y = p.r; p.vy *= -1; }
+      if (p.y + p.r > H) { p.y = H - p.r; p.vy *= -1; }
+    }
+    // remove fully-popped bubbles after their animation
+    for (let i = pieces.length - 1; i >= 0; i--) {
+      if (pieces[i].popped && pieces[i].popT > 0.28) {
+        pieces.splice(i, 1);
       }
     }
-    ensureBubbles();
+    maintainBubbles();
   }
 
   function popAt(x, y) {
-    for (let i = bubbles.length - 1; i >= 0; i--) {
-      const b = bubbles[i];
-      if (b.pop > 0) continue;
-      const dx = b.x - x, dy = b.y - y;
-      if (dx * dx + dy * dy <= b.r * b.r * 1.3) {
-        b.pop = 0.001;
+    // find topmost unpopped bubble under point
+    for (let i = pieces.length - 1; i >= 0; i--) {
+      const p = pieces[i];
+      if (p.popped) continue;
+      const dx = x - p.x, dy = y - p.y;
+      if (dx * dx + dy * dy <= p.r * p.r) {
+        p.popped = true;
+        p.popT = 0;
         tally += 1;
-        CARTRIDGE.send('score', { value: tally });
+        tallyEl.textContent = "POPS: " + tally;
+        CARTRIDGE.send("score", { value: tally });
         return true;
       }
     }
     return false;
   }
 
-  // Clear-the-table: one function used by BOTH the host reset command
-  // and the visible in-game CLEAR button.
+  // Single clear-the-table function: used by the visible button AND by
+  // the host "reset" command. Both call this exact function.
   function clearTable() {
-    bubbles.length = 0;
+    pieces.length = 0;
     tally = 0;
-    CARTRIDGE.send('score', { value: 0 });
-    ensureBubbles();
+    running = false;
+    tallyEl.textContent = "POPS: 0";
+    CARTRIDGE.send("score", { value: 0 });
+    spawnBatch(10);
     draw();
   }
 
-  // ---- drawing ----
-  function drawHalftoneShade(cx, cy, r, color) {
-    // simple halftone dots for a shade ring, avoiding gradients
-    ctx.fillStyle = color;
-    const dots = 10;
-    for (let i = 0; i < dots; i++) {
-      const ang = (i / dots) * Math.PI * 2;
-      const dx = cx + Math.cos(ang) * r * 0.6;
-      const dy = cy + Math.sin(ang) * r * 0.6;
-      ctx.beginPath();
-      ctx.arc(dx, dy, r * 0.06, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  // ---- Drawing ----
+  function drawBackground() {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
   }
 
-  function drawBubble(b) {
+  function drawHalftoneShade(cx, cy, r, color) {
+    // subtle halftone dots to fake shading on bubble edge
     ctx.save();
-    if (b.pop > 0) {
-      const p = b.pop;
-      const rr = b.r * (1 + p * 0.6);
-      ctx.globalAlpha = Math.max(0, 1 - p);
-      // pop burst: a few offset rings
-      ctx.strokeStyle = b.ink;
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = color;
+    const dotCount = 10;
+    for (let i = 0; i < dotCount; i++) {
+      const ang = (i / dotCount) * Math.PI * 2;
+      const dr = r * 0.72;
+      const dx = cx + Math.cos(ang) * dr;
+      const dy = cy + Math.sin(ang) * dr;
+      const rad = Math.max(1, r * 0.06);
+      ctx.beginPath();
+      ctx.arc(dx, dy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawBubble(p) {
+    if (p.popped) {
+      // pop burst animation: expanding ring fragments
+      const t = p.popT / 0.28;
+      const alpha = Math.max(0, 1 - t);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = p.color === INK1 ? INK2 : INK1;
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, rr, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(b.x + 2, b.y - 2, rr * 0.7, 0, Math.PI * 2);
-      ctx.strokeStyle = '#0078bf';
-      ctx.stroke();
+      const spokes = 8;
+      const dist = p.r * (0.6 + t * 0.9);
+      for (let i = 0; i < spokes; i++) {
+        const ang = (i / spokes) * Math.PI * 2;
+        const x1 = p.x + Math.cos(ang) * p.r * 0.3;
+        const y1 = p.y + Math.sin(ang) * p.r * 0.3;
+        const x2 = p.x + Math.cos(ang) * dist;
+        const y2 = p.y + Math.sin(ang) * dist;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
       ctx.restore();
       return;
     }
-    // misregistration offset layer
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = b.ink === INKS[0] ? '#0078bf' : '#ff48b0';
+
+    // misregistration offset layer (second ink offset by 2px)
+    const otherColor = p.color === INK1 ? INK2 : INK1;
+
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = otherColor;
     ctx.beginPath();
-    ctx.arc(b.x + 2, b.y + 2, b.r, 0, Math.PI * 2);
+    ctx.arc(p.x + 2, p.y + 1.5, p.r, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
-    ctx.fillStyle = b.ink;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
-    // highlight shading via halftone dots (overlap color)
-    drawHalftoneShade(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r, '#5b3a8c');
+    drawHalftoneShade(p.x, p.y, p.r, otherColor);
 
+    // outline in overlap ink
+    ctx.save();
+    ctx.strokeStyle = OVERLAP;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // highlight dot
+    ctx.save();
+    ctx.fillStyle = PAPER;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGrain() {
+    if (!grainTile) return;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const pattern = ctx.createPattern(grainTile, "repeat");
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
+  function drawTitleHint() {
+    hintPulse += 0.05;
+    const alpha = 0.55 + 0.45 * Math.sin(hintPulse);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = OVERLAP;
+    ctx.font = "bold " + Math.min(38, W * 0.08) + "px 'Arial Narrow', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("TAP TO BEGIN", W / 2, H / 2);
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = INK1;
+    ctx.font = "bold " + Math.min(26, W * 0.06) + "px 'Arial Narrow', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("POP THE BUBBLES", W / 2, H / 2 - 50);
     ctx.restore();
   }
 
   function draw() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#fbf7ee';
-    ctx.fillRect(0, 0, W, H);
-
-    for (const b of bubbles) drawBubble(b);
-
-    // Title & tally text
-    ctx.fillStyle = '#0078bf';
-    ctx.font = '900 22px "Arial Narrow", Arial, sans-serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText('POP THE BUBBLES', 14, 14);
-
-    ctx.fillStyle = '#ff48b0';
-    ctx.font = '900 34px "Arial Narrow", Arial, sans-serif';
-    ctx.fillText('Pops: ' + tally, 14, 44);
-
-    if (!running) {
-      const alpha = 0.55 + 0.45 * Math.sin(Date.now() / 300);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#5b3a8c';
-      ctx.font = '900 28px "Arial Narrow", Arial, sans-serif';
-      const msg = 'Tap to begin';
-      const w = ctx.measureText(msg).width;
-      ctx.fillText(msg, (W - w) / 2, H / 2 - 14);
-      ctx.restore();
-    }
-
-    // grain overlay
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    const gsize = 128;
-    for (let gx = 0; gx < W; gx += gsize) {
-      for (let gy = 0; gy < H; gy += gsize) {
-        ctx.drawImage(grainCanvas, gx, gy, gsize, gsize);
-      }
-    }
-    ctx.restore();
+    drawBackground();
+    for (const p of pieces) drawBubble(p);
+    if (!running) drawTitleHint();
+    drawGrain();
   }
 
-  function frame() {
-    if (!paused) {
-      if (running) settle(bubbles);
-      draw();
+  // ---- Loop ----
+  let lastTime = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    if (!paused && running) {
+      settle(pieces, dt);
     }
+    draw();
     requestAnimationFrame(frame);
   }
 
-  // ---- input ----
-  canvas.style.touchAction = 'none';
-  canvas.addEventListener('pointerdown', (event) => {
+  // ---- Input ----
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     if (paused) return;
     const rect = canvas.getBoundingClientRect();
@@ -293,38 +368,35 @@
     const y = event.clientY - rect.top;
     if (!running) {
       running = true;
-      ensureBubbles();
-      CARTRIDGE.send('start');
+      CARTRIDGE.send("start");
       return;
     }
     popAt(x, y);
   });
 
-  // Visible in-game control: calls the same clearTable function used by reset.
-  clearBtn.addEventListener('click', clearTable);
-  clearBtn.addEventListener('pointerdown', (e) => {
+  // Visible in-game control: calls the same clearTable() function used by reset.
+  clearBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearTable();
+  });
+  clearBtn.addEventListener("pointerdown", (e) => {
     e.stopPropagation();
   });
 
-  // ---- host bridge ----
-  function backToTitle() {
-    running = false;
-    paused = false;
-    clearTable();
-  }
-
-  window.addEventListener('message', (event) => {
+  // ---- Host bridge commands ----
+  window.addEventListener("message", (event) => {
     const data = event.data;
-    if (!data || data.source !== 'cartridge-host') return;
-    if (data.type === 'pause') paused = true;
-    if (data.type === 'resume') paused = false;
-    if (data.type === 'reset') backToTitle();
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") clearTable();
   });
 
-  // ---- boot ----
-  ensureBubbles();
+  // ---- Boot ----
+  resize();
+  spawnBatch(10);
   draw();
-  CARTRIDGE.send('boot', { title: 'Pop the Bubbles', gameType: 'toy-box', lang: 'en' });
+  CARTRIDGE.send("boot", { title: "Pop the Bubbles", gameType: "toy-box", lang: "en" });
   requestAnimationFrame(frame);
 })();
 </script>

@@ -1,0 +1,265 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:0cf15964cf1ccc2a3f10a0955d189baf6ab4797ee98fdc93c1f3f9a3c1c6ba7e",
+  "occurrence": 0,
+  "role": "planner",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 4000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "title": {
+                "description": "constraints: minimum length 1, maximum length 48",
+                "type": "string"
+              },
+              "slug": {
+                "description": "constraints: maximum length 40\npattern: ^[a-z0-9]+(-[a-z0-9]+)*$.",
+                "type": "string"
+              },
+              "lang": {
+                "enum": [
+                  "en",
+                  "fr"
+                ],
+                "type": "string"
+              },
+              "gameType": {
+                "enum": [
+                  "arcade-run",
+                  "stage-clear",
+                  "puzzle-board",
+                  "toy-box"
+                ],
+                "type": "string"
+              },
+              "loop": {
+                "description": "constraints: minimum length 1, maximum length 280",
+                "type": "string"
+              },
+              "input": {
+                "enum": [
+                  "tap-anywhere",
+                  "drag-follow",
+                  "swipe-lanes"
+                ],
+                "type": "string"
+              },
+              "style": {
+                "enum": [
+                  "paper-cut",
+                  "chalkboard",
+                  "risograph"
+                ],
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "title",
+              "slug",
+              "lang",
+              "gameType",
+              "loop",
+              "input",
+              "style"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You plan one single-file HTML5 mini-game from a short brief.\n\nRead the brief, then decide:\n\n- `gameType`: one of `arcade-run`, `stage-clear`, `puzzle-board`, `toy-box`. Call `list_cards` with kind `type` and read the card that fits before you choose. Pick `toy-box` when the brief has no way to lose.\n- `input`: one of `tap-anywhere`, `drag-follow`, `swipe-lanes`. Prefer `tap-anywhere` unless the brief asks for dragging or lanes.\n- `style`: one of `paper-cut`, `chalkboard`, `risograph`.\n- `title`: a short, playable name in the brief's language, at most 48 characters.\n- `slug`: the title in lowercase ASCII words joined by single hyphens.\n- `lang`: `en` or `fr`, the language the brief is written in.\n- `loop`: one or two sentences, at most 280 characters, saying what the player does, what they are trying to reach and what ends a play-through.\n\nKeep the game small enough to fit in one page with no external files. When the brief asks for something the contract forbids (sound files, network calls, saved progress), plan the closest version that fits and say nothing about the rest.\n\nAnswer only with the structured plan."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\n\nUn long cahier des charges pour un jeu de phare en plusieurs niveaux. Le joueur est le gardien d'un vieux phare sur une côte rocheuse, et chaque niveau se passe pendant une nuit de tempête. Des bateaux approchent depuis le large, et le joueur doit tourner le faisceau du phare en glissant le doigt autour de la tour pour éclairer chaque bateau avant qu'il ne touche les rochers. Un bateau éclairé assez longtemps trouve le chenal et rentre au port, ce qui compte pour l'objectif du niveau. Quand tous les bateaux d'une nuit sont rentrés, le niveau est gagné et une courte carte annonce la nuit suivante. Les nuits suivantes amènent plus de bateaux, du brouillard qui cache une partie de la mer et des vagues qui déplacent les bateaux. Si un bateau touche les rochers, la partie est perdue, avec un message qui dit quel bateau a coulé et un bouton pour rejouer la nuit. Je voudrais une mer bleu nuit, un faisceau jaune pâle et des bateaux rouges, dessinés simplement avec des formes plates. Le texte du jeu doit rester en français, avec le numéro de la nuit affiché en haut de l'écran pendant toute la partie."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_01UCiG39qpDoM5U56fHuQsve",
+              "name": "list_cards",
+              "input": {
+                "kind": "type"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01UCiG39qpDoM5U56fHuQsve",
+              "content": "{\"cards\":[{\"id\":\"arcade-run\",\"kind\":\"type\",\"title\":\"Arcade run\",\"summary\":\"A continuous run with one life where the player survives and collects.\"},{\"id\":\"puzzle-board\",\"kind\":\"type\",\"title\":\"Puzzle board\",\"summary\":\"A turn-based board with no clock pressure, won by solving it.\"},{\"id\":\"stage-clear\",\"kind\":\"type\",\"title\":\"Stage clear\",\"summary\":\"Discrete stages, each with one goal to meet before moving on.\"},{\"id\":\"toy-box\",\"kind\":\"type\",\"title\":\"Toy box\",\"summary\":\"Open play with a visible tally and a clear-the-table replay; nobody loses.\"}]}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_01XF4QbZKSFW597Tc8MbBej7",
+              "name": "get_card",
+              "input": {
+                "id": "stage-clear"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01XJn6PWZseFTzs7ymFvbRD6",
+              "name": "get_card",
+              "input": {
+                "id": "drag-follow"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01MbthoimcWwNfYJLk4AmVLg",
+              "name": "get_card",
+              "input": {
+                "id": "swipe-lanes"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01XF4QbZKSFW597Tc8MbBej7",
+              "content": "{\"id\":\"stage-clear\",\"body\":\"# Stage clear\\n\\nThe player meets a stated goal to clear each stage. Clearing the last stage wins; failing a stage loses.\\n\\n## Contract row\\n\\n| field                | value         |\\n| -------------------- | ------------- |\\n| score                | `optional`    |\\n| level                | `required`    |\\n| end                  | `required`    |\\n| end reasons          | `win, lose`   |\\n| reset                | `soft`        |\\n| idle death gate      | `min-seconds` |\\n| idle motion required | `yes`         |\\n\\n- Emit every event marked `required` above: a `level` on entering each stage and an `end` when the play-through finishes. <!-- rule:E1-15 -->\\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\\n- Use only `win` or `lose` as the `end` reason. <!-- rule:E1-17 -->\\n\\n## Stages\\n\\nNumber stages from 1 and step by one. Show the goal on screen when each stage opens (\\\"Light 5 lamps\\\"). Make stage 1 easy enough to clear on the first try.\\n\\n## Loop skeleton\\n\\n```js\\nlet stage = 0;\\nfunction enterStage(next) {\\n  stage = next;\\n  buildStage(stage);\\n  CARTRIDGE.send(\\\"level\\\", { index: stage });\\n}\\nfunction onGoalMet() {\\n  if (stage === STAGES.length) CARTRIDGE.send(\\\"end\\\", { reason: \\\"win\\\" });\\n  else enterStage(stage + 1);\\n}\\nfunction onStageFailed() {\\n  CARTRIDGE.send(\\\"end\\\", { reason: \\\"lose\\\" });\\n}\\n```\\n\\nGive the player a few seconds of grace at the start of each stage before any threat can finish it.\"}"
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01XJn6PWZseFTzs7ymFvbRD6",
+              "content": "{\"id\":\"drag-follow\",\"body\":\"# Drag follow\\n\\nThe player presses on a piece and it trails the pointer until release. Good for steering, sorting and placing.\\n\\n- Register `pointerdown`, `pointermove` and `pointerup` on the canvas and capture the pointer on press. <!-- rule:E1-22 -->\\n- Convert client coordinates to canvas coordinates with `getBoundingClientRect()` and the device pixel ratio.\\n- Ease towards the target instead of snapping, so small jitters do not shake the piece.\\n\\n```js\\nlet held = null;\\ncanvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n  held = pieceAt(toCanvas(event));\\n  if (held) canvas.setPointerCapture(event.pointerId);\\n});\\ncanvas.addEventListener(\\\"pointermove\\\", (event) => {\\n  if (held) held.target = toCanvas(event);\\n});\\ncanvas.addEventListener(\\\"pointerup\\\", () => {\\n  held = null;\\n});\\n```\\n\\nDrop the piece on `pointercancel` as well, so a system gesture never leaves it stuck to the finger.\"}"
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01MbthoimcWwNfYJLk4AmVLg",
+              "content": "{\"id\":\"swipe-lanes\",\"body\":\"# Swipe lanes\\n\\nThe play field has three or four lanes. A swipe left or right moves one lane; a tap does nothing, or performs a secondary action.\\n\\n- Register `pointerdown` and `pointerup`, measure the horizontal distance and compare it with a minimum swipe length. <!-- rule:E1-22 -->\\n- Choose the minimum swipe length as a fraction of the canvas width, not in fixed pixels.\\n- Clamp the lane index so the player never leaves the field.\\n\\n```js\\nconst SWIPE_FRACTION = 0.08;\\nlet pressX = 0;\\ncanvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n  pressX = event.clientX;\\n});\\ncanvas.addEventListener(\\\"pointerup\\\", (event) => {\\n  const dx = event.clientX - pressX;\\n  if (Math.abs(dx) < canvas.clientWidth * SWIPE_FRACTION) return;\\n  lane = Math.max(0, Math.min(LANES - 1, lane + Math.sign(dx)));\\n});\\n```\\n\\nAlso accept the left and right arrow keys so the game can be tried on a desktop.\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "list_cards",
+          "description": "List the knowledge cards (id, kind, title, summary), sorted by id. Pass a kind to filter.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "contract",
+                  "type",
+                  "input",
+                  "style"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNj7JPXTHiD59tGTaaBf\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":4132,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":22,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}    }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01Kfn2pgZB2qd181GN19bZKJ\",\"name\":\"list_cards\",\"input\":{},\"caller\":{\"type\":\"direct\"}}    }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"kind\\\": \\\"style\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":4132,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":49,\"output_tokens_details\":{\"thinking_tokens\":0}}          }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"       }\n\n",
+    "gapsMs": [
+      0,
+      5,
+      5,
+      5,
+      53,
+      125,
+      125,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 4132,
+    "output": 49,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { FsArtifactStore } from "../../engine/artifacts/fs.ts";
@@ -56,6 +56,7 @@ interface RunOptions {
   readonly json: string | undefined;
   readonly maxUsd: number | null;
   readonly skipE2: boolean;
+  readonly resume: boolean;
   readonly yes: boolean;
 }
 
@@ -70,6 +71,7 @@ function parseRunArgs(args: string[]) {
       yes: { type: "boolean", default: false },
       "max-usd": { type: "string" },
       "skip-e2": { type: "boolean", default: false },
+      resume: { type: "boolean", default: false },
     },
     strict: true,
   }).values;
@@ -94,6 +96,7 @@ function readRunOptions(args: string[]): RunOptions | string {
     json: values.json,
     maxUsd,
     skipE2: values["skip-e2"],
+    resume: values.resume,
     yes: values.yes,
   };
   return fullRunGuard(tier, options) ?? options;
@@ -143,6 +146,14 @@ function clearItemRecording(root: string, itemId: string): void {
     rmSync(dir, { recursive: true, force: true });
 }
 
+/**
+ * `--resume` treats an item as done once its `run.json` exists: the runner writes that file only
+ * after generation finishes, so an interrupted item has none and is recorded again.
+ */
+function alreadyRecorded(root: string, itemId: string): boolean {
+  return existsSync(join(root, "games", itemId, "run.json"));
+}
+
 async function runOneItem(
   item: DatasetItem,
   options: RunOptions,
@@ -187,6 +198,11 @@ async function runItems(
   const records: ItemRecord[] = [];
   let spent = 0;
   for (const item of items) {
+    if (options.resume && alreadyRecorded(deps.root, item.id)) {
+      io.stdout(`${item.id}: skipped (already recorded)
+`);
+      continue;
+    }
     if (overBudget(spent, options.maxUsd)) {
       io.stderr(
         `stopping before ${item.id}: the running estimate passed --max-usd\n`,
@@ -231,7 +247,7 @@ function writeReports(
 }
 
 /**
- * `run --tier <t> [--mode] [--label] [--json] [--yes --max-usd <n>] [--skip-e2]` (§12.2): prints the
+ * `run --tier <t> [--mode] [--label] [--json] [--yes --max-usd <n>] [--skip-e2] [--resume]` (§12.2): prints the
  * cost estimate, generates each item and persists its game, `run.json` and `e2.json` before the
  * next one, then writes `reports/<tier>/<label>/report.{md,json}`.
  * @param args arguments after `run`
@@ -276,25 +292,53 @@ function parseRescoreArgs(args: string[]) {
       label: { type: "string", default: DEFAULT_LABEL },
       json: { type: "string" },
       "rerun-e2": { type: "boolean", default: false },
+      "missing-e2": { type: "boolean", default: false },
     },
     strict: true,
   }).values;
 }
 
+/** Where rescore takes E2 from: the stored `e2.json`, a fresh probe, or a probe only when none is stored. */
+type E2Source = "stored" | "rerun" | "missing";
+
+function e2SourceOf(values: {
+  "rerun-e2": boolean;
+  "missing-e2": boolean;
+}): E2Source {
+  if (values["rerun-e2"]) return "rerun";
+  return values["missing-e2"] ? "missing" : "stored";
+}
+
+/**
+ * `--missing-e2` probes a game only when it has no `e2.json` (a probe that crashed during the run)
+ * and persists the result, so a later plain rescore reproduces the same report.
+ */
+async function e2For(
+  source: E2Source,
+  item: DatasetItem,
+  gamesDir: string,
+  html: string | null,
+  ctx: { deps: EvalDeps; io: Io },
+): Promise<E2Result | null> {
+  const stored = readE2(gamesDir, item.id);
+  if (source === "stored" || !html) return stored;
+  if (source === "missing" && stored) return stored;
+  const fresh = await probeSafely(ctx.deps, html, item.id, ctx.io);
+  if (fresh && source === "missing") writeE2(gamesDir, item.id, fresh);
+  return fresh;
+}
+
 async function rescoreItem(
   item: DatasetItem,
   gamesDir: string,
-  rerunE2: boolean,
+  source: E2Source,
   deps: EvalDeps,
   io: Io,
 ): Promise<ItemRecord | string> {
   const record = readRunRecord(gamesDir, item.id);
   if (!record) return `no run.json for ${item.id} under ${gamesDir}`;
   const html = readGameHtml(gamesDir, record);
-  const e2 =
-    rerunE2 && html
-      ? await probeSafely(deps, html, item.id, io)
-      : readE2(gamesDir, item.id);
+  const e2 = await e2For(source, item, gamesDir, html, { deps, io });
   return evaluateItem({
     item,
     record,
@@ -305,7 +349,7 @@ async function rescoreItem(
 }
 
 /**
- * `score --games <dir> [--tier] [--label] [--json] [--rerun-e2]` (§11.3, §12.1): rescores committed
+ * `score --games <dir> [--tier] [--label] [--json] [--rerun-e2 | --missing-e2]` (§11.3, §12.1): rescores committed
  * games with no key. E1 and E4 are recomputed, E3 is replayed from cassettes, and E2 and wall
  * times are read from `e2.json` and `run.json`. The JSON is byte-stable for CI's `diff -u`.
  * @param args arguments after `score`
@@ -331,7 +375,7 @@ export async function rescoreCommand(
     const record = await rescoreItem(
       item,
       values.games,
-      values["rerun-e2"],
+      e2SourceOf(values),
       deps,
       io,
     );

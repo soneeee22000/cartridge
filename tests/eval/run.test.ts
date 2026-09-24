@@ -2,6 +2,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  rmSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
@@ -181,6 +182,24 @@ describe("cli run (§12.2)", () => {
     expect(readFileSync(out, "utf8")).toBe(committed);
   });
 
+  it("with --missing-e2, probes only unprobed games and persists their e2.json", async () => {
+    const { deps, probed } = harness();
+    await capture(["run", "--tier", "sample", "--mode", "mock"], deps);
+    const [unprobed, ...probedBefore] = SAMPLE_ITEM_IDS;
+    const e2Path = join(deps.root, "games", unprobed ?? "", "e2.json");
+    rmSync(e2Path);
+    probed.length = 0;
+    const games = join(deps.root, "games");
+    const { code } = await capture(
+      ["score", "--games", games, "--tier", "sample", "--missing-e2"],
+      deps,
+    );
+    expect(code).toBe(0);
+    expect(probed).toEqual([unprobed]);
+    expect(existsSync(e2Path)).toBe(true);
+    expect(probedBefore.length).toBeGreaterThan(0);
+  });
+
   it("fails the rescore when an item was never run", async () => {
     const { deps } = harness();
     const { code, err } = await capture(
@@ -256,6 +275,39 @@ describe("cli run (§12.2)", () => {
     expect(existsSync(join(gameDir, "a3.html"))).toBe(false);
     expect(existsSync(join(cassetteDir, "index.json"))).toBe(false);
     expect(existsSync(join(gameDir, "a1.html"))).toBe(true);
+  });
+
+  it("with --resume, skips items that already have a run.json and runs only the rest", async () => {
+    const generated: string[] = [];
+    const base = harness();
+    const { deps } = harness({
+      root: base.deps.root,
+      generatorModels: (mode, itemId) => {
+        generated.push(itemId);
+        return base.deps.generatorModels(mode, itemId);
+      },
+    });
+    await capture(["run", "--tier", "sample", "--mode", "mock"], deps);
+    const [kept, rerun] = SAMPLE_ITEM_IDS;
+    const keptRun = readFileSync(
+      join(deps.root, "games", kept ?? "", "run.json"),
+      "utf8",
+    );
+    rmSync(join(deps.root, "games", rerun ?? ""), {
+      recursive: true,
+      force: true,
+    });
+    generated.length = 0;
+    const { code, out } = await capture(
+      ["run", "--tier", "sample", "--mode", "mock", "--resume"],
+      deps,
+    );
+    expect(code).toBe(0);
+    expect(generated).toEqual([rerun]);
+    expect(out).toContain(`${kept}: skipped (already recorded)`);
+    expect(
+      readFileSync(join(deps.root, "games", kept ?? "", "run.json"), "utf8"),
+    ).toBe(keptRun);
   });
 
   it("never clears recordings outside record mode", async () => {

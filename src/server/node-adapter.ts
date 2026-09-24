@@ -7,7 +7,7 @@ export type WebHandler = (request: Request) => Response | Promise<Response>;
 const FALLBACK_HOST = "localhost";
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
 
-function toRequest(incoming: IncomingMessage): Request {
+function toRequest(incoming: IncomingMessage, signal: AbortSignal): Request {
   const host = incoming.headers.host ?? FALLBACK_HOST;
   const url = new URL(incoming.url ?? "/", `http://${host}`);
   const headers = new Headers();
@@ -17,25 +17,32 @@ function toRequest(incoming: IncomingMessage): Request {
   }
   const method = incoming.method ?? "GET";
   if (BODYLESS_METHODS.has(method))
-    return new Request(url, { method, headers });
+    return new Request(url, { method, headers, signal });
   const body = Readable.toWeb(incoming) as ReadableStream<Uint8Array>;
   return new Request(url, {
     method,
     headers,
     body,
     duplex: "half",
+    signal,
   });
 }
 
 /**
  * Wraps a Web handler as a Node `(req, res)` handler, streaming the response body as it is produced.
+ * A client that disconnects before the response finishes aborts `request.signal`, so relays and
+ * drivers stop with it.
  * @param handler Web-standard handler
  */
 export function toNodeHandler(
   handler: WebHandler,
 ): (incoming: IncomingMessage, outgoing: ServerResponse) => Promise<void> {
   return async (incoming, outgoing) => {
-    const response = await handler(toRequest(incoming));
+    const disconnect = new AbortController();
+    outgoing.on("close", () => {
+      if (!outgoing.writableFinished) disconnect.abort();
+    });
+    const response = await handler(toRequest(incoming, disconnect.signal));
     outgoing.writeHead(response.status, Object.fromEntries(response.headers));
     if (!response.body) {
       outgoing.end();
@@ -44,7 +51,10 @@ export function toNodeHandler(
     const body = Readable.fromWeb(response.body);
     body.pipe(outgoing);
     await new Promise<void>((resolve, reject) => {
-      outgoing.on("finish", resolve);
+      outgoing.on("close", () => {
+        body.destroy();
+        resolve();
+      });
       body.on("error", reject);
     });
   };

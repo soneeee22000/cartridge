@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+.data/
+test-results/
+playwright-report/
+*.log
+
+# AI tool artifacts
+.claude/
+.sixth/
+.cursor/
+
+# Deploy
+.vercel/
+
+# Local secrets
+.env
+.env.*
+!.env.example

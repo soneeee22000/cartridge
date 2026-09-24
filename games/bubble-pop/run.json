@@ -1,7 +1,7 @@
 {
   "artifact": {
-    "bytes": 10246,
-    "sha256": "4734e567ef95833edeebe278aa89b75424fa703278f0cffa95019502834dfbdc",
+    "bytes": 8771,
+    "sha256": "124f5a7d68c4bd9d0f03c858698ac7c1cae23cbe06964a75dad6527f6e8e579a",
     "version": "a1"
   },
   "buildAttempts": 2,
@@ -20,9 +20,9 @@
     "gameType": "toy-box",
     "input": "tap-anywhere",
     "lang": "en",
-    "loop": "Tap floating bubbles to pop them and watch your pop tally rise. Use the clear button anytime to empty the screen and start a fresh batch of bubbles.",
+    "loop": "Tap bubbles anywhere on screen to pop them and watch your pop tally grow as new bubbles keep drifting in. Use the clear button anytime to empty the screen and start fresh.",
     "slug": "pop-the-bubbles",
-    "style": "risograph",
+    "style": "paper-cut",
     "title": "Pop the Bubbles"
   },
   "status": "complete",
@@ -30,21 +30,21 @@
     "generate": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 44116,
-      "output": 10249
+      "input": 41148,
+      "output": 8690
     },
     "plan": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 7043,
-      "output": 273
+      "input": 6586,
+      "output": 234
     },
     "repair": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 30113,
-      "output": 5246
+      "input": 27807,
+      "output": 4393
     }
   },
-  "wallMs": 83295
+  "wallMs": 73178
 }

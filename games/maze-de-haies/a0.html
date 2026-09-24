@@ -3,555 +3,228 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Le Hérisson des Haies</title>
+<title>Le Hérisson et le Labyrinthe</title>
 <style>
   html, body {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background: #f4ecd8;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
+    background: #f4ecd8;
     touch-action: none;
-    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
   }
-  #wrap {
-    position: fixed; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  canvas {
+  #game {
     display: block;
+    width: 100vw;
+    height: 100dvh;
     touch-action: none;
-  }
-  #hint {
-    position: absolute;
-    bottom: 8px; left: 0; right: 0;
-    text-align: center;
-    color: #3d405b;
-    font-size: 14px;
-    pointer-events: none;
-    user-select: none;
   }
 </style>
 </head>
 <body>
-<div id="wrap">
-  <canvas id="game"></canvas>
-</div>
-<div id="hint">Glissez pour déplacer le hérisson (haut / bas / gauche / droite)</div>
+<canvas id="game"></canvas>
 <script>
-  const CARTRIDGE = {
-    send(type, payload = {}) {
-      window.parent.postMessage(
-        { source: "cartridge", v: 1, type, payload },
-        "*",
-      );
-    },
-  };
+// ---- Bridge helper (verbatim) ----
+const CARTRIDGE = {
+  send(type, payload = {}) {
+    window.parent.postMessage(
+      { source: "cartridge", v: 1, type, payload },
+      "*",
+    );
+  },
+};
 </script>
 <script>
-(function(){
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const hint = document.getElementById('hint');
+(function () {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
 
-  const COLORS = {
-    bg: '#f4ecd8',
-    layer: '#e07a5f',
-    accent: '#3d405b',
-    highlight: '#81b29a'
-  };
-
-  // ---------- seeded jitter ----------
-  let seedState = 12345;
-  function seededRandom() {
-    seedState = (seedState * 1103515245 + 12345) & 0x7fffffff;
-    return (seedState % 10000) / 10000;
-  }
-  const jitterCache = new Map();
-  function jitter(key, amp) {
-    if (jitterCache.has(key)) return jitterCache.get(key);
-    const v = (seededRandom() - 0.5) * 2 * amp;
-    jitterCache.set(key, v);
-    return v;
-  }
-
-  function jitteredPolygon(ctx, pts, keyPrefix, amp) {
-    ctx.beginPath();
-    pts.forEach((p, i) => {
-      const jx = jitter(keyPrefix + 'x' + i, amp);
-      const jy = jitter(keyPrefix + 'y' + i, amp);
-      const x = p[0] + jx, y = p[1] + jy;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    });
-    ctx.closePath();
-  }
-
-  function roundRectPath(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  // ---------- layout ----------
   let W = 0, H = 0, DPR = 1;
+
   function resize() {
     DPR = window.devicePixelRatio || 1;
     W = window.innerWidth;
     H = window.innerHeight;
     canvas.width = Math.floor(W * DPR);
     canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     draw();
   }
-  window.addEventListener('resize', resize);
+  window.addEventListener("resize", resize);
 
-  // ---------- game state ----------
-  const GRID = 7; // 7x7 maze
-  let stage = 1;
+  // ---- Seeded jitter for paper-cut style ----
+  function makeRng(seed) {
+    let s = seed >>> 0;
+    return function () {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return (s / 4294967296);
+    };
+  }
+  const rng = makeRng(9182);
+  const jitterCache = new Map();
+  function jitter(key, amount) {
+    if (jitterCache.has(key)) return jitterCache.get(key);
+    const v = (rng() - 0.5) * 2 * amount;
+    jitterCache.set(key, v);
+    return v;
+  }
+
+  const PALETTE = {
+    bg: "#f4ecd8",
+    layer: "#e07a5f",
+    accent: "#3d405b",
+    highlight: "#81b29a",
+  };
+
+  // ---- Maze definition ----
+  // 0 = wall (haie), 1 = path, 2 = apple, 3 = start, 4 = exit
+  const GRID = [
+    [1,1,1,0,1,1,1,1,1],
+    [0,0,1,0,1,0,0,0,1],
+    [1,1,1,0,1,0,1,1,1],
+    [1,0,0,0,1,0,1,0,0],
+    [1,1,1,1,1,0,1,1,1],
+    [0,0,0,1,0,0,0,0,1],
+    [1,1,0,1,1,1,1,0,1],
+    [1,0,0,1,0,0,1,0,1],
+    [1,1,1,1,0,1,1,1,4],
+  ];
+  const ROWS = GRID.length;
+  const COLS = GRID[0].length;
+  const START = { r: 0, c: 0 };
+  const APPLES_SRC = [
+    {r:0,c:4},{r:2,c:6},{r:4,c:0},{r:6,c:5},{r:8,c:4},{r:3,c:8},{r:7,c:6}
+  ];
+
+  let state = "title"; // title, playing, win, stuck
   let paused = false;
-  let started = false;
-  let gameOver = false;
-  let endReason = null;
-
-  let grid = []; // 0 empty, 1 hedge, 2 apple, 3 exit
-  let hx = 0, hy = 0; // hedgehog position
-  let stepsLeft = 0;
+  let player = { r: START.r, c: START.c };
+  let apples = [];
   let score = 0;
-  let applesTotal = 0;
+  let moves = 0;
+  let stepsLeft = 0;
+  const MAX_STEPS = 40;
+  let lastMoveDir = null;
 
-  function inBounds(x, y) {
-    return x >= 0 && x < GRID && y >= 0 && y < GRID;
+  function cellReachable(r, c) {
+    return r >= 0 && r < ROWS && c >= 0 && c < COLS && GRID[r][c] !== 0;
   }
 
-  function genMaze(seedBase) {
-    seedState = seedBase;
-    jitterCache.clear();
-    grid = [];
-    for (let y = 0; y < GRID; y++) {
-      const row = [];
-      for (let x = 0; x < GRID; x++) row.push(1);
-      grid.push(row);
-    }
-    // carve a maze using randomized DFS on odd coordinates conceptually,
-    // but simpler: carve on full grid with backtracking, allow all cells as nodes
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(seededRandom() * (i + 1));
-        const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-      }
-      return arr;
-    }
-    const stack = [[0,0]];
-    const visited = new Set(['0,0']);
-    grid[0][0] = 0;
-    while (stack.length) {
-      const [cx, cy] = stack[stack.length - 1];
-      const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
-      let moved = false;
-      for (const [dx, dy] of dirs) {
-        const nx = cx + dx, ny = cy + dy;
-        if (inBounds(nx, ny) && !visited.has(nx+','+ny)) {
-          visited.add(nx+','+ny);
-          grid[ny][nx] = 0;
-          stack.push([nx, ny]);
-          moved = true;
-          break;
-        }
-      }
-      if (!moved) stack.pop();
-    }
-    // knock a few extra walls down for loop options (keep it a puzzle, moderate)
-    let extra = Math.floor(GRID * 1.2);
-    while (extra > 0) {
-      const x = Math.floor(seededRandom() * GRID);
-      const y = Math.floor(seededRandom() * GRID);
-      if (grid[y][x] === 1) {
-        // only open if it connects two open cells (avoid isolated hedges disappearing randomly on edges)
-        let openNeighbors = 0;
-        [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy]) => {
-          const nx = x+dx, ny = y+dy;
-          if (inBounds(nx,ny) && grid[ny][nx] === 0) openNeighbors++;
-        });
-        if (openNeighbors >= 2) {
-          grid[y][x] = 0;
-          extra--;
-        } else {
-          extra--;
-        }
-      } else {
-        extra--;
-      }
-    }
-
-    // place apples on open cells (not start)
-    const openCells = [];
-    for (let y = 0; y < GRID; y++)
-      for (let x = 0; x < GRID; x++)
-        if (grid[y][x] === 0 && !(x === 0 && y === 0)) openCells.push([x,y]);
-    shuffle(openCells);
-    const numApples = Math.min(5 + stage, openCells.length - 1);
-    for (let i = 0; i < numApples; i++) {
-      const [ax, ay] = openCells[i];
-      grid[ay][ax] = 2;
-    }
-    // exit at far corner-ish, must be open
-    let exitCell = [GRID-1, GRID-1];
-    if (grid[exitCell[1]][exitCell[0]] === 1) grid[exitCell[1]][exitCell[0]] = 0;
-    grid[exitCell[1]][exitCell[0]] = 3;
-
-    applesTotal = numApples;
-    hx = 0; hy = 0;
-    stepsLeft = GRID * GRID + numApples * 2; // generous step budget
+  function resetGameState() {
+    player = { r: START.r, c: START.c };
+    apples = APPLES_SRC.map(a => ({ ...a, taken: false }));
     score = 0;
-  }
-
-  function cellOpen(x, y) {
-    if (!inBounds(x, y)) return false;
-    return grid[y][x] !== 1;
-  }
-
-  function tryMove(dx, dy) {
-    if (paused || gameOver || !started) return;
-    const nx = hx + dx, ny = hy + dy;
-    if (!cellOpen(nx, ny)) return;
-    if (stepsLeft <= 0) return;
-    hx = nx; hy = ny;
-    stepsLeft -= 1;
-    let scored = false;
-    if (grid[hy][hx] === 2) {
-      grid[hy][hx] = 0;
-      score += 10;
-      scored = true;
-      CARTRIDGE.send('score', { value: score });
-    }
-    if (grid[hy][hx] === 3) {
-      // reached exit
-      gameOver = true;
-      endReason = 'win';
-      CARTRIDGE.send('end', { reason: 'win', value: score });
-    } else if (stepsLeft <= 0) {
-      // check if any legal move remains (there won't be steps to use anyway)
-      gameOver = true;
-      endReason = 'stuck';
-      CARTRIDGE.send('end', { reason: 'stuck', value: score });
-    }
-    draw();
-  }
-
-  function anyMovesPossible() {
-    return stepsLeft > 0;
-  }
-
-  // ---------- drawing ----------
-  function drawShadowLayer(fn) {
-    ctx.save();
-    ctx.shadowColor = 'rgba(61,64,91,0.35)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 3;
-    fn();
-    ctx.restore();
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = COLORS.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    if (!started) {
-      drawTitleScreen();
-      return;
-    }
-
-    // board area
-    const margin = 20;
-    const topArea = 70;
-    const boardSize = Math.min(W - margin * 2, H - topArea - 60);
-    const cell = boardSize / GRID;
-    const boardX = (W - boardSize) / 2;
-    const boardY = topArea;
-
-    // board backing card
-    drawShadowLayer(() => {
-      ctx.fillStyle = '#ffffff';
-      roundRectPath(ctx, boardX - 10, boardY - 10, boardSize + 20, boardSize + 20, 14);
-      ctx.fill();
-    });
-
-    // draw cells
-    for (let y = 0; y < GRID; y++) {
-      for (let x = 0; x < GRID; x++) {
-        const cx = boardX + x * cell;
-        const cy = boardY + y * cell;
-        const val = grid[y][x];
-        const key = 'cell'+x+'_'+y;
-
-        if (val === 1) {
-          // hedge - layer color polygon
-          drawShadowLayer(() => {
-            ctx.fillStyle = COLORS.layer;
-            const pts = [
-              [cx+3, cy+3],[cx+cell-3, cy+3],
-              [cx+cell-3, cy+cell-3],[cx+3, cy+cell-3]
-            ];
-            jitteredPolygon(ctx, pts, key, 2);
-            ctx.fill();
-          });
-          // texture dots
-          ctx.fillStyle = COLORS.accent;
-          ctx.globalAlpha = 0.25;
-          for (let i = 0; i < 3; i++) {
-            const dx = jitter(key+'dotx'+i, cell*0.3);
-            const dy = jitter(key+'doty'+i, cell*0.3);
-            ctx.beginPath();
-            ctx.arc(cx+cell/2+dx, cy+cell/2+dy, cell*0.06, 0, Math.PI*2);
-            ctx.fill();
-          }
-          ctx.globalAlpha = 1;
-        } else {
-          // open path, light card
-          ctx.fillStyle = '#f9f4e8';
-          roundRectPath(ctx, cx+2, cy+2, cell-4, cell-4, 4);
-          ctx.fill();
-
-          if (val === 2) {
-            // apple - highlight circle
-            drawShadowLayer(() => {
-              ctx.fillStyle = '#c1443a';
-              ctx.beginPath();
-              ctx.arc(cx+cell/2, cy+cell/2, cell*0.22, 0, Math.PI*2);
-              ctx.fill();
-            });
-            ctx.fillStyle = COLORS.highlight;
-            ctx.beginPath();
-            ctx.ellipse(cx+cell/2+cell*0.08, cy+cell/2-cell*0.2, cell*0.08, cell*0.05, 0.6, 0, Math.PI*2);
-            ctx.fill();
-          } else if (val === 3) {
-            // exit - accent rounded square with arrow
-            drawShadowLayer(() => {
-              ctx.fillStyle = COLORS.highlight;
-              roundRectPath(ctx, cx+6, cy+6, cell-12, cell-12, 6);
-              ctx.fill();
-            });
-            ctx.fillStyle = COLORS.accent;
-            ctx.font = `bold ${Math.floor(cell*0.4)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🏁', cx+cell/2, cy+cell/2+1);
-          }
-        }
-      }
-    }
-
-    // hedgehog
-    const hcx = boardX + hx * cell + cell/2;
-    const hcy = boardY + hy * cell + cell/2;
-    drawHedgehog(hcx, hcy, cell*0.38);
-
-    // HUD
-    drawHUD(boardY);
-
-    if (gameOver) {
-      drawEndOverlay();
-    }
-  }
-
-  function drawHedgehog(cx, cy, r) {
-    drawShadowLayer(() => {
-      ctx.fillStyle = COLORS.accent;
-      const pts = [
-        [cx - r, cy + r*0.3],
-        [cx - r*0.4, cy - r],
-        [cx + r*0.3, cy - r*0.9],
-        [cx + r, cy],
-        [cx + r*0.5, cy + r*0.8],
-        [cx - r*0.5, cy + r*0.9]
-      ];
-      jitteredPolygon(ctx, pts, 'hog', 1.5);
-      ctx.fill();
-    });
-    // body
-    ctx.fillStyle = '#caa26a';
-    ctx.beginPath();
-    ctx.ellipse(cx + r*0.1, cy + r*0.1, r*0.7, r*0.55, 0, 0, Math.PI*2);
-    ctx.fill();
-    // eye
-    ctx.fillStyle = COLORS.accent;
-    ctx.beginPath();
-    ctx.arc(cx + r*0.55, cy - r*0.05, r*0.09, 0, Math.PI*2);
-    ctx.fill();
-    // nose
-    ctx.beginPath();
-    ctx.arc(cx + r*0.95, cy + r*0.05, r*0.08, 0, Math.PI*2);
-    ctx.fill();
-  }
-
-  function drawHUD(boardTop) {
-    // score card
-    drawShadowLayer(() => {
-      ctx.fillStyle = '#ffffff';
-      roundRectPath(ctx, 16, 12, 150, 42, 10);
-      ctx.fill();
-    });
-    ctx.fillStyle = COLORS.accent;
-    ctx.font = 'bold 18px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🍎 ' + score, 30, 33);
-
-    // steps card
-    drawShadowLayer(() => {
-      ctx.fillStyle = '#ffffff';
-      roundRectPath(ctx, W-166, 12, 150, 42, 10);
-      ctx.fill();
-    });
-    ctx.fillStyle = COLORS.accent;
-    ctx.textAlign = 'right';
-    ctx.fillText('Pas: ' + Math.max(0,stepsLeft), W-30, 33);
-  }
-
-  function drawEndOverlay() {
-    ctx.fillStyle = 'rgba(61,64,91,0.55)';
-    ctx.fillRect(0, 0, W, H);
-
-    drawShadowLayer(() => {
-      ctx.fillStyle = '#ffffff';
-      roundRectPath(ctx, W/2-160, H/2-90, 320, 180, 16);
-      ctx.fill();
-    });
-
-    ctx.fillStyle = COLORS.accent;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 26px sans-serif';
-    const msg = endReason === 'win' ? 'Sortie atteinte !' : 'Plus de pas...';
-    ctx.fillText(msg, W/2, H/2 - 30);
-    ctx.font = '18px sans-serif';
-    ctx.fillText('Score: ' + score, W/2, H/2 + 6);
-    ctx.font = '15px sans-serif';
-    ctx.fillText('Touchez pour recommencer', W/2, H/2 + 40);
-  }
-
-  function drawTitleScreen() {
-    drawShadowLayer(() => {
-      ctx.fillStyle = '#ffffff';
-      roundRectPath(ctx, W/2-170, H/2-110, 340, 220, 18);
-      ctx.fill();
-    });
-    ctx.fillStyle = COLORS.accent;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 26px sans-serif';
-    ctx.fillText('Le Hérisson des Haies', W/2, H/2 - 60);
-    ctx.font = '16px sans-serif';
-    wrapText('Glissez pour guider le hérisson à travers les haies et ramasser des pommes.', W/2, H/2 - 15, 300, 22);
-    ctx.font = 'bold 18px sans-serif';
-    ctx.fillStyle = COLORS.highlight;
-    roundRectPath(ctx, W/2-90, H/2+50, 180, 46, 12);
-    ctx.fill();
-    ctx.fillStyle = COLORS.accent;
-    ctx.fillText('Jouer', W/2, H/2+73);
-  }
-
-  function wrapText(text, x, y, maxWidth, lineHeight) {
-    const words = text.split(' ');
-    let line = '';
-    let lines = [];
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + ' ';
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && n > 0) {
-        lines.push(line);
-        line = words[n] + ' ';
-      } else {
-        line = testLine;
-      }
-    }
-    lines.push(line);
-    const startY = y - (lines.length - 1) * lineHeight / 2;
-    lines.forEach((l, i) => ctx.fillText(l.trim(), x, startY + i * lineHeight));
-  }
-
-  // ---------- input ----------
-  const SWIPE_FRACTION = 0.08;
-  let pressX = 0, pressY = 0;
-
-  canvas.addEventListener('pointerdown', (event) => {
-    pressX = event.clientX;
-    pressY = event.clientY;
-
-    if (!started) {
-      started = true;
-      CARTRIDGE.send('start');
-      CARTRIDGE.send('level', { index: stage });
-      genMaze(Date.now() % 100000);
-      draw();
-      return;
-    }
-    if (gameOver) {
-      resetGame();
-      return;
-    }
-  });
-
-  canvas.addEventListener('pointerup', (event) => {
-    if (!started || gameOver || paused) return;
-    const dx = event.clientX - pressX;
-    const dy = event.clientY - pressY;
-    const minSwipe = canvas.clientWidth * SWIPE_FRACTION;
-    if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) return;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      tryMove(Math.sign(dx), 0);
-    } else {
-      tryMove(0, Math.sign(dy));
-    }
-  });
-
-  window.addEventListener('keydown', (event) => {
-    if (!started) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        started = true;
-        CARTRIDGE.send('start');
-        CARTRIDGE.send('level', { index: stage });
-        genMaze(Date.now() % 100000);
-        draw();
-      }
-      return;
-    }
-    if (gameOver) {
-      if (event.key === 'Enter' || event.key === ' ') resetGame();
-      return;
-    }
-    if (paused) return;
-    if (event.key === 'ArrowLeft') tryMove(-1, 0);
-    else if (event.key === 'ArrowRight') tryMove(1, 0);
-    else if (event.key === 'ArrowUp') tryMove(0, -1);
-    else if (event.key === 'ArrowDown') tryMove(0, 1);
-  });
-
-  function resetGame() {
-    stage += 1;
-    gameOver = false;
-    endReason = null;
-    CARTRIDGE.send('level', { index: stage });
-    genMaze(Date.now() % 100000 + stage * 777);
-    draw();
+    moves = 0;
+    stepsLeft = MAX_STEPS;
+    lastMoveDir = null;
   }
 
   function backToTitle() {
-    started = false;
-    gameOver = false;
-    endReason = null;
-    stage = 1;
-    score = 0;
+    state = "title";
     paused = false;
+    resetGameState();
     draw();
   }
 
-  // ---------- host bridge ----------
+  resetGameState();
+
+  function anyLegalMove() {
+    if (stepsLeft <= 0) return false;
+    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    for (const [dr, dc] of dirs) {
+      const nr = player.r + dr, nc = player.c + dc;
+      if (cellReachable(nr, nc)) return true;
+    }
+    return false;
+  }
+
+  function tryMove(dr, dc) {
+    if (state !== "playing" || paused) return;
+    const nr = player.r + dr, nc = player.c + dc;
+    if (!cellReachable(nr, nc)) return;
+    player.r = nr;
+    player.c = nc;
+    moves += 1;
+    stepsLeft -= 1;
+    lastMoveDir = dc > 0 ? "right" : dc < 0 ? "left" : dr > 0 ? "down" : "up";
+
+    // apple pickup
+    for (const a of apples) {
+      if (!a.taken && a.r === nr && a.c === nc) {
+        a.taken = true;
+        score += 10;
+        CARTRIDGE.send("score", { value: score });
+      }
+    }
+
+    if (GRID[nr][nc] === 4) {
+      state = "win";
+      CARTRIDGE.send("end", { reason: "win", value: score });
+    } else if (!anyLegalMove()) {
+      state = "stuck";
+      CARTRIDGE.send("end", { reason: "stuck", value: score });
+    }
+    draw();
+  }
+
+  // ---- Input: swipe lanes style (adapted to 4-direction grid) ----
+  let pressX = 0, pressY = 0;
+  let pressActive = false;
+  canvas.addEventListener("pointerdown", (event) => {
+    pressX = event.clientX;
+    pressY = event.clientY;
+    pressActive = true;
+    if (state === "title") {
+      startGame();
+    } else if (state === "win" || state === "stuck") {
+      backToTitle();
+    }
+  });
+  canvas.addEventListener("pointerup", (event) => {
+    if (!pressActive) return;
+    pressActive = false;
+    if (state !== "playing") return;
+    const dx = event.clientX - pressX;
+    const dy = event.clientY - pressY;
+    const SWIPE_FRACTION = 0.08;
+    const minLen = canvas.clientWidth * SWIPE_FRACTION;
+    if (Math.abs(dx) < minLen && Math.abs(dy) < minLen) return;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      tryMove(0, Math.sign(dx));
+    } else {
+      tryMove(Math.sign(dy), 0);
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (state === "title") {
+      if (event.key === "Enter" || event.key === " ") startGame();
+      return;
+    }
+    if (state === "win" || state === "stuck") {
+      if (event.key === "Enter" || event.key === " ") backToTitle();
+      return;
+    }
+    if (state !== "playing" || paused) return;
+    if (event.key === "ArrowLeft") tryMove(0, -1);
+    else if (event.key === "ArrowRight") tryMove(0, 1);
+    else if (event.key === "ArrowUp") tryMove(-1, 0);
+    else if (event.key === "ArrowDown") tryMove(1, 0);
+  });
+
+  function startGame() {
+    resetGameState();
+    state = "playing";
+    CARTRIDGE.send("start");
+    CARTRIDGE.send("level", { index: 1 });
+    draw();
+  }
+
+  // ---- Host bridge commands ----
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data || data.source !== "cartridge-host") return;
@@ -560,16 +233,269 @@
     if (data.type === "reset") backToTitle();
   });
 
-  // ---------- boot ----------
+  // ---- Drawing helpers: paper-cut style ----
+  function roundedRectPath(x, y, w, h, r, seedKey) {
+    const pts = [
+      [x, y], [x + w, y], [x + w, y + h], [x, y + h]
+    ];
+    ctx.beginPath();
+    const jr = (i, axis) => jitter(seedKey + "_" + i + "_" + axis, 1.5);
+    ctx.moveTo(x + r + jr(0,'x'), y + jr(0,'y'));
+    ctx.lineTo(x + w - r + jr(1,'x'), y + jr(1,'y'));
+    ctx.quadraticCurveTo(x + w + jr(1,'qx'), y + jr(1,'qy'), x + w + jr(1,'qx2'), y + r + jr(1,'qy2'));
+    ctx.lineTo(x + w + jr(2,'x'), y + h - r + jr(2,'y'));
+    ctx.quadraticCurveTo(x + w + jr(2,'qx'), y + h + jr(2,'qy'), x + w - r + jr(2,'qx2'), y + h + jr(2,'qy2'));
+    ctx.lineTo(x + r + jr(3,'x'), y + h + jr(3,'y'));
+    ctx.quadraticCurveTo(x + jr(3,'qx'), y + h + jr(3,'qy'), x + jr(3,'qx2'), y + h - r + jr(3,'qy2'));
+    ctx.lineTo(x + jr(0,'x2'), y + r + jr(0,'y2'));
+    ctx.quadraticCurveTo(x + jr(0,'qx'), y + jr(0,'qy'), x + r + jr(0,'qx2'), y + jr(0,'qy2'));
+    ctx.closePath();
+  }
+
+  function drawCardPlate(x, y, w, h, color, seedKey) {
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.35)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    roundedRectPath(x, y, w, h, Math.min(w, h) * 0.15, seedKey);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawTitleScreen() {
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const plateW = Math.min(W * 0.85, 560);
+    const plateH = Math.min(H * 0.5, 320);
+    const px = (W - plateW) / 2;
+    const py = (H - plateH) / 2 - 20;
+    drawCardPlate(px, py, plateW, plateH, PALETTE.layer, "titleplate");
+
+    ctx.fillStyle = PALETTE.accent;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const titleSize = Math.max(20, Math.min(34, plateW * 0.075));
+    ctx.font = "bold " + titleSize + "px sans-serif";
+    wrapText("Le Hérisson et le Labyrinthe", W / 2, py + plateH * 0.32, plateW * 0.85, titleSize * 1.15);
+
+    ctx.font = Math.max(14, titleSize * 0.5) + "px sans-serif";
+    ctx.fillText("Glissez pour avancer, ramassez les pommes", W / 2, py + plateH * 0.68, plateW * 0.9);
+
+    // start button plate
+    const bw = Math.min(220, plateW * 0.6);
+    const bh = 56;
+    const bx = W / 2 - bw / 2;
+    const by = py + plateH + 30;
+    drawCardPlate(bx, by, bw, bh, PALETTE.highlight, "startbtn");
+    ctx.fillStyle = PALETTE.accent;
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("Jouer", W / 2, by + bh / 2 + 1);
+
+    drawHedgehogIcon(W / 2, py - 45, 30);
+  }
+
+  function wrapText(text, cx, cy, maxWidth, lineHeight) {
+    const words = text.split(" ");
+    let lines = [];
+    let cur = "";
+    for (const w of words) {
+      const test = cur ? cur + " " + w : w;
+      if (ctx.measureText(test).width > maxWidth && cur) {
+        lines.push(cur);
+        cur = w;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    const startY = cy - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, i) => {
+      ctx.fillText(line, cx, startY + i * lineHeight);
+    });
+  }
+
+  function drawHedgehogIcon(cx, cy, size) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.shadowColor = "rgba(61,64,91,0.3)";
+    ctx.shadowBlur = 5;
+    ctx.shadowOffsetY = 2;
+    // body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size, size * 0.75, 0, 0, Math.PI * 2);
+    ctx.fillStyle = PALETTE.accent;
+    ctx.fill();
+    // spikes
+    ctx.fillStyle = PALETTE.layer;
+    for (let i = -3; i <= 3; i++) {
+      const ang = -Math.PI / 2 + i * 0.28;
+      const x1 = Math.cos(ang) * size * 0.5;
+      const y1 = Math.sin(ang) * size * 0.5;
+      const x2 = Math.cos(ang) * size * 1.3;
+      const y2 = Math.sin(ang) * size * 1.3 - size * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(x1 - 4, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x1 + 4, y1);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawMaze() {
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const margin = 16;
+    const boardTop = 90;
+    const boardW = W - margin * 2;
+    const boardH = H - boardTop - margin;
+    const cellSize = Math.min(boardW / COLS, boardH / ROWS);
+    const gridW = cellSize * COLS;
+    const gridH = cellSize * ROWS;
+    const offX = margin + (boardW - gridW) / 2;
+    const offY = boardTop + (boardH - gridH) / 2;
+
+    // background plate for board
+    drawCardPlate(offX - 8, offY - 8, gridW + 16, gridH + 16, "#e9dcc0", "boardplate");
+
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const x = offX + c * cellSize;
+        const y = offY + r * cellSize;
+        const val = GRID[r][c];
+        const key = "cell_" + r + "_" + c;
+        if (val === 0) {
+          // hedge (wall)
+          ctx.save();
+          ctx.shadowColor = "rgba(61,64,91,0.25)";
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetY = 2;
+          roundedRectPath(x + 2, y + 2, cellSize - 4, cellSize - 4, cellSize * 0.2, key);
+          ctx.fillStyle = PALETTE.highlight;
+          ctx.fill();
+          ctx.restore();
+        } else {
+          // path tile - subtle
+          roundedRectPath(x + 3, y + 3, cellSize - 6, cellSize - 6, cellSize * 0.15, key + "_path");
+          ctx.fillStyle = "#f4ecd8";
+          ctx.fill();
+          if (val === 4) {
+            // exit marker
+            ctx.save();
+            ctx.fillStyle = PALETTE.accent;
+            ctx.beginPath();
+            ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = PALETTE.bg;
+            ctx.font = "bold " + Math.floor(cellSize * 0.32) + "px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("S", x + cellSize / 2, y + cellSize / 2 + 1);
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    // apples
+    for (const a of apples) {
+      if (a.taken) continue;
+      const x = offX + a.c * cellSize + cellSize / 2;
+      const y = offY + a.r * cellSize + cellSize / 2;
+      drawApple(x, y, cellSize * 0.22);
+    }
+
+    // player hedgehog
+    const px = offX + player.c * cellSize + cellSize / 2;
+    const py = offY + player.r * cellSize + cellSize / 2;
+    drawHedgehogIcon(px, py, cellSize * 0.28);
+
+    // HUD
+    drawHUD(offX, gridW);
+
+    if (state === "win" || state === "stuck") {
+      drawEndOverlay();
+    } else if (paused) {
+      drawPauseOverlay();
+    }
+  }
+
+  function drawApple(cx, cy, r) {
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.3)";
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = PALETTE.layer;
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = PALETTE.highlight;
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.3, cy - r * 1.1, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHUD(offX, gridW) {
+    const hudH = 60;
+    drawCardPlate(offX, 14, gridW, hudH, PALETTE.layer, "hudplate");
+    ctx.fillStyle = "#f4ecd8";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 18px sans-serif";
+    ctx.fillText("Score: " + score, offX + 18, 14 + hudH / 2);
+    ctx.textAlign = "right";
+    ctx.fillText("Pas restants: " + stepsLeft, offX + gridW - 18, 14 + hudH / 2);
+  }
+
+  function drawPauseOverlay() {
+    ctx.fillStyle = "rgba(61,64,91,0.5)";
+    ctx.fillRect(0, 0, W, H);
+    const pw = 260, ph = 90;
+    drawCardPlate(W / 2 - pw / 2, H / 2 - ph / 2, pw, ph, PALETTE.highlight, "pauseplate");
+    ctx.fillStyle = PALETTE.accent;
+    ctx.font = "bold 24px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Pause", W / 2, H / 2);
+  }
+
+  function drawEndOverlay() {
+    ctx.fillStyle = "rgba(61,64,91,0.55)";
+    ctx.fillRect(0, 0, W, H);
+    const pw = Math.min(W * 0.8, 420);
+    const ph = 220;
+    const px = W / 2 - pw / 2;
+    const py = H / 2 - ph / 2;
+    drawCardPlate(px, py, pw, ph, PALETTE.layer, "endplate");
+    ctx.fillStyle = "#f4ecd8";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 28px sans-serif";
+    const msg = state === "win" ? "Bravo, sorti !" : "Plus aucun pas...";
+    ctx.fillText(msg, W / 2, py + ph * 0.32);
+    ctx.font = "20px sans-serif";
+    ctx.fillText("Score final: " + score, W / 2, py + ph * 0.55);
+    ctx.font = "16px sans-serif";
+    ctx.fillText("Touchez pour recommencer", W / 2, py + ph * 0.78);
+  }
+
+  function draw() {
+    if (state === "title") {
+      drawTitleScreen();
+    } else {
+      drawMaze();
+    }
+  }
+
+  // ---- Boot ----
   resize();
   draw();
-  CARTRIDGE.send("boot", { title: "Le Hérisson des Haies", gameType: "puzzle-board", lang: "fr" });
-
-  // simple render loop to keep responsive to resize/pause without relying solely on events
-  function loop() {
-    requestAnimationFrame(loop);
-  }
-  loop();
+  CARTRIDGE.send("boot", { title: "Le Hérisson et le Labyrinthe", gameType: "puzzle-board", lang: "fr" });
 })();
 </script>
 </body>

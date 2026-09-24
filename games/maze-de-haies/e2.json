@@ -10,11 +10,11 @@
   },
   "longestPlaySeconds": 25,
   "metrics": {
-    "bootMs": 23,
-    "distinctColours": 1452,
+    "bootMs": 23.299999997019768,
+    "distinctColours": 3219,
     "firstEndSeconds": null,
     "idleMotionRatio": 0,
-    "lumaStddev": 21.583651728549253,
-    "tapMotionRatio": 0.4175607638888889
+    "lumaStddev": 32.5552520514737,
+    "tapMotionRatio": 0.6550911458333334
   }
 }

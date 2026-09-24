@@ -2,13 +2,13 @@
   "versions": [
     {
       "version": "a0",
-      "sha256": "99e213606076a470039ee9b26dfa0ae128a3fdfe47a68c238663a22b7dc2c610",
-      "bytes": 10081
+      "sha256": "375ae57675be58177c35858f5ad915e3e51da222082495b9b60767018070906f",
+      "bytes": 8673
     },
     {
       "version": "a1",
-      "sha256": "4734e567ef95833edeebe278aa89b75424fa703278f0cffa95019502834dfbdc",
-      "bytes": 10246
+      "sha256": "124f5a7d68c4bd9d0f03c858698ac7c1cae23cbe06964a75dad6527f6e8e579a",
+      "bytes": 8771
     }
   ]
 }

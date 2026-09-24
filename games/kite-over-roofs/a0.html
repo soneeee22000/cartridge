@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kite on the Wind</title>
+<title>Kite Over the Rooftops</title>
 <style>
   html, body {
     margin: 0;
@@ -12,10 +12,12 @@
     height: 100%;
     background: #f4ecd8;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   }
   canvas {
     display: block;
+    width: 100vw;
+    height: 100dvh;
     touch-action: none;
   }
 </style>
@@ -23,548 +25,512 @@
 <body>
 <canvas id="game"></canvas>
 <script>
-const CARTRIDGE = {
-  send(type, payload = {}) {
-    window.parent.postMessage(
-      { source: "cartridge", v: 1, type, payload },
-      "*",
-    );
-  },
-};
+  const CARTRIDGE = {
+    send(type, payload = {}) {
+      window.parent.postMessage(
+        { source: "cartridge", v: 1, type, payload },
+        "*",
+      );
+    },
+  };
 </script>
 <script>
-(function(){
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
+(function () {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
 
-  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
   let W = 0, H = 0;
 
-  function resize(){
+  function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
-    DPR = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.round(W * DPR);
-    canvas.height = Math.round(H * DPR);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  window.addEventListener('resize', resize);
+  window.addEventListener("resize", resize);
   resize();
 
-  // Palette
-  const COLORS = {
-    bg: '#f4ecd8',
-    layer: '#e07a5f',
-    accent: '#3d405b',
-    highlight: '#81b29a'
-  };
+  // ---------- palette ----------
+  const COL_BG = "#f4ecd8";
+  const COL_LAYER = "#e07a5f";
+  const COL_ACCENT = "#3d405b";
+  const COL_HILITE = "#81b29a";
 
-  // Seeded jitter helper for paper-cut edges
-  function mulberry32(a){
-    return function(){
-      a |= 0; a = (a + 0x6D2B79F5) | 0;
-      let t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  // ---------- seeded jitter helpers ----------
+  function seededRand(seed) {
+    let s = seed % 2147483647;
+    if (s <= 0) s += 2147483646;
+    return function () {
+      s = (s * 16807) % 2147483647;
+      return (s - 1) / 2147483646;
     };
   }
-  const jitterRand = mulberry32(12345);
-  function jitteredPoints(points, amt){
-    return points.map(p => [
-      p[0] + (jitterRand() - 0.5) * amt * 2,
-      p[1] + (jitterRand() - 0.5) * amt * 2
+  const jitterRand = seededRand(12345);
+  function jitter(v, amt) {
+    return v + (jitterRand() - 0.5) * amt * 2;
+  }
+
+  function roundedRectPath(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+  }
+
+  function jitterPolygon(points, seedOffset) {
+    const rnd = seededRand(9000 + seedOffset);
+    return points.map(([px, py]) => [
+      px + (rnd() - 0.5) * 3,
+      py + (rnd() - 0.5) * 3,
     ]);
   }
 
-  function drawPaperShape(pointsArr, fillColor, shadow){
+  function drawPaperShape(pathFn, fillColor, shadow) {
     ctx.save();
-    if (shadow !== false){
-      ctx.shadowColor = 'rgba(61,64,91,0.35)';
+    if (shadow) {
+      ctx.shadowColor = "rgba(61,64,91,0.35)";
       ctx.shadowBlur = 6;
-      ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 3;
     }
     ctx.fillStyle = fillColor;
-    ctx.beginPath();
-    ctx.moveTo(pointsArr[0][0], pointsArr[0][1]);
-    for (let i=1;i<pointsArr.length;i++){
-      ctx.lineTo(pointsArr[i][0], pointsArr[i][1]);
-    }
-    ctx.closePath();
+    pathFn();
     ctx.fill();
     ctx.restore();
   }
 
-  function roundRectPath(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r, y);
-    ctx.arcTo(x+w, y, x+w, y+h, r);
-    ctx.arcTo(x+w, y+h, x, y+h, r);
-    ctx.arcTo(x, y+h, x, y, r);
-    ctx.arcTo(x, y, x+w, y, r);
-    ctx.closePath();
-  }
-
-  function drawRoundedPlate(x,y,w,h,r,color){
-    ctx.save();
-    ctx.shadowColor = 'rgba(61,64,91,0.35)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = color;
-    roundRectPath(x,y,w,h,r);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Game state
+  // ---------- game state ----------
   let last = 0;
   let running = false;
   let paused = false;
   let started = false; // whether boot happened
   let score = 0;
-  let ribbons = 0;
-  let time = 0;
-  let elapsedSinceStart = 0;
+  let scoreSent = -1;
+  let gameOverShown = false;
 
-  // Kite (player)
-  let kiteX, kiteY, kiteVY;
-  const kiteSize = 28;
-  const gravity = 520;
-  const liftVY = -230;
+  let kiteY = 0;
+  let kiteVY = 0;
+  const kiteX = 0; // set relative to W
+  let windSpeed = 160; // px/s scroll speed, ramps up
+  let elapsed = 0;
 
-  // World
-  let worldSpeed = 160;
-  const speedRamp = 3.2; // px/s^2 growth
   let chimneys = [];
-  let ribbonsList = [];
+  let ribbons = [];
   let clouds = [];
   let spawnTimer = 0;
-  let ribbonSpawnTimer = 0;
+  let ribbonTimer = 0;
 
-  const GROUND_Y_FRAC = 0.86;
+  const GRAVITY = 480;
+  const FLAP = -260;
+  const KITE_R = 22;
 
-  function resetWorld(){
-    kiteX = () => W * 0.28;
-    kiteY = H * 0.45;
-    kiteVY = 0;
-    score = 0;
-    ribbons = 0;
-    time = 0;
-    elapsedSinceStart = 0;
-    worldSpeed = 160;
-    chimneys = [];
-    ribbonsList = [];
-    spawnTimer = 2.2; // fairness: first hazard well ahead
-    ribbonSpawnTimer = 1.2;
-  }
-
-  function initClouds(){
+  function initClouds() {
     clouds = [];
-    for (let i=0;i<6;i++){
+    for (let i = 0; i < 5; i++) {
       clouds.push({
-        x: Math.random()*1200,
-        y: 40 + Math.random()*140,
-        s: 0.6 + Math.random()*0.8,
-        speed: 12 + Math.random()*18
+        x: Math.random() * 800,
+        y: 40 + Math.random() * 150,
+        s: 0.6 + Math.random() * 0.8,
+        speed: 20 + Math.random() * 20,
       });
     }
   }
 
-  let kiteYVal = 0;
-  function fullReset(){
-    kiteYVal = H*0.45;
-    kiteVY = 0;
+  function resetGameState() {
     score = 0;
-    ribbons = 0;
-    time = 0;
-    elapsedSinceStart = 0;
-    worldSpeed = 160;
+    scoreSent = -1;
+    elapsed = 0;
+    windSpeed = 160;
+    kiteY = H / 2;
+    kiteVY = 0;
     chimneys = [];
-    ribbonsList = [];
-    spawnTimer = 2.2;
-    ribbonSpawnTimer = 1.2;
+    ribbons = [];
+    spawnTimer = 2.2; // fairness: keep opening lane clear a bit
+    ribbonTimer = 1.2;
+    gameOverShown = false;
+    initClouds();
+  }
+
+  function backToTitle() {
     running = false;
     paused = false;
+    resetGameState();
   }
 
-  fullReset();
-  initClouds();
+  resetGameState();
 
-  function backToTitle(){
-    fullReset();
-  }
-
-  function spawnChimney(){
-    const groundY = H * GROUND_Y_FRAC;
-    const gapH = Math.max(140, 260 - elapsedSinceStart*2);
-    const gapY = 60 + Math.random() * (groundY - gapH - 120);
+  // ---------- spawning ----------
+  function spawnChimney() {
+    const gapH = Math.max(120, 230 - elapsed * 3);
+    const margin = 60;
+    const centerY = margin + Math.random() * (H - margin * 2 - gapH) + gapH / 2;
     chimneys.push({
       x: W + 60,
-      w: 54,
-      gapY: gapY,
+      w: 46,
+      gapCenter: centerY,
       gapH: gapH,
-      passed: false
+      passed: false,
+      seed: Math.floor(Math.random() * 10000),
     });
   }
 
-  function spawnRibbon(){
-    const groundY = H * GROUND_Y_FRAC;
-    ribbonsList.push({
+  function spawnRibbon() {
+    ribbons.push({
       x: W + 40,
-      y: 60 + Math.random() * (groundY - 160),
-      r: 14,
-      taken: false
+      y: 60 + Math.random() * (H - 120),
+      r: 12,
+      taken: false,
+      seed: Math.floor(Math.random() * 10000),
+      bob: Math.random() * Math.PI * 2,
     });
   }
 
-  function act(){
-    kiteVY = liftVY;
-  }
-
-  function advance(dt){
-    elapsedSinceStart += dt;
-    time += dt;
-    worldSpeed += speedRamp * dt;
+  // ---------- update ----------
+  function advance(dt) {
+    elapsed += dt;
+    windSpeed = 160 + Math.min(elapsed * 4, 160); // ramps up to 320
 
     // clouds always drift for idle liveliness
-    for (const c of clouds){
+    for (const c of clouds) {
       c.x -= c.speed * dt;
-      if (c.x < -120) c.x = W + 120 + Math.random()*80;
+      if (c.x < -100) c.x = W + 100;
     }
 
-    // kite physics
-    kiteVY += gravity * dt;
-    kiteYVal += kiteVY * dt;
-    const groundY = H * GROUND_Y_FRAC;
-    if (kiteYVal < 10) { kiteYVal = 10; kiteVY = 0; }
-    if (kiteYVal > groundY - kiteSize) {
-      kiteYVal = groundY - kiteSize;
-      crash();
-      return;
+    if (!running) return;
+
+    kiteVY += GRAVITY * dt;
+    kiteY += kiteVY * dt;
+
+    if (kiteY < KITE_R) {
+      kiteY = KITE_R;
+      kiteVY = 0;
+    }
+    if (kiteY > H - KITE_R) {
+      kiteY = H - KITE_R;
+      kiteVY = 0;
     }
 
-    // spawn hazards
     spawnTimer -= dt;
-    if (spawnTimer <= 0){
+    if (spawnTimer <= 0) {
       spawnChimney();
-      spawnTimer = Math.max(1.1, 2.3 - elapsedSinceStart*0.03);
+      spawnTimer = Math.max(1.1, 1.9 - elapsed * 0.01);
     }
-    ribbonSpawnTimer -= dt;
-    if (ribbonSpawnTimer <= 0){
+    ribbonTimer -= dt;
+    if (ribbonTimer <= 0) {
       spawnRibbon();
-      ribbonSpawnTimer = 1.4 + Math.random()*1.2;
+      ribbonTimer = 1.6 + Math.random() * 1.2;
     }
 
-    // move chimneys
-    for (const c of chimneys){
-      c.x -= worldSpeed * dt;
-      if (!c.passed && c.x + c.w < W*0.28){
+    for (const c of chimneys) {
+      c.x -= windSpeed * dt;
+    }
+    for (const r of ribbons) {
+      r.x -= windSpeed * dt;
+      r.bob += dt * 3;
+    }
+
+    chimneys = chimneys.filter((c) => c.x > -c.w - 20);
+    ribbons = ribbons.filter((r) => !r.taken && r.x > -40);
+
+    // scoring: passing chimneys
+    const kx = W * 0.28;
+    for (const c of chimneys) {
+      if (!c.passed && c.x + c.w < kx) {
         c.passed = true;
         score += 1;
-        CARTRIDGE.send('score', { value: score + ribbons });
       }
     }
-    chimneys = chimneys.filter(c => c.x + c.w > -20);
-
-    // move ribbons
-    for (const r of ribbonsList){
-      r.x -= worldSpeed * dt;
+    // ribbons collection
+    for (const r of ribbons) {
+      if (r.taken) continue;
+      const dx = kx - r.x;
+      const dy = kiteY - r.y;
+      if (Math.sqrt(dx * dx + dy * dy) < KITE_R + r.r) {
+        r.taken = true;
+        score += 3;
+      }
     }
-    ribbonsList = ribbonsList.filter(r => r.x > -40 && !r.taken);
+
+    if (score !== scoreSent) {
+      scoreSent = score;
+      CARTRIDGE.send("score", { value: score });
+    }
   }
 
-  function collide(){
-    const px = W*0.28;
-    const py = kiteYVal;
-    const pr = kiteSize*0.5;
-
-    // chimneys
-    for (const c of chimneys){
-      if (px + pr > c.x && px - pr < c.x + c.w){
-        if (py - pr < c.gapY || py + pr > c.gapY + c.gapH){
+  function collide() {
+    if (!running) return;
+    const kx = W * 0.28;
+    for (const c of chimneys) {
+      if (kx + KITE_R > c.x && kx - KITE_R < c.x + c.w) {
+        const gapTop = c.gapCenter - c.gapH / 2;
+        const gapBottom = c.gapCenter + c.gapH / 2;
+        if (kiteY - KITE_R < gapTop || kiteY + KITE_R > gapBottom) {
           crash();
           return;
         }
       }
     }
-
-    // ribbons
-    for (const r of ribbonsList){
-      if (r.taken) continue;
-      const dx = px - r.x;
-      const dy = py - r.y;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < pr + r.r){
-        r.taken = true;
-        ribbons += 1;
-        CARTRIDGE.send('score', { value: score + ribbons });
-      }
-    }
   }
 
-  function crash(){
-    if (!running) return;
+  function crash() {
     running = false;
-    CARTRIDGE.send('end', { reason: 'lose', value: score + ribbons });
+    gameOverShown = true;
+    CARTRIDGE.send("end", { reason: "lose", value: score });
   }
 
-  // Drawing
-  function drawBackground(){
-    ctx.fillStyle = COLORS.bg;
-    ctx.fillRect(0,0,W,H);
+  // ---------- drawing ----------
+  function drawBackground() {
+    ctx.fillStyle = COL_BG;
+    ctx.fillRect(0, 0, W, H);
 
     // clouds - simple paper-cut puffs
-    for (const c of clouds){
-      const pts = jitteredPoints([
-        [c.x-30*c.s, c.y],
-        [c.x-10*c.s, c.y-18*c.s],
-        [c.x+15*c.s, c.y-20*c.s],
-        [c.x+35*c.s, c.y-6*c.s],
-        [c.x+30*c.s, c.y+14*c.s],
-        [c.x-20*c.s, c.y+14*c.s]
-      ], 1.5);
-      drawPaperShape(pts, '#ffffff', false);
+    for (const c of clouds) {
+      drawPaperShape(() => {
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, 30 * c.s, 16 * c.s, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x + 20 * c.s, c.y + 4 * c.s, 20 * c.s, 12 * c.s, 0, 0, Math.PI * 2);
+        ctx.ellipse(c.x - 20 * c.s, c.y + 4 * c.s, 18 * c.s, 11 * c.s, 0, 0, Math.PI * 2);
+      }, "#ffffff", false);
     }
 
-    // ground
-    const groundY = H * GROUND_Y_FRAC;
+    // rooftop skyline strip at bottom for depth
+    drawPaperShape(() => {
+      ctx.rect(0, H - 30, W, 30);
+    }, COL_ACCENT, false);
+  }
+
+  function drawChimney(c) {
+    const gapTop = c.gapCenter - c.gapH / 2;
+    const gapBottom = c.gapCenter + c.gapH / 2;
+
+    // top stack
+    drawPaperShape(() => {
+      const pts = jitterPolygon(
+        [
+          [c.x, -10],
+          [c.x + c.w, -10],
+          [c.x + c.w, gapTop],
+          [c.x, gapTop],
+        ],
+        c.seed
+      );
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+    }, COL_LAYER, true);
+
+    // bottom stack
+    drawPaperShape(() => {
+      const pts = jitterPolygon(
+        [
+          [c.x, gapBottom],
+          [c.x + c.w, gapBottom],
+          [c.x + c.w, H + 10],
+          [c.x, H + 10],
+        ],
+        c.seed + 1
+      );
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+    }, COL_LAYER, true);
+
+    // little chimney cap lines (accent bands)
     ctx.save();
-    ctx.shadowColor = 'rgba(61,64,91,0.3)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = -3;
-    ctx.fillStyle = COLORS.highlight;
-    ctx.fillRect(0, groundY + kiteSize, W, H - groundY - kiteSize);
+    ctx.fillStyle = COL_ACCENT;
+    ctx.fillRect(c.x - 2, gapTop - 8, c.w + 4, 8);
+    ctx.fillRect(c.x - 2, gapBottom, c.w + 4, 8);
     ctx.restore();
   }
 
-  function drawChimney(c){
-    const groundY = H * GROUND_Y_FRAC;
-    // top part
-    const topPts = jitteredPoints([
-      [c.x, 0],
-      [c.x + c.w, 0],
-      [c.x + c.w, c.gapY],
-      [c.x, c.gapY]
-    ], 1.5);
-    drawPaperShape(topPts, COLORS.layer);
-
-    // bottom part
-    const botPts = jitteredPoints([
-      [c.x, c.gapY + c.gapH],
-      [c.x + c.w, c.gapY + c.gapH],
-      [c.x + c.w, groundY + kiteSize],
-      [c.x, groundY + kiteSize]
-    ], 1.5);
-    drawPaperShape(botPts, COLORS.layer);
-
-    // accent stripe caps
-    ctx.save();
-    ctx.fillStyle = COLORS.accent;
-    ctx.fillRect(c.x-3, Math.max(0,c.gapY-10), c.w+6, 10);
-    ctx.fillRect(c.x-3, c.gapY + c.gapH, c.w+6, 10);
-    ctx.restore();
+  function drawRibbon(r) {
+    const bobY = r.y + Math.sin(r.bob) * 4;
+    drawPaperShape(() => {
+      const pts = jitterPolygon(
+        [
+          [r.x - 10, bobY - 4],
+          [r.x + 10, bobY - 4],
+          [r.x + 6, bobY + 10],
+          [r.x, bobY + 4],
+          [r.x - 6, bobY + 10],
+        ],
+        r.seed
+      );
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+    }, COL_HILITE, true);
   }
 
-  function drawRibbon(r){
+  const kiteJitterSeed = 555;
+  function drawKite(x, y) {
     ctx.save();
-    ctx.translate(r.x, r.y);
-    ctx.rotate(Math.sin(time*3 + r.x*0.05) * 0.3);
-    const pts = jitteredPoints([
-      [-14,-4],[-4,-12],[6,-10],[14,0],[6,10],[-4,12],[-14,4]
-    ], 1.2);
-    drawPaperShape(pts, COLORS.accent);
-    ctx.restore();
-  }
-
-  function drawKite(){
-    const x = W*0.28;
-    const y = kiteYVal;
-    const s = kiteSize;
-    ctx.save();
-    ctx.translate(x,y);
-    const tilt = Math.max(-0.4, Math.min(0.4, -kiteVY/600));
+    ctx.translate(x, y);
+    const tilt = Math.max(-0.4, Math.min(0.4, kiteVY / 900));
     ctx.rotate(tilt);
 
     // tail
-    ctx.strokeStyle = COLORS.accent;
+    ctx.save();
+    ctx.strokeStyle = COL_ACCENT;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(-s*0.2, s*0.6);
-    for (let i=1;i<=4;i++){
-      ctx.lineTo(-s*0.2 - i*6, s*0.6 + Math.sin(time*6+i)*5 + i*4);
-    }
+    ctx.moveTo(-KITE_R * 0.6, KITE_R * 0.7);
+    ctx.quadraticCurveTo(-KITE_R * 1.6, KITE_R * 1.4, -KITE_R * 2.4, KITE_R * 0.9);
     ctx.stroke();
-
-    // kite body (diamond)
-    const pts = jitteredPoints([
-      [0,-s],
-      [s*0.8,0],
-      [0,s],
-      [-s*0.8,0]
-    ], 1.5);
-    drawPaperShape(pts, COLORS.highlight);
-
-    // inner accent diamond
-    const innerPts = jitteredPoints([
-      [0,-s*0.45],
-      [s*0.35,0],
-      [0,s*0.45],
-      [-s*0.35,0]
-    ], 1);
-    drawPaperShape(innerPts, COLORS.layer, false);
-
     ctx.restore();
-  }
 
-  function drawHUD(){
-    const total = score + ribbons;
-    const text = 'Ribbons: ' + total;
-    ctx.font = 'bold 20px sans-serif';
-    const tw = ctx.measureText(text).width;
-    drawRoundedPlate(14, 14, tw + 28, 38, 10, '#ffffff');
-    ctx.fillStyle = COLORS.accent;
-    ctx.fillText(text, 28, 40);
-  }
+    // kite body - diamond paper cut
+    drawPaperShape(() => {
+      const pts = jitterPolygon(
+        [
+          [0, -KITE_R],
+          [KITE_R * 0.85, 0],
+          [0, KITE_R],
+          [-KITE_R * 0.85, 0],
+        ],
+        kiteJitterSeed
+      );
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+    }, COL_LAYER, true);
 
-  function drawTitleScreen(){
-    drawBackground();
-    drawKite();
-
-    const pulse = 0.5 + 0.5*Math.sin(time*3);
+    // inner accent cross
     ctx.save();
-    ctx.globalAlpha = 0.7 + pulse*0.3;
-    const text = 'Tap to begin';
-    ctx.font = 'bold 28px sans-serif';
-    const tw = ctx.measureText(text).width;
-    drawRoundedPlate(W/2 - tw/2 - 20, H*0.3 - 30, tw+40, 56, 14, '#ffffff');
-    ctx.fillStyle = COLORS.accent;
-    ctx.textAlign = 'left';
-    ctx.fillText(text, W/2 - tw/2, H*0.3 + 6);
+    ctx.strokeStyle = COL_ACCENT;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -KITE_R);
+    ctx.lineTo(0, KITE_R);
+    ctx.moveTo(-KITE_R * 0.85, 0);
+    ctx.lineTo(KITE_R * 0.85, 0);
+    ctx.stroke();
     ctx.restore();
 
-    ctx.font = 'bold 22px sans-serif';
-    const t2 = 'Kite on the Wind';
-    const tw2 = ctx.measureText(t2).width;
-    drawRoundedPlate(W/2 - tw2/2 - 16, H*0.15 - 26, tw2+32, 46, 12, '#ffffff');
-    ctx.fillStyle = COLORS.layer;
-    ctx.fillText(t2, W/2 - tw2/2, H*0.15 + 4);
+    ctx.restore();
   }
 
-  function drawGameOverOverlay(){
+  function drawCardPlate(text, subtext, x, y, w, h) {
+    drawPaperShape(() => {
+      roundedRectPath(jitter(x, 1), jitter(y, 1), w, h, 14);
+    }, "#fffaf0", true);
     ctx.save();
-    ctx.fillStyle = 'rgba(244,236,216,0.6)';
-    ctx.fillRect(0,0,W,H);
-    ctx.font = 'bold 30px sans-serif';
-    const t = 'Run Over';
-    const tw = ctx.measureText(t).width;
-    drawRoundedPlate(W/2 - tw/2 - 20, H*0.35 - 34, tw+40, 60, 14, '#ffffff');
-    ctx.fillStyle = COLORS.accent;
-    ctx.fillText(t, W/2 - tw/2, H*0.35 + 6);
-
-    const s2 = 'Ribbons: ' + (score+ribbons);
-    ctx.font = 'bold 22px sans-serif';
-    const tw2 = ctx.measureText(s2).width;
-    drawRoundedPlate(W/2 - tw2/2 - 16, H*0.35 + 40, tw2+32, 44, 12, '#ffffff');
-    ctx.fillStyle = COLORS.layer;
-    ctx.fillText(s2, W/2 - tw2/2, H*0.35 + 70);
-
-    ctx.font = 'bold 18px sans-serif';
-    const s3 = 'Tap to try again';
-    const tw3 = ctx.measureText(s3).width;
-    drawRoundedPlate(W/2 - tw3/2 - 14, H*0.35 + 100, tw3+28, 38, 10, '#ffffff');
-    ctx.fillStyle = COLORS.accent;
-    ctx.fillText(s3, W/2 - tw3/2, H*0.35 + 126);
-    ctx.restore();
-  }
-
-  let awaitingRestart = false;
-
-  function draw(){
-    if (!running && !awaitingRestart){
-      drawTitleScreen();
-      return;
+    ctx.fillStyle = COL_ACCENT;
+    ctx.textAlign = "center";
+    ctx.font = "bold 26px -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+    ctx.fillText(text, x + w / 2, y + h / 2 - (subtext ? 8 : -6));
+    if (subtext) {
+      ctx.font = "16px -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+      ctx.fillText(subtext, x + w / 2, y + h / 2 + 20);
     }
+    ctx.restore();
+  }
+
+  let hintPulse = 0;
+  function draw() {
     drawBackground();
+
     for (const c of chimneys) drawChimney(c);
-    for (const r of ribbonsList) if (!r.taken) drawRibbon(r);
-    drawKite();
-    drawHUD();
+    for (const r of ribbons) if (!r.taken) drawRibbon(r);
 
-    if (paused){
-      ctx.save();
-      ctx.fillStyle = 'rgba(61,64,91,0.4)';
-      ctx.fillRect(0,0,W,H);
-      ctx.font = 'bold 26px sans-serif';
-      const t = 'Paused';
-      const tw = ctx.measureText(t).width;
-      drawRoundedPlate(W/2-tw/2-18, H/2-30, tw+36, 50, 12, '#ffffff');
-      ctx.fillStyle = COLORS.accent;
-      ctx.fillText(t, W/2-tw/2, H/2+2);
-      ctx.restore();
-    }
+    const kx = W * 0.28;
+    drawKite(kx, kiteY);
 
-    if (awaitingRestart && !running){
-      drawGameOverOverlay();
+    // score plate top-left
+    const plateW = 120, plateH = 46;
+    drawPaperShape(() => {
+      roundedRectPath(14, 14, plateW, plateH, 10);
+    }, "#fffaf0", true);
+    ctx.save();
+    ctx.fillStyle = COL_ACCENT;
+    ctx.font = "bold 20px -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Ribbons: " + score, 26, 14 + plateH / 2 + 7);
+    ctx.restore();
+
+    if (!running) {
+      hintPulse += 0.05;
+      const alpha = 0.6 + Math.sin(hintPulse) * 0.4;
+      const w = Math.min(320, W * 0.8);
+      const h = 110;
+      const x = W / 2 - w / 2;
+      const y = H / 2 - h / 2;
+      if (gameOverShown) {
+        drawCardPlate("Flight Over", "Ribbons collected: " + score + " — tap to fly again", x, y, w, h);
+      } else {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        drawCardPlate("Tap to begin", "Ride the wind, dodge the chimneys", x, y, w, h);
+        ctx.restore();
+      }
     }
   }
 
-  function frame(now){
-    const dt = Math.min((now - last) / 1000, 0.05);
-    last = now;
-    if (running && !paused){
-      advance(dt);
-      collide();
-      if (!running){
-        awaitingRestart = true;
-      }
-    } else if (!running){
-      time += dt;
-      for (const c of clouds){
-        c.x -= c.speed * dt * 0.5;
-        if (c.x < -120) c.x = W + 120 + Math.random()*80;
-      }
-    }
-    draw();
-    requestAnimationFrame(frame);
-  }
-
-  canvas.style.touchAction = 'none';
-  canvas.addEventListener('pointerdown', (event) => {
+  // ---------- input ----------
+  canvas.style.touchAction = "none";
+  canvas.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     if (paused) return;
-    if (!running && awaitingRestart){
-      fullReset();
-      awaitingRestart = false;
+    if (!running) {
+      if (gameOverShown) {
+        resetGameState();
+      }
       running = true;
-      CARTRIDGE.send('start');
-      return;
-    }
-    if (!running){
-      running = true;
-      CARTRIDGE.send('start');
+      CARTRIDGE.send("start");
       return;
     }
     act();
   });
 
-  window.addEventListener('message', (event) => {
+  function act() {
+    kiteVY = FLAP;
+  }
+
+  // ---------- host messages ----------
+  window.addEventListener("message", (event) => {
     const data = event.data;
-    if (!data || data.source !== 'cartridge-host') return;
-    if (data.type === 'pause') paused = true;
-    if (data.type === 'resume') paused = false;
-    if (data.type === 'reset'){
-      awaitingRestart = false;
-      backToTitle();
-    }
+    if (!data || data.source !== "cartridge-host") return;
+    if (data.type === "pause") paused = true;
+    if (data.type === "resume") paused = false;
+    if (data.type === "reset") backToTitle();
   });
+
+  // ---------- main loop ----------
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, 0.05);
+    last = now;
+    if (running && !paused) {
+      advance(dt);
+      collide();
+    } else if (!paused) {
+      // idle animation for clouds even before start
+      advance(Math.min(dt, 0.05));
+    }
+    draw();
+    if (!started) {
+      started = true;
+      CARTRIDGE.send("boot", { title: "Kite Over the Rooftops", gameType: "arcade-run", lang: "en" });
+    }
+    requestAnimationFrame(frame);
+  }
 
   requestAnimationFrame((t) => {
     last = t;
-    draw();
-    CARTRIDGE.send('boot', { title: 'Kite on the Wind', gameType: 'arcade-run', lang: 'en' });
     requestAnimationFrame(frame);
   });
 })();

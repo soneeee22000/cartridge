@@ -10,393 +10,337 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    background: #fbf7ee;
+    background: #f4ecd8;
     overflow: hidden;
-    font-family: "Arial Narrow", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   }
   #wrap {
-    position: relative;
+    position: fixed;
+    inset: 0;
     width: 100vw;
     height: 100dvh;
   }
   canvas {
     display: block;
-    width: 100%;
-    height: 100%;
     touch-action: none;
   }
   #clearBtn {
     position: absolute;
     top: 14px;
     right: 14px;
+    min-width: 96px;
     min-height: 48px;
-    min-width: 100px;
     padding: 8px 18px;
-    background: #ff48b0;
-    color: #fbf7ee;
-    border: 3px solid #5b3a8c;
-    border-radius: 10px;
-    font-weight: bold;
+    background: #3d405b;
+    color: #f4ecd8;
+    border: none;
+    border-radius: 12px;
     font-size: 16px;
-    font-family: inherit;
-    letter-spacing: 1px;
+    font-weight: 700;
+    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);
     cursor: pointer;
     z-index: 10;
-    text-transform: uppercase;
   }
   #clearBtn:active {
     transform: translateY(1px);
   }
-  #tally {
+  #tallyPlate {
     position: absolute;
     top: 14px;
     left: 14px;
-    color: #0078bf;
-    font-weight: bold;
-    font-size: 22px;
-    letter-spacing: 1px;
+    min-height: 48px;
+    padding: 8px 18px;
+    background: #e07a5f;
+    color: #3d405b;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);
     z-index: 10;
-    text-shadow: 1px 1px 0 #ff48b0;
+    display: flex;
+    align-items: center;
   }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="game"></canvas>
-  <div id="tally">POPS: 0</div>
+  <div id="tallyPlate">Pops: 0</div>
   <button id="clearBtn">Clear</button>
 </div>
 <script>
-// ---- Bridge helper (verbatim) ----
-const CARTRIDGE = {
-  send(type, payload = {}) {
-    window.parent.postMessage(
-      { source: "cartridge", v: 1, type, payload },
-      "*",
-    );
-  },
-};
+  const CARTRIDGE = {
+    send(type, payload = {}) {
+      window.parent.postMessage(
+        { source: "cartridge", v: 1, type, payload },
+        "*",
+      );
+    },
+  };
 </script>
 <script>
 (function () {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
   const clearBtn = document.getElementById("clearBtn");
-  const tallyEl = document.getElementById("tally");
+  const tallyPlate = document.getElementById("tallyPlate");
 
   let dpr = Math.max(1, window.devicePixelRatio || 1);
-  let W = 0, H = 0;
+  let W = window.innerWidth, H = window.innerHeight;
 
   function resize() {
     W = window.innerWidth;
     H = window.innerHeight;
+    dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width = Math.floor(W * dpr);
     canvas.height = Math.floor(H * dpr);
     canvas.style.width = W + "px";
     canvas.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (!grainTile) buildGrain();
   }
   window.addEventListener("resize", resize);
+  resize();
 
-  // ---- Grain tile (pre-rendered noise) ----
-  let grainTile = null;
-  function buildGrain() {
-    const size = 128;
-    const gCanvas = document.createElement("canvas");
-    gCanvas.width = size;
-    gCanvas.height = size;
-    const gctx = gCanvas.getContext("2d");
-    const imgData = gctx.createImageData(size, size);
-    for (let i = 0; i < imgData.data.length; i += 4) {
-      const v = Math.random() * 255;
-      imgData.data[i] = v;
-      imgData.data[i + 1] = v;
-      imgData.data[i + 2] = v;
-      imgData.data[i + 3] = 255;
-    }
-    gctx.putImageData(imgData, 0, 0);
-    grainTile = gCanvas;
+  const PALETTE = {
+    bg: "#f4ecd8",
+    layer: "#e07a5f",
+    accent: "#3d405b",
+    highlight: "#81b29a"
+  };
+
+  const bubbleColors = [PALETTE.layer, PALETTE.highlight, PALETTE.accent];
+
+  // seeded jitter helper
+  function seededRand(seed) {
+    let s = seed;
+    return function () {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
   }
 
-  // ---- Colours ----
-  const PAPER = "#fbf7ee";
-  const INK1 = "#ff48b0";
-  const INK2 = "#0078bf";
-  const OVERLAP = "#5b3a8c";
-
-  // ---- State ----
-  const pieces = []; // bubbles: {x,y,r,vx,vy,color,popped,popT}
-  let tally = 0;
   let paused = false;
-  let running = false; // becomes true after first tap
-  let hintPulse = 0;
+  let running = false;
+  let tally = 0;
+  const bubbles = [];
+  const pops = []; // pop animations
 
-  function rand(a, b) {
-    return a + Math.random() * (b - a);
-  }
+  let bubbleIdCounter = 1;
 
-  function spawnBatch(n) {
-    for (let i = 0; i < n; i++) {
-      spawnOne();
+  function spawnBubble() {
+    const r = 26 + Math.random() * 30;
+    const x = r + Math.random() * (W - 2 * r);
+    const y = H + r + Math.random() * 100;
+    const speed = 0.4 + Math.random() * 0.6;
+    const colorIdx = Math.floor(Math.random() * bubbleColors.length);
+    const rnd = seededRand(Math.floor(Math.random() * 100000));
+    const jitter = [];
+    for (let i = 0; i < 10; i++) {
+      jitter.push((rnd() - 0.5) * 3);
     }
-  }
-
-  function spawnOne() {
-    const r = rand(24, 48);
-    const x = rand(r, W - r);
-    const y = rand(r, H - r);
-    const color = Math.random() < 0.5 ? INK1 : INK2;
-    pieces.push({
+    bubbles.push({
+      id: bubbleIdCounter++,
       x, y, r,
-      vx: rand(-18, 18),
-      vy: rand(-14, 14),
-      color,
-      born: performance.now(),
-      popped: false,
-      popT: 0,
+      speed,
+      color: bubbleColors[colorIdx],
+      wobblePhase: Math.random() * Math.PI * 2,
+      jitter
     });
   }
 
   function maintainBubbles() {
-    // keep a healthy count of live bubbles
-    const alive = pieces.filter((p) => !p.popped);
-    if (alive.length < 9) {
-      spawnOne();
+    const target = Math.min(10, 4 + Math.floor(tally / 5));
+    while (bubbles.length < target) {
+      spawnBubble();
     }
   }
 
-  function settle(list, dt) {
-    for (const p of list) {
-      if (p.popped) {
-        p.popT += dt;
-        continue;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      if (p.x - p.r < 0) { p.x = p.r; p.vx *= -1; }
-      if (p.x + p.r > W) { p.x = W - p.r; p.vx *= -1; }
-      if (p.y - p.r < 0) { p.y = p.r; p.vy *= -1; }
-      if (p.y + p.r > H) { p.y = H - p.r; p.vy *= -1; }
-    }
-    // remove fully-popped bubbles after their animation
-    for (let i = pieces.length - 1; i >= 0; i--) {
-      if (pieces[i].popped && pieces[i].popT > 0.28) {
-        pieces.splice(i, 1);
+  let lastSpawnTime = 0;
+
+  function settle(dtSeconds) {
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.y -= b.speed;
+      b.wobblePhase += 0.02;
+      if (b.y < -b.r - 50) {
+        bubbles.splice(i, 1);
       }
     }
-    maintainBubbles();
+    lastSpawnTime += dtSeconds;
+    if (lastSpawnTime > 0.5) {
+      lastSpawnTime = 0;
+      maintainBubbles();
+    }
+    for (let i = pops.length - 1; i >= 0; i--) {
+      pops[i].life -= dtSeconds;
+      if (pops[i].life <= 0) pops.splice(i, 1);
+    }
   }
 
-  function popAt(x, y) {
-    // find topmost unpopped bubble under point
-    for (let i = pieces.length - 1; i >= 0; i--) {
-      const p = pieces[i];
-      if (p.popped) continue;
-      const dx = x - p.x, dy = y - p.y;
-      if (dx * dx + dy * dy <= p.r * p.r) {
-        p.popped = true;
-        p.popT = 0;
-        tally += 1;
-        tallyEl.textContent = "POPS: " + tally;
-        CARTRIDGE.send("score", { value: tally });
-        return true;
+  function popBubbleAt(index) {
+    const b = bubbles[index];
+    pops.push({ x: b.x, y: b.y, r: b.r, color: b.color, life: 0.35, maxLife: 0.35 });
+    bubbles.splice(index, 1);
+    tally += 1;
+    tallyPlate.textContent = "Pops: " + tally;
+    CARTRIDGE.send("score", { value: tally });
+  }
+
+  function hitTest(px, py) {
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      const dx = px - b.x, dy = py - b.y;
+      if (dx * dx + dy * dy <= b.r * b.r) {
+        return i;
       }
     }
-    return false;
+    return -1;
   }
 
-  // Single clear-the-table function: used by the visible button AND by
-  // the host "reset" command. Both call this exact function.
-  function clearTable() {
-    pieces.length = 0;
-    tally = 0;
-    running = false;
-    tallyEl.textContent = "POPS: 0";
-    CARTRIDGE.send("score", { value: 0 });
-    spawnBatch(10);
-    draw();
-  }
+  function drawRoundedBubble(b) {
+    const wob = Math.sin(b.wobblePhase) * 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(61,64,91,0.35)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
+    ctx.beginPath();
+    const points = 10;
+    for (let i = 0; i < points; i++) {
+      const angle = (i / points) * Math.PI * 2;
+      const jitterAmt = b.jitter[i];
+      const rr = b.r + jitterAmt;
+      const px = b.x + Math.cos(angle) * rr + wob * 0.2;
+      const py = b.y + Math.sin(angle) * rr;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = b.color;
+    ctx.fill();
+    ctx.restore();
 
-  // ---- Drawing ----
-  function drawBackground() {
-    ctx.fillStyle = PAPER;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  function drawHalftoneShade(cx, cy, r, color) {
-    // subtle halftone dots to fake shading on bubble edge
+    // inner highlight card
     ctx.save();
     ctx.globalAlpha = 0.35;
-    ctx.fillStyle = color;
-    const dotCount = 10;
-    for (let i = 0; i < dotCount; i++) {
-      const ang = (i / dotCount) * Math.PI * 2;
-      const dr = r * 0.72;
-      const dx = cx + Math.cos(ang) * dr;
-      const dy = cy + Math.sin(ang) * dr;
-      const rad = Math.max(1, r * 0.06);
-      ctx.beginPath();
-      ctx.arc(dx, dy, rad, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.beginPath();
+    ctx.ellipse(b.x - b.r * 0.3, b.y - b.r * 0.35, b.r * 0.28, b.r * 0.18, -0.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#f4ecd8";
+    ctx.fill();
     ctx.restore();
   }
 
-  function drawBubble(p) {
-    if (p.popped) {
-      // pop burst animation: expanding ring fragments
-      const t = p.popT / 0.28;
-      const alpha = Math.max(0, 1 - t);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = p.color === INK1 ? INK2 : INK1;
-      ctx.lineWidth = 3;
-      const spokes = 8;
-      const dist = p.r * (0.6 + t * 0.9);
-      for (let i = 0; i < spokes; i++) {
-        const ang = (i / spokes) * Math.PI * 2;
-        const x1 = p.x + Math.cos(ang) * p.r * 0.3;
-        const y1 = p.y + Math.sin(ang) * p.r * 0.3;
-        const x2 = p.x + Math.cos(ang) * dist;
-        const y2 = p.y + Math.sin(ang) * dist;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-      ctx.restore();
-      return;
-    }
-
-    // misregistration offset layer (second ink offset by 2px)
-    const otherColor = p.color === INK1 ? INK2 : INK1;
-
+  function drawPop(p) {
+    const t = 1 - p.life / p.maxLife;
+    const rad = p.r * (1 + t * 0.8);
     ctx.save();
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = otherColor;
+    ctx.globalAlpha = 1 - t;
     ctx.beginPath();
-    ctx.arc(p.x + 2, p.y + 1.5, p.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
-    ctx.globalAlpha = 0.92;
+    const points = 8;
+    for (let i = 0; i < points; i++) {
+      const angle = (i / points) * Math.PI * 2;
+      const rr = rad * (0.6 + 0.4 * Math.sin(i * 3 + t * 6));
+      const px = p.x + Math.cos(angle) * rr;
+      const py = p.y + Math.sin(angle) * rr;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
     ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    drawHalftoneShade(p.x, p.y, p.r, otherColor);
-
-    // outline in overlap ink
-    ctx.save();
-    ctx.strokeStyle = OVERLAP;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-
-    // highlight dot
-    ctx.save();
-    ctx.fillStyle = PAPER;
-    ctx.globalAlpha = 0.85;
-    ctx.beginPath();
-    ctx.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.18, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  function drawGrain() {
-    if (!grainTile) return;
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    const pattern = ctx.createPattern(grainTile, "repeat");
-    ctx.fillStyle = pattern;
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-  }
-
-  function drawTitleHint() {
-    hintPulse += 0.05;
-    const alpha = 0.55 + 0.45 * Math.sin(hintPulse);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = OVERLAP;
-    ctx.font = "bold " + Math.min(38, W * 0.08) + "px 'Arial Narrow', Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("TAP TO BEGIN", W / 2, H / 2);
-    ctx.restore();
-
-    ctx.save();
-    ctx.fillStyle = INK1;
-    ctx.font = "bold " + Math.min(26, W * 0.06) + "px 'Arial Narrow', Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("POP THE BUBBLES", W / 2, H / 2 - 50);
-    ctx.restore();
-  }
+  let hintPhase = 0;
 
   function draw() {
-    drawBackground();
-    for (const p of pieces) drawBubble(p);
-    if (!running) drawTitleHint();
-    drawGrain();
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // subtle layered background strips
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = PALETTE.highlight;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(0, H - 40, W, 40, 10) : ctx.rect(0, H - 40, W, 40);
+    ctx.fill();
+    ctx.restore();
+
+    for (const b of bubbles) drawRoundedBubble(b);
+    for (const p of pops) drawPop(p);
+
+    if (!running) {
+      hintPhase += 0.05;
+      const alpha = 0.6 + Math.sin(hintPhase) * 0.4;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0.2, alpha);
+      ctx.fillStyle = PALETTE.accent;
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Tap to begin", W / 2, H / 2);
+      ctx.restore();
+    }
   }
 
-  // ---- Loop ----
-  let lastTime = performance.now();
-  function frame(now) {
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
-    lastTime = now;
+  let lastFrameTime = performance.now();
+
+  function frame() {
+    const now = performance.now();
+    const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+    lastFrameTime = now;
     if (!paused && running) {
-      settle(pieces, dt);
+      settle(dt);
     }
     draw();
     requestAnimationFrame(frame);
   }
 
-  // ---- Input ----
+  // Single clear-the-table function: used by the visible Clear button,
+  // and by the host "reset" command. Both paths call this same function.
+  function backToTitle() {
+    bubbles.length = 0;
+    pops.length = 0;
+    tally = 0;
+    running = false;
+    tallyPlate.textContent = "Pops: 0";
+    CARTRIDGE.send("score", { value: 0 });
+    draw();
+  }
+
+  clearBtn.addEventListener("click", backToTitle);
+
   canvas.style.touchAction = "none";
   canvas.addEventListener("pointerdown", (event) => {
     event.preventDefault();
     if (paused) return;
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const px = event.clientX - rect.left;
+    const py = event.clientY - rect.top;
     if (!running) {
       running = true;
       CARTRIDGE.send("start");
+      maintainBubbles();
       return;
     }
-    popAt(x, y);
+    const idx = hitTest(px, py);
+    if (idx >= 0) {
+      popBubbleAt(idx);
+    }
   });
 
-  // Visible in-game control: calls the same clearTable() function used by reset.
-  clearBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    clearTable();
-  });
-  clearBtn.addEventListener("pointerdown", (e) => {
-    e.stopPropagation();
-  });
-
-  // ---- Host bridge commands ----
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data || data.source !== "cartridge-host") return;
     if (data.type === "pause") paused = true;
     if (data.type === "resume") paused = false;
-    if (data.type === "reset") clearTable();
+    if (data.type === "reset") backToTitle();
   });
 
-  // ---- Boot ----
-  resize();
-  spawnBatch(10);
+  // initial draw + boot
   draw();
   CARTRIDGE.send("boot", { title: "Pop the Bubbles", gameType: "toy-box", lang: "en" });
+
   requestAnimationFrame(frame);
 })();
 </script>

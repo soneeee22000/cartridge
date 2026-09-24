@@ -5,16 +5,16 @@
     "boot-handshake": "pass",
     "console-error": "pass",
     "idle-death": "pass",
-    "idle-static": "fail",
+    "idle-static": "pass",
     "tap-unresponsive": "pass"
   },
   "longestPlaySeconds": 25,
   "metrics": {
-    "bootMs": 20.5,
-    "distinctColours": 2348,
+    "bootMs": 31.799999997019768,
+    "distinctColours": 1703,
     "firstEndSeconds": null,
-    "idleMotionRatio": 0,
-    "lumaStddev": 27.35955054211312,
-    "tapMotionRatio": 0.3672048611111111
+    "idleMotionRatio": 0.0029123263888888888,
+    "lumaStddev": 67.39727674457933,
+    "tapMotionRatio": 0.1883203125
   }
 }

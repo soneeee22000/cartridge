@@ -10,7 +10,7 @@
 | planner / builder model | claude-sonnet-5 / claude-sonnet-5 |
 | judge model | claude-haiku-4-5 |
 | price table version | 2026-09-24 |
-| scorer git sha | 05df07a |
+| scorer git sha | 1420c4c |
 
 ## Per-band results
 
@@ -33,7 +33,7 @@ Game items only. There is no cross-band mean. E4 is match/mismatch/abstain, and 
 | terse | 1.000 | 1.000 | 1/1 | - | 1/0/0 | 2.0 |
 | short-brief | 1.000 | 1.000 | 0/1 | idle-death 1 | 1/0/0 | 1.0 |
 | full-brief | 1.000 | 1.000 | 1/1 | - | 1/0/0 | 1.0 |
-| edge | 1.000 | 1.000 | 0/1 | idle-static 1 | 1/0/0 | 1.0 |
+| edge | 1.000 | 1.000 | 1/1 | - | 1/0/0 | 1.0 |
 
 ### E3 labels
 
@@ -50,13 +50,13 @@ Label counts on game items. `null` means no cited finding survived validation; `
 | short-brief | feedback-on-input | immediate 1 |
 | short-brief | fail-state-clarity | explained 1 |
 | full-brief | prompt-coverage | null 1 |
-| full-brief | goal-legibility | null 1 |
-| full-brief | feedback-on-input | null 1 |
-| full-brief | fail-state-clarity | null 1 |
-| edge | prompt-coverage | covered 1 |
-| edge | goal-legibility | stated 1 |
-| edge | feedback-on-input | immediate 1 |
-| edge | fail-state-clarity | explained 1 |
+| full-brief | goal-legibility | stated 1 |
+| full-brief | feedback-on-input | immediate 1 |
+| full-brief | fail-state-clarity | explained 1 |
+| edge | prompt-coverage | null 1 |
+| edge | goal-legibility | null 1 |
+| edge | feedback-on-input | null 1 |
+| edge | fail-state-clarity | null 1 |
 
 E4 labelled set: accuracy 1.000, abstention rate 0.000 (measured on 40 authored bundles; the thresholds were set on the same bundles).
 
@@ -79,15 +79,15 @@ No failures.
 
 | tokens | input | output | cache read | cache write |
 | --- | --- | --- | --- | --- |
-| generator (claude-sonnet-5) | 126849 | 35018 | 0 | 0 |
-| judge (claude-haiku-4-5) | 30791 | 6387 | 0 | 0 |
-| of which repair passes | 30113 | 5246 | 0 | 0 |
+| generator (claude-sonnet-5) | 121666 | 32009 | 0 | 0 |
+| judge (claude-haiku-4-5) | 29091 | 7915 | 0 | 0 |
+| of which repair passes | 27807 | 4393 | 0 | 0 |
 
 Measured cache reads on repair passes: 0 tokens.
 
-Estimated cost: $0.67 (estimate from list prices; not an invoice).
+Estimated cost: $0.63 (estimate from list prices; not an invoice).
 
-Wall time: 282.1 s in total, 70.3 s median per item (from run.json).
+Wall time: 259.5 s in total, 63.9 s median per item (from run.json).
 
 ## Out of scope for this run
 

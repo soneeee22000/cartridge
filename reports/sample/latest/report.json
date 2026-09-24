@@ -90,13 +90,13 @@
       },
       "e3": {
         "fail-state-clarity": {
-          "null": 1
+          "explained": 1
         },
         "feedback-on-input": {
-          "null": 1
+          "immediate": 1
         },
         "goal-legibility": {
-          "null": 1
+          "stated": 1
         },
         "prompt-coverage": {
           "null": 1
@@ -121,24 +121,22 @@
         "min": 1
       },
       "e2": {
-        "detectorFails": {
-          "idle-static": 1
-        },
-        "passed": 0,
+        "detectorFails": {},
+        "passed": 1,
         "probed": 1
       },
       "e3": {
         "fail-state-clarity": {
-          "explained": 1
+          "null": 1
         },
         "feedback-on-input": {
-          "immediate": 1
+          "null": 1
         },
         "goal-legibility": {
-          "stated": 1
+          "null": 1
         },
         "prompt-coverage": {
-          "covered": 1
+          "null": 1
         }
       },
       "e4": {
@@ -154,31 +152,31 @@
     }
   ],
   "cost": {
-    "estUsd": 0.667,
+    "estUsd": 0.632,
     "repairCacheRead": 0,
     "repairTokens": {
       "cacheRead": 0,
       "cacheWrite": 0,
-      "input": 30113,
-      "output": 5246
+      "input": 27807,
+      "output": 4393
     },
     "tokens": {
       "generator": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 126849,
-        "output": 35018
+        "input": 121666,
+        "output": 32009
       },
       "judge": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 30791,
-        "output": 6387
+        "input": 29091,
+        "output": 7915
       }
     },
     "usdLabel": "estimate from list prices; not an invoice",
-    "wallMsMedian": 70287.5,
-    "wallMsTotal": 282101
+    "wallMsMedian": 63936.5,
+    "wallMsTotal": 259484
   },
   "e4Labelled": {
     "abstentionRate": 0,
@@ -217,12 +215,12 @@
         },
         "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 37.8,
-          "distinctColours": 8389,
+          "bootMs": 25.5,
+          "distinctColours": 348,
           "firstEndSeconds": null,
-          "idleMotionRatio": 0.073,
-          "lumaStddev": 53.705,
-          "tapMotionRatio": 0.059
+          "idleMotionRatio": 0.005,
+          "lumaStddev": 29.521,
+          "tapMotionRatio": 0.008
         }
       },
       "e3": {
@@ -238,10 +236,9 @@
       "e4": {
         "evidence": [
           "Pop the Bubbles",
-          "POPS:",
+          "Pops:",
           "Clear",
-          "TAP TO BEGIN",
-          "POP THE BUBBLES"
+          "Tap to begin"
         ],
         "htmlLang": "en",
         "promptLang": "en",
@@ -261,24 +258,24 @@
       "repairUsage": {
         "cacheRead": 0,
         "cacheWrite": 0,
-        "input": 30113,
-        "output": 5246
+        "input": 27807,
+        "output": 4393
       },
       "usage": {
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 51159,
-          "output": 10522
+          "input": 47734,
+          "output": 8924
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 5699,
-          "output": 651
+          "input": 5065,
+          "output": 808
         }
       },
-      "wallMs": 83295
+      "wallMs": 73178
     },
     {
       "buildAttempts": 1,
@@ -293,14 +290,14 @@
           "idle-static": "pass",
           "tap-unresponsive": "pass"
         },
-        "longestPlaySeconds": 4.612,
+        "longestPlaySeconds": 4.514,
         "metrics": {
-          "bootMs": 29.8,
-          "distinctColours": 541,
-          "firstEndSeconds": 0.935,
+          "bootMs": 50.8,
+          "distinctColours": 714,
+          "firstEndSeconds": 3.923,
           "idleMotionRatio": 0.018,
-          "lumaStddev": 24.715,
-          "tapMotionRatio": 0.137
+          "lumaStddev": 38.53,
+          "tapMotionRatio": 0.15
         }
       },
       "e3": {
@@ -315,10 +312,13 @@
       },
       "e4": {
         "evidence": [
-          "Kite on the Wind",
+          "Kite Over the Rooftops",
+          "Ribbons:",
+          "Flight Over",
+          "Ribbons collected:",
+          "— tap to fly again",
           "Tap to begin",
-          "Run Over",
-          "Tap to try again"
+          "Ride the wind, dodge the chimneys"
         ],
         "htmlLang": "en",
         "promptLang": "en",
@@ -343,17 +343,17 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 20359,
-          "output": 7556
+          "input": 22962,
+          "output": 7099
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 7973,
-          "output": 761
+          "input": 7544,
+          "output": 2164
         }
       },
-      "wallMs": 58231
+      "wallMs": 58433
     },
     {
       "buildAttempts": 1,
@@ -370,35 +370,45 @@
         },
         "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 23,
-          "distinctColours": 1452,
+          "bootMs": 23.3,
+          "distinctColours": 3219,
           "firstEndSeconds": null,
           "idleMotionRatio": 0,
-          "lumaStddev": 21.584,
-          "tapMotionRatio": 0.418
+          "lumaStddev": 32.555,
+          "tapMotionRatio": 0.655
         }
       },
       "e3": {
         "dimensions": {
-          "fail-state-clarity": null,
-          "feedback-on-input": null,
-          "goal-legibility": null,
+          "fail-state-clarity": "explained",
+          "feedback-on-input": "immediate",
+          "goal-legibility": "stated",
           "prompt-coverage": null
         },
-        "discarded": [],
-        "judgeError": "judge call failed: Structured output was truncated because the model finished with reason \"length\"."
+        "discarded": [
+          {
+            "dimension": "prompt-coverage",
+            "reason": "quote-not-found"
+          },
+          {
+            "dimension": "prompt-coverage",
+            "reason": "numeric-claim"
+          }
+        ],
+        "judgeError": null
       },
       "e4": {
         "evidence": [
-          "Le Hérisson des Haies",
-          "Glissez pour déplacer le hérisson (haut / bas / gauche / droite)",
-          "Pas:",
-          "Sortie atteinte !",
-          "Plus de pas...",
+          "Le Hérisson et le Labyrinthe",
+          "Glissez pour avancer, ramassez les pommes",
+          "Jouer",
           "Score:",
-          "Touchez pour recommencer",
-          "Glissez pour guider le hérisson à travers les haies et ramasser des pommes.",
-          "Jouer"
+          "Pas restants:",
+          "Pause",
+          "Bravo, sorti !",
+          "Plus aucun pas...",
+          "Score final:",
+          "Touchez pour recommencer"
         ],
         "htmlLang": "fr",
         "promptLang": "fr",
@@ -423,17 +433,17 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 25147,
-          "output": 8356
+          "input": 25328,
+          "output": 8129
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 8410,
-          "output": 4000
+          "input": 8140,
+          "output": 943
         }
       },
-      "wallMs": 68321
+      "wallMs": 63668
     },
     {
       "buildAttempts": 1,
@@ -445,44 +455,42 @@
           "boot-handshake": "pass",
           "console-error": "pass",
           "idle-death": "pass",
-          "idle-static": "fail",
+          "idle-static": "pass",
           "tap-unresponsive": "pass"
         },
         "longestPlaySeconds": 25,
         "metrics": {
-          "bootMs": 20.5,
-          "distinctColours": 2348,
+          "bootMs": 31.8,
+          "distinctColours": 1703,
           "firstEndSeconds": null,
-          "idleMotionRatio": 0,
-          "lumaStddev": 27.36,
-          "tapMotionRatio": 0.367
+          "idleMotionRatio": 0.003,
+          "lumaStddev": 67.397,
+          "tapMotionRatio": 0.188
         }
       },
       "e3": {
         "dimensions": {
-          "fail-state-clarity": "explained",
-          "feedback-on-input": "immediate",
-          "goal-legibility": "stated",
-          "prompt-coverage": "covered"
+          "fail-state-clarity": null,
+          "feedback-on-input": null,
+          "goal-legibility": null,
+          "prompt-coverage": null
         },
         "discarded": [],
-        "judgeError": null
+        "judgeError": "judge call failed: Structured output was truncated because the model finished with reason \"length\"."
       },
       "e4": {
         "evidence": [
-          "Le Gardien du Phare",
-          "Sauvez bateaux",
-          "Glissez autour de la tour pour tourner le faisceau et sauver les bateaux des rochers.",
-          "Touchez pour commencer",
+          "Le Phare des Naufrages",
+          "— Guidez",
+          "au port",
+          "Touchez et glissez pour tourner le faisceau — sauvez les bateaux !",
           "Score:",
-          "Étape",
+          "Préparez-vous...",
           "réussie !",
-          "Préparez-vous pour la suite...",
+          "Prochaine nuit à venir...",
           "Toutes les nuits sont sauvées !",
-          "Un bateau a coulé...",
-          "Score final:",
-          "Touchez pour recommencer",
-          "Pause"
+          "Touchez l'écran pour recommencer",
+          "Un bateau s'est brisé sur les rochers..."
         ],
         "htmlLang": "fr",
         "promptLang": "fr",
@@ -507,17 +515,17 @@
         "generator": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 30184,
-          "output": 8584
+          "input": 25642,
+          "output": 7857
         },
         "judge": {
           "cacheRead": 0,
           "cacheWrite": 0,
-          "input": 8709,
-          "output": 975
+          "input": 8342,
+          "output": 4000
         }
       },
-      "wallMs": 72254
+      "wallMs": 64205
     }
   ],
   "noiseFloor": "One generation per item. With 1 item per band, one item moves a band rate by 100 points. Differences smaller than that are not interpretable.",
@@ -546,7 +554,7 @@
   },
   "totals": {
     "contractFailed": 0,
-    "estUsd": 0.667,
+    "estUsd": 0.632,
     "games": 4,
     "harnessFailures": 0,
     "n": 4,

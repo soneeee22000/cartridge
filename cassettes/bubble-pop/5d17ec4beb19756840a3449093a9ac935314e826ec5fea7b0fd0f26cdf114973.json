@@ -1,0 +1,187 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:5d17ec4beb19756840a3449093a9ac935314e826ec5fea7b0fd0f26cdf114973",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Pop the Bubbles\",\n  \"slug\": \"pop-the-bubbles\",\n  \"lang\": \"en\",\n  \"gameType\": \"toy-box\",\n  \"loop\": \"Tap bubbles anywhere on screen to pop them and watch your pop tally grow as new bubbles keep drifting in. Use the clear button anytime to empty the screen and start fresh.\",\n  \"input\": \"tap-anywhere\",\n  \"style\": \"paper-cut\"\n}\n```\n\n## Cards\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `paper-cut`\n\n# Paper cut\n\nEverything looks cut from coloured card and stacked in layers.\n\n## Palette\n\n| role       | colour    |\n| ---------- | --------- |\n| background | `#f4ecd8` |\n| layer      | `#e07a5f` |\n| accent     | `#3d405b` |\n| highlight  | `#81b29a` |\n\n## Primitives\n\n- Filled paths with slightly irregular edges: jitter each vertex by one or two pixels, seeded once so it does not flicker.\n- One soft shadow per layer: `shadowBlur` around 6 and a small downward offset.\n- Rounded rectangles and circles for pieces; stacked copies offset by a few pixels suggest depth.\n- Text in a heavy system sans-serif, drawn on a card-shaped plate.\n\n## Avoid\n\n- Gradients, glows and outlines thicker than two pixels.\n- Pure black; use the accent colour for the darkest tone.\n- Photographic textures or anything loaded from a file.\n\n### Card `tap-anywhere`\n\n# Tap anywhere\n\nThe whole screen is the button. Best for jumps, flaps and single choices.\n\n- Register pointer input on the canvas: `canvas.addEventListener(\"pointerdown\", onTap)`. <!-- rule:E1-22 -->\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\n- Ignore taps while paused.\n\n```js\ncanvas.style.touchAction = \"none\";\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!running) {\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n```\n\nShow a short pulsing hint (\"Tap to begin\") until the first tap.\n\n### Card `toy-box`\n\n# Toy box\n\nA toy, not a contest. The player places, pops or arranges things and watches a tally grow. There is no losing and no final screen.\n\n## Contract row\n\n| field                | value       |\n| -------------------- | ----------- |\n| score                | `optional`  |\n| level                | `forbidden` |\n| end                  | `forbidden` |\n| end reasons          | `none`      |\n| reset                | `hard`      |\n| idle death gate      | `any-end`   |\n| idle motion required | `no`        |\n\n- Emit every event marked `required` above. A toy box has none beyond `boot` and `start`, and it sends `start` straight away. <!-- rule:E1-15 -->\n- Never emit `level` or `end`. <!-- rule:E1-16 -->\n- No `end` reason is allowed, because `end` is never sent. <!-- rule:E1-17 -->\n\n## Clear-the-table replay\n\nReplay means clearing the table. Write one function that empties the table and zeroes the tally, call it from the host `reset` command, and call the same function from a visible in-game control. <!-- rule:E1-24 -->\n\n```js\nfunction clearTable() {\n  pieces.length = 0;\n  tally = 0;\n  CARTRIDGE.send(\"score\", { value: 0 });\n  draw();\n}\nclearButton.addEventListener(\"click\", clearTable);\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"reset\") clearTable();\n});\n```\n\nKeep the clear control visible at all times and at least 44 CSS pixels tall.\n\n## Loop skeleton\n\n```js\nconst pieces = [];\nlet tally = 0,\n  paused = false;\nfunction place(x, y) {\n  pieces.push({ x, y });\n  tally += 1;\n  CARTRIDGE.send(\"score\", { value: tally });\n}\nfunction frame() {\n  if (!paused) settle(pieces);\n  draw();\n  requestAnimationFrame(frame);\n}\nCARTRIDGE.send(\"start\");\nrequestAnimationFrame(frame);\n```\n\n## Failed rules\n\nThe saved draft broke these hard rules. Call `load_draft` first, fix each one, then save the whole page again with `save_draft`.\n\n- E1-24: The reset branch calls backToTitle(), and no in-game control calls it. Make a visible control's click or pointer handler call backToTitle() directly, or make the reset branch call the function the control already calls. Fix: Write one clear-the-table function, call it on the host reset command, and call it from a visible in-game control."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll load the current draft to see what needs fixing."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01FwqJ3vm1D3k3NhXbi8UzzS",
+              "name": "load_draft",
+              "input": {},
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01FwqJ3vm1D3k3NhXbi8UzzS",
+              "content": "{\"draft\":{\"version\":\"a0\",\"html\":\"<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>\\n<meta charset=\\\"utf-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n<title>Pop the Bubbles</title>\\n<style>\\n  html, body {\\n    margin: 0;\\n    padding: 0;\\n    width: 100%;\\n    height: 100%;\\n    background: #f4ecd8;\\n    overflow: hidden;\\n    font-family: -apple-system, BlinkMacSystemFont, \\\"Segoe UI\\\", Roboto, Arial, sans-serif;\\n  }\\n  #wrap {\\n    position: fixed;\\n    inset: 0;\\n    width: 100vw;\\n    height: 100dvh;\\n  }\\n  canvas {\\n    display: block;\\n    touch-action: none;\\n  }\\n  #clearBtn {\\n    position: absolute;\\n    top: 14px;\\n    right: 14px;\\n    min-width: 96px;\\n    min-height: 48px;\\n    padding: 8px 18px;\\n    background: #3d405b;\\n    color: #f4ecd8;\\n    border: none;\\n    border-radius: 12px;\\n    font-size: 16px;\\n    font-weight: 700;\\n    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);\\n    cursor: pointer;\\n    z-index: 10;\\n  }\\n  #clearBtn:active {\\n    transform: translateY(1px);\\n  }\\n  #tallyPlate {\\n    position: absolute;\\n    top: 14px;\\n    left: 14px;\\n    min-height: 48px;\\n    padding: 8px 18px;\\n    background: #e07a5f;\\n    color: #3d405b;\\n    border-radius: 12px;\\n    font-size: 18px;\\n    font-weight: 800;\\n    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);\\n    z-index: 10;\\n    display: flex;\\n    align-items: center;\\n  }\\n</style>\\n</head>\\n<body>\\n<div id=\\\"wrap\\\">\\n  <canvas id=\\\"game\\\"></canvas>\\n  <div id=\\\"tallyPlate\\\">Pops: 0</div>\\n  <button id=\\\"clearBtn\\\">Clear</button>\\n</div>\\n<script>\\n  const CARTRIDGE = {\\n    send(type, payload = {}) {\\n      window.parent.postMessage(\\n        { source: \\\"cartridge\\\", v: 1, type, payload },\\n        \\\"*\\\",\\n      );\\n    },\\n  };\\n</script>\\n<script>\\n(function () {\\n  const canvas = document.getElementById(\\\"game\\\");\\n  const ctx = canvas.getContext(\\\"2d\\\");\\n  const clearBtn = document.getElementById(\\\"clearBtn\\\");\\n  const tallyPlate = document.getElementById(\\\"tallyPlate\\\");\\n\\n  let dpr = Math.max(1, window.devicePixelRatio || 1);\\n  let W = window.innerWidth, H = window.innerHeight;\\n\\n  function resize() {\\n    W = window.innerWidth;\\n    H = window.innerHeight;\\n    dpr = Math.max(1, window.devicePixelRatio || 1);\\n    canvas.width = Math.floor(W * dpr);\\n    canvas.height = Math.floor(H * dpr);\\n    canvas.style.width = W + \\\"px\\\";\\n    canvas.style.height = H + \\\"px\\\";\\n    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\\n  }\\n  window.addEventListener(\\\"resize\\\", resize);\\n  resize();\\n\\n  const PALETTE = {\\n    bg: \\\"#f4ecd8\\\",\\n    layer: \\\"#e07a5f\\\",\\n    accent: \\\"#3d405b\\\",\\n    highlight: \\\"#81b29a\\\"\\n  };\\n\\n  const bubbleColors = [PALETTE.layer, PALETTE.highlight, PALETTE.accent];\\n\\n  // seeded jitter helper\\n  function seededRand(seed) {\\n    let s = seed;\\n    return function () {\\n      s = (s * 9301 + 49297) % 233280;\\n      return s / 233280;\\n    };\\n  }\\n\\n  let paused = false;\\n  let running = false;\\n  let tally = 0;\\n  const bubbles = [];\\n  const pops = []; // pop animations\\n\\n  let bubbleIdCounter = 1;\\n\\n  function spawnBubble() {\\n    const r = 26 + Math.random() * 30;\\n    const x = r + Math.random() * (W - 2 * r);\\n    const y = H + r + Math.random() * 100;\\n    const speed = 0.4 + Math.random() * 0.6;\\n    const colorIdx = Math.floor(Math.random() * bubbleColors.length);\\n    const rnd = seededRand(Math.floor(Math.random() * 100000));\\n    const jitter = [];\\n    for (let i = 0; i < 10; i++) {\\n      jitter.push((rnd() - 0.5) * 3);\\n    }\\n    bubbles.push({\\n      id: bubbleIdCounter++,\\n      x, y, r,\\n      speed,\\n      color: bubbleColors[colorIdx],\\n      wobblePhase: Math.random() * Math.PI * 2,\\n      jitter\\n    });\\n  }\\n\\n  function maintainBubbles() {\\n    const target = Math.min(10, 4 + Math.floor(tally / 5));\\n    while (bubbles.length < target) {\\n      spawnBubble();\\n    }\\n  }\\n\\n  let lastSpawnTime = 0;\\n\\n  function settle(dtSeconds) {\\n    for (let i = bubbles.length - 1; i >= 0; i--) {\\n      const b = bubbles[i];\\n      b.y -= b.speed;\\n      b.wobblePhase += 0.02;\\n      if (b.y < -b.r - 50) {\\n        bubbles.splice(i, 1);\\n      }\\n    }\\n    lastSpawnTime += dtSeconds;\\n    if (lastSpawnTime > 0.5) {\\n      lastSpawnTime = 0;\\n      maintainBubbles();\\n    }\\n    for (let i = pops.length - 1; i >= 0; i--) {\\n      pops[i].life -= dtSeconds;\\n      if (pops[i].life <= 0) pops.splice(i, 1);\\n    }\\n  }\\n\\n  function popBubbleAt(index) {\\n    const b = bubbles[index];\\n    pops.push({ x: b.x, y: b.y, r: b.r, color: b.color, life: 0.35, maxLife: 0.35 });\\n    bubbles.splice(index, 1);\\n    tally += 1;\\n    tallyPlate.textContent = \\\"Pops: \\\" + tally;\\n    CARTRIDGE.send(\\\"score\\\", { value: tally });\\n  }\\n\\n  function hitTest(px, py) {\\n    for (let i = bubbles.length - 1; i >= 0; i--) {\\n      const b = bubbles[i];\\n      const dx = px - b.x, dy = py - b.y;\\n      if (dx * dx + dy * dy <= b.r * b.r) {\\n        return i;\\n      }\\n    }\\n    return -1;\\n  }\\n\\n  function drawRoundedBubble(b) {\\n    const wob = Math.sin(b.wobblePhase) * 2;\\n    ctx.save();\\n    ctx.shadowColor = \\\"rgba(61,64,91,0.35)\\\";\\n    ctx.shadowBlur = 6;\\n    ctx.shadowOffsetY = 3;\\n    ctx.beginPath();\\n    const points = 10;\\n    for (let i = 0; i < points; i++) {\\n      const angle = (i / points) * Math.PI * 2;\\n      const jitterAmt = b.jitter[i];\\n      const rr = b.r + jitterAmt;\\n      const px = b.x + Math.cos(angle) * rr + wob * 0.2;\\n      const py = b.y + Math.sin(angle) * rr;\\n      if (i === 0) ctx.moveTo(px, py);\\n      else ctx.lineTo(px, py);\\n    }\\n    ctx.closePath();\\n    ctx.fillStyle = b.color;\\n    ctx.fill();\\n    ctx.restore();\\n\\n    // inner highlight card\\n    ctx.save();\\n    ctx.globalAlpha = 0.35;\\n    ctx.beginPath();\\n    ctx.ellipse(b.x - b.r * 0.3, b.y - b.r * 0.35, b.r * 0.28, b.r * 0.18, -0.5, 0, Math.PI * 2);\\n    ctx.fillStyle = \\\"#f4ecd8\\\";\\n    ctx.fill();\\n    ctx.restore();\\n  }\\n\\n  function drawPop(p) {\\n    const t = 1 - p.life / p.maxLife;\\n    const rad = p.r * (1 + t * 0.8);\\n    ctx.save();\\n    ctx.globalAlpha = 1 - t;\\n    ctx.beginPath();\\n    const points = 8;\\n    for (let i = 0; i < points; i++) {\\n      const angle = (i / points) * Math.PI * 2;\\n      const rr = rad * (0.6 + 0.4 * Math.sin(i * 3 + t * 6));\\n      const px = p.x + Math.cos(angle) * rr;\\n      const py = p.y + Math.sin(angle) * rr;\\n      if (i === 0) ctx.moveTo(px, py);\\n      else ctx.lineTo(px, py);\\n    }\\n    ctx.closePath();\\n    ctx.fillStyle = p.color;\\n    ctx.fill();\\n    ctx.restore();\\n  }\\n\\n  let hintPhase = 0;\\n\\n  function draw() {\\n    ctx.clearRect(0, 0, W, H);\\n    ctx.fillStyle = PALETTE.bg;\\n    ctx.fillRect(0, 0, W, H);\\n\\n    // subtle layered background strips\\n    ctx.save();\\n    ctx.globalAlpha = 0.5;\\n    ctx.fillStyle = PALETTE.highlight;\\n    ctx.beginPath();\\n    ctx.roundRect ? ctx.roundRect(0, H - 40, W, 40, 10) : ctx.rect(0, H - 40, W, 40);\\n    ctx.fill();\\n    ctx.restore();\\n\\n    for (const b of bubbles) drawRoundedBubble(b);\\n    for (const p of pops) drawPop(p);\\n\\n    if (!running) {\\n      hintPhase += 0.05;\\n      const alpha = 0.6 + Math.sin(hintPhase) * 0.4;\\n      ctx.save();\\n      ctx.globalAlpha = Math.max(0.2, alpha);\\n      ctx.fillStyle = PALETTE.accent;\\n      ctx.font = \\\"bold 28px sans-serif\\\";\\n      ctx.textAlign = \\\"center\\\";\\n      ctx.textBaseline = \\\"middle\\\";\\n      ctx.fillText(\\\"Tap to begin\\\", W / 2, H / 2);\\n      ctx.restore();\\n    }\\n  }\\n\\n  let lastFrameTime = performance.now();\\n\\n  function frame() {\\n    const now = performance.now();\\n    const dt = Math.min(0.05, (now - lastFrameTime) / 1000);\\n    lastFrameTime = now;\\n    if (!paused && running) {\\n      settle(dt);\\n    }\\n    draw();\\n    requestAnimationFrame(frame);\\n  }\\n\\n  function clearTable() {\\n    bubbles.length = 0;\\n    pops.length = 0;\\n    tally = 0;\\n    tallyPlate.textContent = \\\"Pops: 0\\\";\\n    CARTRIDGE.send(\\\"score\\\", { value: 0 });\\n    draw();\\n  }\\n\\n  function backToTitle() {\\n    running = false;\\n    clearTable();\\n  }\\n\\n  clearBtn.addEventListener(\\\"click\\\", clearTable);\\n\\n  canvas.style.touchAction = \\\"none\\\";\\n  canvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n    event.preventDefault();\\n    if (paused) return;\\n    const rect = canvas.getBoundingClientRect();\\n    const px = event.clientX - rect.left;\\n    const py = event.clientY - rect.top;\\n    if (!running) {\\n      running = true;\\n      CARTRIDGE.send(\\\"start\\\");\\n      maintainBubbles();\\n      return;\\n    }\\n    const idx = hitTest(px, py);\\n    if (idx >= 0) {\\n      popBubbleAt(idx);\\n    }\\n  });\\n\\n  window.addEventListener(\\\"message\\\", (event) => {\\n    const data = event.data;\\n    if (!data || data.source !== \\\"cartridge-host\\\") return;\\n    if (data.type === \\\"pause\\\") paused = true;\\n    if (data.type === \\\"resume\\\") paused = false;\\n    if (data.type === \\\"reset\\\") backToTitle();\\n  });\\n\\n  // initial draw + boot\\n  draw();\\n  CARTRIDGE.send(\\\"boot\\\", { title: \\\"Pop the Bubbles\\\", gameType: \\\"toy-box\\\", lang: \\\"en\\\" });\\n\\n  requestAnimationFrame(frame);\\n})();\\n</script>\\n</body>\\n</html>\\n\"}}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Now I'll fix the reset issue: make `clearBtn` call `backToTitle()` (or make `clearTable` itself handle everything and have reset call the same function the button calls)."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01QBnoEZdrGVCvr9bmX2yPv9",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Pop the Bubbles</title>\n<style>\n  html, body {\n    margin: 0;\n    padding: 0;\n    width: 100%;\n    height: 100%;\n    background: #f4ecd8;\n    overflow: hidden;\n    font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n  }\n  #wrap {\n    position: fixed;\n    inset: 0;\n    width: 100vw;\n    height: 100dvh;\n  }\n  canvas {\n    display: block;\n    touch-action: none;\n  }\n  #clearBtn {\n    position: absolute;\n    top: 14px;\n    right: 14px;\n    min-width: 96px;\n    min-height: 48px;\n    padding: 8px 18px;\n    background: #3d405b;\n    color: #f4ecd8;\n    border: none;\n    border-radius: 12px;\n    font-size: 16px;\n    font-weight: 700;\n    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);\n    cursor: pointer;\n    z-index: 10;\n  }\n  #clearBtn:active {\n    transform: translateY(1px);\n  }\n  #tallyPlate {\n    position: absolute;\n    top: 14px;\n    left: 14px;\n    min-height: 48px;\n    padding: 8px 18px;\n    background: #e07a5f;\n    color: #3d405b;\n    border-radius: 12px;\n    font-size: 18px;\n    font-weight: 800;\n    box-shadow: 2px 4px 6px rgba(0,0,0,0.25);\n    z-index: 10;\n    display: flex;\n    align-items: center;\n  }\n</style>\n</head>\n<body>\n<div id=\"wrap\">\n  <canvas id=\"game\"></canvas>\n  <div id=\"tallyPlate\">Pops: 0</div>\n  <button id=\"clearBtn\">Clear</button>\n</div>\n<script>\n  const CARTRIDGE = {\n    send(type, payload = {}) {\n      window.parent.postMessage(\n        { source: \"cartridge\", v: 1, type, payload },\n        \"*\",\n      );\n    },\n  };\n</script>\n<script>\n(function () {\n  const canvas = document.getElementById(\"game\");\n  const ctx = canvas.getContext(\"2d\");\n  const clearBtn = document.getElementById(\"clearBtn\");\n  const tallyPlate = document.getElementById(\"tallyPlate\");\n\n  let dpr = Math.max(1, window.devicePixelRatio || 1);\n  let W = window.innerWidth, H = window.innerHeight;\n\n  function resize() {\n    W = window.innerWidth;\n    H = window.innerHeight;\n    dpr = Math.max(1, window.devicePixelRatio || 1);\n    canvas.width = Math.floor(W * dpr);\n    canvas.height = Math.floor(H * dpr);\n    canvas.style.width = W + \"px\";\n    canvas.style.height = H + \"px\";\n    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);\n  }\n  window.addEventListener(\"resize\", resize);\n  resize();\n\n  const PALETTE = {\n    bg: \"#f4ecd8\",\n    layer: \"#e07a5f\",\n    accent: \"#3d405b\",\n    highlight: \"#81b29a\"\n  };\n\n  const bubbleColors = [PALETTE.layer, PALETTE.highlight, PALETTE.accent];\n\n  // seeded jitter helper\n  function seededRand(seed) {\n    let s = seed;\n    return function () {\n      s = (s * 9301 + 49297) % 233280;\n      return s / 233280;\n    };\n  }\n\n  let paused = false;\n  let running = false;\n  let tally = 0;\n  const bubbles = [];\n  const pops = []; // pop animations\n\n  let bubbleIdCounter = 1;\n\n  function spawnBubble() {\n    const r = 26 + Math.random() * 30;\n    const x = r + Math.random() * (W - 2 * r);\n    const y = H + r + Math.random() * 100;\n    const speed = 0.4 + Math.random() * 0.6;\n    const colorIdx = Math.floor(Math.random() * bubbleColors.length);\n    const rnd = seededRand(Math.floor(Math.random() * 100000));\n    const jitter = [];\n    for (let i = 0; i < 10; i++) {\n      jitter.push((rnd() - 0.5) * 3);\n    }\n    bubbles.push({\n      id: bubbleIdCounter++,\n      x, y, r,\n      speed,\n      color: bubbleColors[colorIdx],\n      wobblePhase: Math.random() * Math.PI * 2,\n      jitter\n    });\n  }\n\n  function maintainBubbles() {\n    const target = Math.min(10, 4 + Math.floor(tally / 5));\n    while (bubbles.length < target) {\n      spawnBubble();\n    }\n  }\n\n  let lastSpawnTime = 0;\n\n  function settle(dtSeconds) {\n    for (let i = bubbles.length - 1; i >= 0; i--) {\n      const b = bubbles[i];\n      b.y -= b.speed;\n      b.wobblePhase += 0.02;\n      if (b.y < -b.r - 50) {\n        bubbles.splice(i, 1);\n      }\n    }\n    lastSpawnTime += dtSeconds;\n    if (lastSpawnTime > 0.5) {\n      lastSpawnTime = 0;\n      maintainBubbles();\n    }\n    for (let i = pops.length - 1; i >= 0; i--) {\n      pops[i].life -= dtSeconds;\n      if (pops[i].life <= 0) pops.splice(i, 1);\n    }\n  }\n\n  function popBubbleAt(index) {\n    const b = bubbles[index];\n    pops.push({ x: b.x, y: b.y, r: b.r, color: b.color, life: 0.35, maxLife: 0.35 });\n    bubbles.splice(index, 1);\n    tally += 1;\n    tallyPlate.textContent = \"Pops: \" + tally;\n    CARTRIDGE.send(\"score\", { value: tally });\n  }\n\n  function hitTest(px, py) {\n    for (let i = bubbles.length - 1; i >= 0; i--) {\n      const b = bubbles[i];\n      const dx = px - b.x, dy = py - b.y;\n      if (dx * dx + dy * dy <= b.r * b.r) {\n        return i;\n      }\n    }\n    return -1;\n  }\n\n  function drawRoundedBubble(b) {\n    const wob = Math.sin(b.wobblePhase) * 2;\n    ctx.save();\n    ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n    ctx.shadowBlur = 6;\n    ctx.shadowOffsetY = 3;\n    ctx.beginPath();\n    const points = 10;\n    for (let i = 0; i < points; i++) {\n      const angle = (i / points) * Math.PI * 2;\n      const jitterAmt = b.jitter[i];\n      const rr = b.r + jitterAmt;\n      const px = b.x + Math.cos(angle) * rr + wob * 0.2;\n      const py = b.y + Math.sin(angle) * rr;\n      if (i === 0) ctx.moveTo(px, py);\n      else ctx.lineTo(px, py);\n    }\n    ctx.closePath();\n    ctx.fillStyle = b.color;\n    ctx.fill();\n    ctx.restore();\n\n    // inner highlight card\n    ctx.save();\n    ctx.globalAlpha = 0.35;\n    ctx.beginPath();\n    ctx.ellipse(b.x - b.r * 0.3, b.y - b.r * 0.35, b.r * 0.28, b.r * 0.18, -0.5, 0, Math.PI * 2);\n    ctx.fillStyle = \"#f4ecd8\";\n    ctx.fill();\n    ctx.restore();\n  }\n\n  function drawPop(p) {\n    const t = 1 - p.life / p.maxLife;\n    const rad = p.r * (1 + t * 0.8);\n    ctx.save();\n    ctx.globalAlpha = 1 - t;\n    ctx.beginPath();\n    const points = 8;\n    for (let i = 0; i < points; i++) {\n      const angle = (i / points) * Math.PI * 2;\n      const rr = rad * (0.6 + 0.4 * Math.sin(i * 3 + t * 6));\n      const px = p.x + Math.cos(angle) * rr;\n      const py = p.y + Math.sin(angle) * rr;\n      if (i === 0) ctx.moveTo(px, py);\n      else ctx.lineTo(px, py);\n    }\n    ctx.closePath();\n    ctx.fillStyle = p.color;\n    ctx.fill();\n    ctx.restore();\n  }\n\n  let hintPhase = 0;\n\n  function draw() {\n    ctx.clearRect(0, 0, W, H);\n    ctx.fillStyle = PALETTE.bg;\n    ctx.fillRect(0, 0, W, H);\n\n    // subtle layered background strips\n    ctx.save();\n    ctx.globalAlpha = 0.5;\n    ctx.fillStyle = PALETTE.highlight;\n    ctx.beginPath();\n    ctx.roundRect ? ctx.roundRect(0, H - 40, W, 40, 10) : ctx.rect(0, H - 40, W, 40);\n    ctx.fill();\n    ctx.restore();\n\n    for (const b of bubbles) drawRoundedBubble(b);\n    for (const p of pops) drawPop(p);\n\n    if (!running) {\n      hintPhase += 0.05;\n      const alpha = 0.6 + Math.sin(hintPhase) * 0.4;\n      ctx.save();\n      ctx.globalAlpha = Math.max(0.2, alpha);\n      ctx.fillStyle = PALETTE.accent;\n      ctx.font = \"bold 28px sans-serif\";\n      ctx.textAlign = \"center\";\n      ctx.textBaseline = \"middle\";\n      ctx.fillText(\"Tap to begin\", W / 2, H / 2);\n      ctx.restore();\n    }\n  }\n\n  let lastFrameTime = performance.now();\n\n  function frame() {\n    const now = performance.now();\n    const dt = Math.min(0.05, (now - lastFrameTime) / 1000);\n    lastFrameTime = now;\n    if (!paused && running) {\n      settle(dt);\n    }\n    draw();\n    requestAnimationFrame(frame);\n  }\n\n  // Single clear-the-table function: used by the visible Clear button,\n  // and by the host \"reset\" command. Both paths call this same function.\n  function backToTitle() {\n    bubbles.length = 0;\n    pops.length = 0;\n    tally = 0;\n    running = false;\n    tallyPlate.textContent = \"Pops: 0\";\n    CARTRIDGE.send(\"score\", { value: 0 });\n    draw();\n  }\n\n  clearBtn.addEventListener(\"click\", backToTitle);\n\n  canvas.style.touchAction = \"none\";\n  canvas.addEventListener(\"pointerdown\", (event) => {\n    event.preventDefault();\n    if (paused) return;\n    const rect = canvas.getBoundingClientRect();\n    const px = event.clientX - rect.left;\n    const py = event.clientY - rect.top;\n    if (!running) {\n      running = true;\n      CARTRIDGE.send(\"start\");\n      maintainBubbles();\n      return;\n    }\n    const idx = hitTest(px, py);\n    if (idx >= 0) {\n      popBubbleAt(idx);\n    }\n  });\n\n  window.addEventListener(\"message\", (event) => {\n    const data = event.data;\n    if (!data || data.source !== \"cartridge-host\") return;\n    if (data.type === \"pause\") paused = true;\n    if (data.type === \"resume\") paused = false;\n    if (data.type === \"reset\") backToTitle();\n  });\n\n  // initial draw + boot\n  draw();\n  CARTRIDGE.send(\"boot\", { title: \"Pop the Bubbles\", gameType: \"toy-box\", lang: \"en\" });\n\n  requestAnimationFrame(frame);\n})();\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01QBnoEZdrGVCvr9bmX2yPv9",
+              "content": "{\"version\":\"a1\",\"bytes\":8771,\"sha256\":\"124f5a7d68c4bd9d0f03c858698ac7c1cae23cbe06964a75dad6527f6e8e579a\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNjeJ6HT4L7fYUSUhDon\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":13768,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":7,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}        }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}  }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Fixed: the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Clear button and the host\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" `\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"reset` command now both call the\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" same `backToTitle()\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"` function that clears the table.\"}  }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":13768,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":40,\"output_tokens_details\":{\"thinking_tokens\":0}}   }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"               }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      389,
+      1,
+      1,
+      4,
+      2,
+      0,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 13768,
+    "output": 40,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

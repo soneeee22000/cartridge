@@ -112,6 +112,26 @@ describe("E3 validation: discard reasons (§10.1)", () => {
     ["numeric-claim", { rationale: "About 80% of the brief is covered." }],
     ["numeric-claim", { rationale: "It scores 7/10 on clarity." }],
     ["numeric-claim", { rationale: "It runs at 60 fps." }],
+    ["numeric-claim", { rationale: "Each pear is worth 5 points." }],
+    ["numeric-claim", { rationale: "The brief is met 3 out of 4 ways." }],
+    [
+      "quote-not-found",
+      {
+        evidence: [
+          { line: 4, quote: "Catch every falling pear" },
+          { line: 4, quote: "Dodge the falling plums" },
+        ],
+      },
+    ],
+    [
+      "line-out-of-range",
+      {
+        evidence: [
+          { line: 4, quote: "Catch every falling pear" },
+          { line: 42, quote: "Catch every falling pear" },
+        ],
+      },
+    ],
     ["unknown-label", { label: "excellent" }],
   ])("discards with %s", (reason, overrides) => {
     expect(discardReason(finding(overrides), LINES)).toBe(reason);
@@ -174,6 +194,44 @@ describe("E3 summary: null, not zero (§10.1)", () => {
     for (const dimension of DIMENSIONS)
       expect(result.dimensions[dimension]).toBeNull();
     expect(result.judgeError).toMatch(/unparseable/);
+  });
+
+  it("ignores judge findings on fail-state-clarity for toy-box instead of discarding them", () => {
+    const result = summariseJudgement(
+      {
+        findings: [
+          finding({
+            dimension: "fail-state-clarity",
+            label: "missing",
+            evidence: [],
+          }),
+        ],
+      },
+      HTML,
+      "toy-box",
+    );
+    expect(result.dimensions["fail-state-clarity"]).toBe("n/a");
+    expect(result.discarded).toEqual([]);
+  });
+
+  it("keeps a dimension null when its only finding is discarded, even with a worst label", () => {
+    const result = summariseJudgement(
+      {
+        findings: [
+          finding({
+            dimension: "feedback-on-input",
+            label: "none",
+            evidence: [{ line: 6, quote: "not on this line at all" }],
+          }),
+        ],
+      },
+      HTML,
+      "arcade-run",
+    );
+    expect(result.dimensions["feedback-on-input"]).toBeNull();
+    expect(result.discarded).toEqual([
+      { dimension: "feedback-on-input", reason: "quote-not-found" },
+    ]);
   });
 
   it("keeps the first surviving finding when a dimension has several", () => {

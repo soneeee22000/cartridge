@@ -21,6 +21,10 @@ const LABELLED_BUNDLES = 40;
 const LABELLED_EN = 16;
 const LABELLED_FR = 16;
 const LABELLED_HARD = 8;
+/** The figures SPEC §10.2 states for the labelled set; a threshold change must update both. */
+const STATED_ACCURACY = 1;
+const STATED_ABSTENTION_RATE = 0;
+const STATED_EXPECTED_ABSTENTIONS_HIT = 1;
 
 function page(body: string, script = "", lang = "en"): string {
   return `<!doctype html><html lang="${lang}"><head><title>T</title><style>.a { color: red; }</style></head><body>${body}<script>${script}</script></body></html>`;
@@ -135,10 +139,26 @@ describe("classifyStrings abstention floor (§10.2)", () => {
 
 describe("matchLanguage (§10.2)", () => {
   it("scores match when the UI language equals the prompt language", () => {
+    const html = page(
+      "<h1>Catch the pears before they fall</h1><p>Tap the basket to move it</p>",
+      'ctx.fillText("You missed the last pear", 1, 2); el.textContent = "Try it again from the start";',
+    );
+    expect(matchLanguage("en", html)).toMatchObject({
+      verdict: "match",
+      promptLang: "en",
+      uiLang: "en",
+      htmlLang: "en",
+    });
+  });
+
+  it("abstains on the two-string mock game rather than calling it a match", () => {
     const result = matchLanguage("en", MOCK_GAME_HTML);
-    expect(result.promptLang).toBe("en");
-    expect(result.htmlLang).toBe("en");
-    expect(["match", "abstain"]).toContain(result.verdict);
+    expect(result).toMatchObject({
+      verdict: "abstain",
+      uiLang: null,
+      htmlLang: "en",
+    });
+    expect(result.evidence.length).toBeLessThan(E4_MIN_STRINGS);
   });
 
   it("scores mismatch for an English UI on a French prompt", () => {
@@ -207,10 +227,13 @@ describe("labelled set (§10.2)", () => {
     process.stdout.write(
       `E4 labelled set: accuracy ${stats.accuracy.toFixed(3)}, abstention ${stats.abstentionRate.toFixed(3)}, expected abstentions hit ${stats.expectedAbstentionsHit.toFixed(3)} (${LABELLED_NOTE})\n`,
     );
-    expect(stats.bundles).toBe(LABELLED_BUNDLES);
-    expect(stats.accuracy).toBeGreaterThanOrEqual(0);
-    expect(stats.accuracy).toBeLessThanOrEqual(1);
-    expect(stats.wrongLanguage).toBe(0);
+    expect(stats).toEqual({
+      bundles: LABELLED_BUNDLES,
+      accuracy: STATED_ACCURACY,
+      abstentionRate: STATED_ABSTENTION_RATE,
+      expectedAbstentionsHit: STATED_EXPECTED_ABSTENTIONS_HIT,
+      wrongLanguage: 0,
+    });
     expect(LABELLED_NOTE).toBe(
       "measured on 40 authored bundles; the thresholds were set on the same bundles",
     );

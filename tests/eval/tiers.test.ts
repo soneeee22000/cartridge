@@ -51,6 +51,23 @@ describe("price table (§11.4)", () => {
     expect(USD_LABEL).toBe("estimate from list prices; not an invoice");
   });
 
+  it("holds the §11.4 list prices per million tokens", () => {
+    expect(PRICE_TABLE).toEqual({
+      "claude-sonnet-5": {
+        input: 2.0,
+        output: 10.0,
+        cacheRead: 0.2,
+        cacheWrite: 2.5,
+      },
+      "claude-haiku-4-5": {
+        input: 1.0,
+        output: 5.0,
+        cacheRead: 0.1,
+        cacheWrite: 1.25,
+      },
+    });
+  });
+
   it("throws for a model with no price", () => {
     expect(() =>
       priceUsage("unpriced-model", {

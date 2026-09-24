@@ -289,7 +289,26 @@ describe("cli run (§12.2)", () => {
     expect(err).toContain("--tier");
   });
 
-  it("the sample tier selects the four sample items", () => {
-    expect(SAMPLE_ITEM_IDS).toHaveLength(4);
+  it("runs the smoke alias as the sample tier: the four sample items, in order", async () => {
+    const { deps, probed } = harness();
+    const { code, out } = await capture(
+      ["run", "--tier", "smoke", "--mode", "mock"],
+      deps,
+    );
+    expect(code).toBe(0);
+    expect(out).toMatch(/^estimate: 4 items/);
+    expect(probed).toEqual([...SAMPLE_ITEM_IDS]);
+    const report = ReportJson.parse(
+      JSON.parse(
+        readFileSync(
+          join(deps.root, "reports", "sample", "latest", "report.json"),
+          "utf8",
+        ),
+      ),
+    );
+    expect(report.items.map((item) => item.id)).toEqual(
+      [...SAMPLE_ITEM_IDS].sort(),
+    );
+    expect(report.bands.map((row) => row.n)).toEqual([1, 1, 1, 1]);
   });
 });

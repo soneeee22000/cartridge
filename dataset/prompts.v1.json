@@ -1,0 +1,202 @@
+{
+  "version": "v1",
+  "items": [
+    {
+      "id": "comet-dodger",
+      "lengthBand": "terse",
+      "lang": "en",
+      "prompt": "comet dodger",
+      "intendedType": "arcade-run",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "bubble-pop",
+      "lengthBand": "terse",
+      "lang": "en",
+      "prompt": "pop the bubbles",
+      "intendedType": "toy-box",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "tiny-maze",
+      "lengthBand": "terse",
+      "lang": "en",
+      "prompt": "a tiny maze",
+      "intendedType": null,
+      "probes": [
+        "type-left-open"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "course-escargots",
+      "lengthBand": "terse",
+      "lang": "fr",
+      "prompt": "course d'escargots",
+      "intendedType": "arcade-run",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "jardin-cailloux",
+      "lengthBand": "terse",
+      "lang": "fr",
+      "prompt": "jardin de cailloux",
+      "intendedType": "toy-box",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "kite-over-roofs",
+      "lengthBand": "short-brief",
+      "lang": "en",
+      "prompt": "A paper kite rides the wind over the rooftops. Tap to rise, avoid the chimneys and collect ribbons while the wind slowly speeds up.",
+      "intendedType": "arcade-run",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "lighthouse-floors",
+      "lengthBand": "short-brief",
+      "lang": "en",
+      "prompt": "A lighthouse with a few short floors: light every lamp on a floor before the tide reaches it, then climb the stairs to the next floor.",
+      "intendedType": "stage-clear",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "tile-sort",
+      "lengthBand": "short-brief",
+      "lang": "en",
+      "prompt": "Slide coloured tiles on a small square board until each row holds a single colour. There is no timer, only moves.",
+      "intendedType": "puzzle-board",
+      "probes": [
+        "names-a-colour"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "potager-grille",
+      "lengthBand": "short-brief",
+      "lang": "fr",
+      "prompt": "Un potager en grille : échange deux légumes voisins pour aligner trois carottes. Pas de chrono, la partie se termine quand plus aucun échange n'est possible.",
+      "intendedType": "puzzle-board",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "aquarium-papier",
+      "lengthBand": "short-brief",
+      "lang": "fr",
+      "prompt": "Un aquarium où l'on dépose des poissons en papier d'un simple toucher. Un compteur affiche combien nagent, et un bouton vide le bocal.",
+      "intendedType": "toy-box",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "orchard-rounds",
+      "lengthBand": "full-brief",
+      "lang": "en",
+      "prompt": "An orchard game played in rounds. Each round the player must catch a set number of falling apples in a basket that slides along the bottom of the screen. Rotten apples fall too, and catching one empties the basket. When the round goal is met a short banner announces the next round, which adds wind that pushes the apples sideways. Missing too many apples ends the game with a clear message and a button to try again.",
+      "intendedType": "stage-clear",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "comet-lanes-brief",
+      "lengthBand": "full-brief",
+      "lang": "en",
+      "prompt": "A space runner with three lanes. The ship stays near the bottom of the screen and the player taps the left or right half to change lane. Comets stream down and get faster over time, and small stars appear between them; each star collected adds to the score. There is one life, so the first comet that hits the ship ends the run. Show the score during play and a short summary with a replay prompt at the end.",
+      "intendedType": "arcade-run",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "sticker-table",
+      "lengthBand": "full-brief",
+      "lang": "en",
+      "prompt": "A calm sticker table for young players. Tapping anywhere on the table drops a sticker shaped like a leaf, a shell or a star, chosen in turn, and each one wobbles for a moment after it lands. A counter in the corner shows how many stickers are on the table. A clear button sweeps the table empty so the child can start again. Nothing can be lost and there is no timer.",
+      "intendedType": "toy-box",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "maze-de-haies",
+      "lengthBand": "full-brief",
+      "lang": "fr",
+      "prompt": "Un labyrinthe de haies vu du dessus, joué au tour par tour. Le joueur guide un hérisson case par case en glissant le doigt vers une direction. Chaque déplacement coûte un pas, et des pommes posées dans les allées rapportent des points. La partie est gagnée quand le hérisson atteint la sortie, et elle est bloquée si plus aucun pas ne reste. Aucun chronomètre ne presse le joueur.",
+      "intendedType": "puzzle-board",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "tramway-niveaux",
+      "lengthBand": "full-brief",
+      "lang": "fr",
+      "prompt": "Un petit tramway traverse une ville en plusieurs niveaux. À chaque niveau, le joueur doit ouvrir les portes au bon arrêt en touchant l'écran quand le tram passe devant un quai éclairé. Chaque voyageur embarqué compte pour l'objectif du niveau. Rater trois quais fait perdre la partie, avec un message qui explique pourquoi et un bouton pour recommencer. Les niveaux suivants ajoutent des quais plus courts.",
+      "intendedType": "stage-clear",
+      "probes": [],
+      "origin": "authored"
+    },
+    {
+      "id": "calm-but-lose",
+      "lengthBand": "edge",
+      "lang": "en",
+      "prompt": "Make a relaxing game with no way to lose, where the player loses a life every time they miss a falling star.",
+      "intendedType": null,
+      "probes": [
+        "contradiction"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "online-chess",
+      "lengthBand": "edge",
+      "lang": "en",
+      "prompt": "Build an online multiplayer chess game with player accounts and a leaderboard saved on a server.",
+      "intendedType": null,
+      "probes": [
+        "off-scope"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "canal-long-brief",
+      "lengthBand": "edge",
+      "lang": "en",
+      "prompt": "A long brief for a canal boat game. The player steers a narrow wooden boat along a city canal at dusk, and the view scrolls upward so the canal keeps coming toward the boat. The boat sits in one of three channels, and the player drags a finger left or right to move it between them. Moored barges, low bridges and floating crates block the channels, and they arrive faster as the run goes on. Lanterns float between the obstacles; each lantern collected adds to the score, and a lantern that is missed simply drifts away. There is only one boat, so the first collision ends the run. Please make the water a deep teal, the barges a warm brown and the lanterns a soft orange, with thin white lines for the ripples. I would also like a gentle splash sound whenever a lantern is collected and a low horn when the boat hits something, if that is possible. During play, show the score in the top corner in a clear, readable font. At the end, show how many lanterns were collected, say what the boat hit, and offer a way to set off again. The first few seconds should be calm, with no obstacles at all, so a new player can learn to steer before anything arrives.",
+      "intendedType": "arcade-run",
+      "probes": [
+        "long-brief",
+        "names-a-colour",
+        "asks-for-sound"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "reflexion-chrono",
+      "lengthBand": "edge",
+      "lang": "fr",
+      "prompt": "Un jeu de réflexion au tour par tour, sans aucune pression, où il faut pourtant répondre en moins de trois secondes avant la fin du chrono.",
+      "intendedType": "puzzle-board",
+      "probes": [
+        "contradiction"
+      ],
+      "origin": "authored"
+    },
+    {
+      "id": "phare-long",
+      "lengthBand": "edge",
+      "lang": "fr",
+      "prompt": "Un long cahier des charges pour un jeu de phare en plusieurs niveaux. Le joueur est le gardien d'un vieux phare sur une côte rocheuse, et chaque niveau se passe pendant une nuit de tempête. Des bateaux approchent depuis le large, et le joueur doit tourner le faisceau du phare en glissant le doigt autour de la tour pour éclairer chaque bateau avant qu'il ne touche les rochers. Un bateau éclairé assez longtemps trouve le chenal et rentre au port, ce qui compte pour l'objectif du niveau. Quand tous les bateaux d'une nuit sont rentrés, le niveau est gagné et une courte carte annonce la nuit suivante. Les nuits suivantes amènent plus de bateaux, du brouillard qui cache une partie de la mer et des vagues qui déplacent les bateaux. Si un bateau touche les rochers, la partie est perdue, avec un message qui dit quel bateau a coulé et un bouton pour rejouer la nuit. Je voudrais une mer bleu nuit, un faisceau jaune pâle et des bateaux rouges, dessinés simplement avec des formes plates. Le texte du jeu doit rester en français, avec le numéro de la nuit affiché en haut de l'écran pendant toute la partie.",
+      "intendedType": "stage-clear",
+      "probes": [
+        "long-brief",
+        "names-a-colour"
+      ],
+      "origin": "authored"
+    }
+  ]
+}

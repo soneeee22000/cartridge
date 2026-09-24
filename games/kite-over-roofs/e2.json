@@ -8,13 +8,13 @@
     "idle-static": "pass",
     "tap-unresponsive": "pass"
   },
-  "longestPlaySeconds": 4.5142000000029805,
+  "longestPlaySeconds": 6.16929999999702,
   "metrics": {
-    "bootMs": 50.79999999701977,
-    "distinctColours": 714,
-    "firstEndSeconds": 3.9228999999910594,
-    "idleMotionRatio": 0.01773871527777778,
-    "lumaStddev": 38.53015907423239,
-    "tapMotionRatio": 0.1500173611111111
+    "bootMs": 19,
+    "distinctColours": 1272,
+    "firstEndSeconds": 1.2177000000029803,
+    "idleMotionRatio": 0.020868055555555556,
+    "lumaStddev": 11.569983063572518,
+    "tapMotionRatio": 0.25543836805555553
   }
 }

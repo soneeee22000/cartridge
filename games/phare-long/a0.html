@@ -3,35 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Le Phare des Naufrages</title>
+<title>Le Gardien du Phare</title>
 <style>
   html, body {
-    margin: 0; padding: 0; overflow: hidden;
-    background: #f4ecd8;
-    width: 100%; height: 100%;
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #fbf7ee; overflow: hidden;
     touch-action: none;
-    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: 'Arial Narrow', Arial, sans-serif;
   }
-  #stage {
-    position: fixed; inset: 0;
-    width: 100vw; height: 100dvh;
-    display: block;
-  }
-  #hint {
-    position: fixed;
-    left: 50%; top: 8px;
-    transform: translateX(-50%);
-    color: #3d405b;
-    font-weight: 700;
-    font-size: 14px;
-    pointer-events: none;
-    user-select: none;
-    text-align: center;
-  }
+  #wrap { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 </style>
 </head>
 <body>
-<canvas id="stage"></canvas>
+<div id="wrap">
+<canvas id="game"></canvas>
+</div>
 <script>
 // ---- Bridge helper (verbatim) ----
 const CARTRIDGE = {
@@ -45,176 +32,121 @@ const CARTRIDGE = {
 </script>
 <script>
 (function(){
-  const canvas = document.getElementById('stage');
+  const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
-  let W = 0, H = 0, DPR = 1;
+
+  const PAPER = '#fbf7ee';
+  const INK1 = '#ff48b0';
+  const INK2 = '#0078bf';
+  const OVER = '#5b3a8c';
+
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
 
   function resize() {
-    DPR = window.devicePixelRatio || 1;
+    DPR = Math.max(1, window.devicePixelRatio || 1);
     W = window.innerWidth;
     H = window.innerHeight;
-    canvas.width = Math.round(W * DPR);
-    canvas.height = Math.round(H * DPR);
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    buildGrainTile();
   }
-  window.addEventListener('resize', resize);
-  resize();
 
-  // ---- seeded jitter for paper-cut edges ----
-  let seedVal = 1234567;
-  function rand() {
-    seedVal = (seedVal * 1103515245 + 12345) & 0x7fffffff;
-    return (seedVal % 1000) / 1000;
+  // ---- Grain tile (pre-rendered noise) ----
+  let grainCanvas = document.createElement('canvas');
+  let grainCtx = grainCanvas.getContext('2d');
+  function buildGrainTile() {
+    const size = 128;
+    grainCanvas.width = size;
+    grainCanvas.height = size;
+    const imgData = grainCtx.createImageData(size, size);
+    for (let i = 0; i < imgData.data.length; i += 4) {
+      const v = Math.random() * 255;
+      imgData.data[i] = v;
+      imgData.data[i+1] = v;
+      imgData.data[i+2] = v;
+      imgData.data[i+3] = 255;
+    }
+    grainCtx.putImageData(imgData, 0, 0);
   }
-  function jitter(v, amt) { return v + (rand() - 0.5) * amt; }
+  let grainPattern = null;
 
-  const PAL = {
-    bg: '#f4ecd8',
-    layer: '#e07a5f',
-    accent: '#3d405b',
-    highlight: '#81b29a'
-  };
+  function drawGrain() {
+    if (!grainPattern) {
+      grainPattern = ctx.createPattern(grainCanvas, 'repeat');
+    }
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = grainPattern;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
 
   // ---- Game state ----
-  let state = 'title'; // title, playing, stageclear, win, lose
   let paused = false;
+  let screen = 'title'; // title, playing, stageclear, win, lose
   let stage = 0;
   let score = 0;
-  let beamAngle = 0; // radians, pointing direction of beam
-  let beamTarget = 0;
-  let held = false;
-  let graceTimer = 0;
-  let stageGoalText = '';
-  let boats = [];
-  let lastTime = performance.now();
-  let bootSent = false;
+  let started = false;
 
   const STAGES = [
-    { boatCount: 1, boatSpeed: 0.10, needLight: 2.0, rockChance: 0.0 },
-    { boatCount: 2, boatSpeed: 0.13, needLight: 2.2, rockChance: 0.15 },
-    { boatCount: 3, boatSpeed: 0.16, needLight: 2.4, rockChance: 0.25 },
-    { boatCount: 3, boatSpeed: 0.20, needLight: 2.6, rockChance: 0.35 },
-    { boatCount: 4, boatSpeed: 0.24, needLight: 2.8, rockChance: 0.4 }
+    { boats: 2, speed: 0.10, needLight: 1.6, rockDelay: 5.0 },
+    { boats: 3, speed: 0.13, needLight: 1.8, rockDelay: 4.5 },
+    { boats: 4, speed: 0.16, needLight: 2.0, rockDelay: 4.0 },
+    { boats: 5, speed: 0.19, needLight: 2.2, rockDelay: 3.6 },
+    { boats: 6, speed: 0.22, needLight: 2.4, rockDelay: 3.2 }
   ];
 
-  function cx() { return W / 2; }
-  function cy() { return H / 2; }
-  function lighthouseRadius() { return Math.min(W, H) * 0.09; }
-  function worldRadius() { return Math.min(W, H) * 0.46; }
+  let cx = 0, cy = 0; // lighthouse center
+  let beamAngle = 0; // radians
+  let targetAngle = 0;
+  let beamWidth = 0.32; // radians half-angle-ish (full spread)
+  let beamLength = 0;
+
+  let boats = [];
+  let stageGoalTimer = 0; // grace period
+  let graceSeconds = 3;
+  let stageStartMsg = '';
+  let stageStartMsgTimer = 0;
+
+  let held = false;
 
   function toCanvas(evt) {
     const rect = canvas.getBoundingClientRect();
-    return {
-      x: (evt.clientX - rect.left),
-      y: (evt.clientY - rect.top)
-    };
+    const x = (evt.clientX - rect.left);
+    const y = (evt.clientY - rect.top);
+    return { x, y };
   }
 
-  function angleTo(px, py) {
-    return Math.atan2(py - cy(), px - cx());
+  function angleFromPoint(p) {
+    return Math.atan2(p.y - cy, p.x - cx);
   }
 
-  // ---- Boats ----
-  function makeBoat(cfg, idx) {
-    const angle = rand() * Math.PI * 2;
-    const dist = worldRadius() * (0.85 + rand() * 0.15);
-    const isRock = rand() < cfg.rockChance && idx > 0;
-    return {
-      angle: angle,
-      dist: dist,
-      speed: cfg.boatSpeed * (0.85 + rand() * 0.3),
-      lit: 0,
-      needLight: cfg.needLight,
-      saved: false,
-      wrecked: false,
-      wobble: rand() * Math.PI * 2,
-      seedA: rand(), seedB: rand(), seedC: rand()
-    };
-  }
-
-  function buildStage(n) {
-    const cfg = STAGES[n - 1];
-    boats = [];
-    for (let i = 0; i < cfg.boatCount; i++) {
-      boats.push(makeBoat(cfg, i));
-    }
-    stageGoalText = 'Nuit ' + n + ' — Guidez ' + cfg.boatCount + ' bateau' + (cfg.boatCount>1?'x':'') + ' au port';
-    graceTimer = 2.5; // seconds of grace
-    score = 0;
-    CARTRIDGE.send('score', { value: score });
-  }
-
-  function enterStage(next) {
-    stage = next;
-    buildStage(stage);
-    CARTRIDGE.send('level', { index: stage });
-    state = 'playing';
-  }
-
-  function onGoalMet() {
-    if (stage === STAGES.length) {
-      state = 'win';
-      CARTRIDGE.send('end', { reason: 'win', value: score });
-    } else {
-      state = 'stageclear';
-      stageClearTimer = 1.6;
-    }
-  }
-
-  function onStageFailed() {
-    state = 'lose';
-    CARTRIDGE.send('end', { reason: 'lose', value: score });
-  }
-
-  let stageClearTimer = 0;
-
-  function backToTitle() {
-    state = 'title';
-    paused = false;
-    stage = 0;
-    score = 0;
-    boats = [];
-  }
-
-  // ---- Input (drag-follow style) ----
-  let pointerId = null;
   canvas.addEventListener('pointerdown', (event) => {
-    const p = toCanvas(event);
-    const dx = p.x - cx(), dy = p.y - cy();
-    const dist = Math.hypot(dx, dy);
-    // allow grabbing anywhere for steering the beam
+    if (screen !== 'playing') return;
     held = true;
-    pointerId = event.pointerId;
     canvas.setPointerCapture(event.pointerId);
-    if (state === 'title') {
-      startGame();
-    } else if (state === 'playing') {
-      beamTarget = angleTo(p.x, p.y);
-    } else if (state === 'lose' || state === 'win') {
-      backToTitle();
-    }
+    targetAngle = angleFromPoint(toCanvas(event));
   });
   canvas.addEventListener('pointermove', (event) => {
-    if (held && state === 'playing') {
-      const p = toCanvas(event);
-      beamTarget = angleTo(p.x, p.y);
-    }
+    if (!held) return;
+    targetAngle = angleFromPoint(toCanvas(event));
   });
-  function release(event) {
-    held = false;
-    pointerId = null;
-  }
-  canvas.addEventListener('pointerup', release);
-  canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('pointerup', () => { held = false; });
+  canvas.addEventListener('pointercancel', () => { held = false; });
 
-  function startGame() {
-    CARTRIDGE.send('start');
-    enterStage(1);
-  }
+  // click on title / end screens to advance
+  canvas.addEventListener('pointerdown', (event) => {
+    if (screen === 'title') {
+      beginPlay();
+    } else if (screen === 'win' || screen === 'lose') {
+      backToTitle();
+    }
+  }, true);
 
-  // ---- Update ----
   function shortestAngleDiff(a, b) {
     let d = (b - a) % (Math.PI * 2);
     if (d > Math.PI) d -= Math.PI * 2;
@@ -222,315 +154,366 @@ const CARTRIDGE = {
     return d;
   }
 
-  function update(dt) {
-    if (paused) return;
+  function buildStage(n) {
+    const cfg = STAGES[n - 1];
+    boats = [];
+    for (let i = 0; i < cfg.boats; i++) {
+      spawnBoat(cfg, i);
+    }
+    stageGoalTimer = graceSeconds;
+    stageStartMsg = 'Phase ' + n + ' — Faites rentrer ' + cfg.boats + ' bateaux';
+    stageStartMsgTimer = 3.2;
+  }
 
-    // ease beam toward target
-    const diff = shortestAngleDiff(beamAngle, beamTarget);
+  function spawnBoat(cfg, idx) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.max(W, H) * 0.62 + Math.random() * 40;
+    const x = cx + Math.cos(angle) * dist;
+    const y = cy + Math.sin(angle) * dist;
+    boats.push({
+      x, y,
+      angle: angle,
+      speed: cfg.speed * (0.85 + Math.random() * 0.3),
+      lit: 0,
+      needLight: cfg.needLight,
+      rockDelay: cfg.rockDelay,
+      dangerTimer: 0,
+      safe: false,
+      dead: false,
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+
+  function enterStage(next) {
+    stage = next;
+    buildStage(stage);
+    CARTRIDGE.send('level', { index: stage });
+    screen = 'playing';
+  }
+
+  function onGoalMet() {
+    if (stage === STAGES.length) {
+      screen = 'win';
+      CARTRIDGE.send('end', { reason: 'win', value: score });
+    } else {
+      enterStage(stage + 1);
+    }
+  }
+
+  function onStageFailed() {
+    screen = 'lose';
+    CARTRIDGE.send('end', { reason: 'lose', value: score });
+  }
+
+  function beginPlay() {
+    if (!started) {
+      started = true;
+      CARTRIDGE.send('start');
+    }
+    score = 0;
+    CARTRIDGE.send('score', { value: score });
+    enterStage(1);
+  }
+
+  function backToTitle() {
+    screen = 'title';
+    boats = [];
+    stage = 0;
+    score = 0;
+  }
+
+  // ---- Update ----
+  let lastTime = performance.now();
+  function update(dt) {
+    if (screen !== 'playing') return;
+
+    // ease beam angle toward target
+    const diff = shortestAngleDiff(beamAngle, targetAngle);
     beamAngle += diff * Math.min(1, dt * 6);
 
-    if (state === 'stageclear') {
-      stageClearTimer -= dt;
-      if (stageClearTimer <= 0) enterStage(stage + 1);
-      return;
-    }
+    if (stageGoalTimer > 0) stageGoalTimer -= dt;
+    if (stageStartMsgTimer > 0) stageStartMsgTimer -= dt;
 
-    if (state !== 'playing') return;
+    const rockRadius = Math.min(W, H) * 0.14;
+    const portRadius = Math.min(W, H) * 0.10;
 
-    if (graceTimer > 0) graceTimer -= dt;
-
-    const beamWidth = 0.42; // half-angle of cone in radians
-
-    let allSaved = true;
+    let allSafe = true;
     for (const boat of boats) {
-      if (boat.saved || boat.wrecked) continue;
-      allSaved = false;
+      if (boat.safe || boat.dead) continue;
+      allSafe = false;
 
-      // move boat inward slowly, wobbling angle
-      boat.wobble += dt * 0.5;
-      boat.dist -= boat.speed * 22 * dt;
+      // move boat toward lighthouse slowly (drifting toward rocks)
+      const dx = cx - boat.x, dy = cy - boat.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const nx = dx / (dist || 1), ny = dy / (dist || 1);
+      boat.bob += dt * 2;
 
-      if (boat.dist < lighthouseRadius() * 1.3) {
-        boat.dist = lighthouseRadius() * 1.3;
-      }
+      // Check if boat is lit by beam
+      const boatAngle = Math.atan2(boat.y - cy, boat.x - cx);
+      const adiff = Math.abs(shortestAngleDiff(beamAngle, boatAngle));
+      const isLit = adiff < beamWidth * 0.5 && dist < beamLength;
 
-      // check if lit
-      const diffA = Math.abs(shortestAngleDiff(beamAngle, boat.angle));
-      const isLit = diffA < beamWidth;
       if (isLit) {
         boat.lit += dt;
-        if (boat.lit >= boat.needLight) {
-          boat.saved = true;
-          score += 10;
-          CARTRIDGE.send('score', { value: score });
-        }
       } else {
-        boat.lit = Math.max(0, boat.lit - dt * 0.4);
+        boat.lit = Math.max(0, boat.lit - dt * 0.5);
       }
 
-      // danger: if boat reaches inner rocks without being saved and grace passed
-      if (graceTimer <= 0 && boat.dist <= lighthouseRadius() * 1.35 && !boat.saved) {
-        boat.wrecked = true;
+      if (stageGoalTimer <= 0) {
+        if (!isLit) {
+          boat.dangerTimer += dt;
+        } else {
+          boat.dangerTimer = Math.max(0, boat.dangerTimer - dt * 1.5);
+        }
+      }
+
+      // drift toward rocks always (slowly), guided in when lit enough
+      let driftSpeed = boat.speed * 0.4;
+      if (boat.lit >= boat.needLight) {
+        driftSpeed = boat.speed * 1.4; // guided in fast once "saved"
+      }
+      boat.x += nx * driftSpeed * 60 * dt * 0.5;
+      boat.y += ny * driftSpeed * 60 * dt * 0.5;
+
+      if (boat.lit >= boat.needLight && dist < portRadius) {
+        boat.safe = true;
+        score += 10;
+        CARTRIDGE.send('score', { value: score });
+      }
+
+      if (dist < rockRadius && boat.lit < boat.needLight) {
+        boat.dead = true;
+        onStageFailed();
+        return;
+      }
+
+      if (stageGoalTimer <= 0 && boat.dangerTimer > boat.rockDelay) {
+        boat.dead = true;
         onStageFailed();
         return;
       }
     }
 
-    const stillActive = boats.some(b => !b.saved && !b.wrecked);
-    if (!stillActive) {
+    if (allSafe && boats.length > 0) {
       onGoalMet();
     }
   }
 
-  // ---- Draw helpers: paper-cut primitives ----
-  function shadowedPath(drawFn, fillColor) {
+  // ---- Draw ----
+  function drawTitle() {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+    drawHalftoneSea();
+    drawLighthouseBase();
+
+    ctx.fillStyle = INK1;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.075) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('LE GARDIEN', W/2, H*0.28);
+    ctx.fillStyle = INK2;
+    ctx.fillText('DU PHARE', W/2 + 2, H*0.28 + Math.round(Math.min(W,H)*0.075) + 4);
+
+    ctx.fillStyle = OVER;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.03) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('Glissez pour tourner le faisceau', W/2, H*0.62);
+    ctx.fillText('et guidez les bateaux au port', W/2, H*0.62 + Math.round(Math.min(W,H)*0.045));
+
+    ctx.fillStyle = INK1;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.045) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('TOUCHEZ POUR COMMENCER', W/2, H*0.8);
+  }
+
+  function drawHalftoneSea() {
     ctx.save();
-    ctx.shadowColor = 'rgba(61,64,91,0.35)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = fillColor;
-    drawFn();
+    ctx.fillStyle = INK2;
+    ctx.globalAlpha = 1;
+    const spacing = Math.max(14, Math.min(W,H)*0.03);
+    for (let y = H*0.5; y < H; y += spacing) {
+      for (let x = 0; x < W; x += spacing) {
+        const t = (y - H*0.5) / (H*0.5);
+        const r = spacing * 0.15 * (0.3 + t * 0.7);
+        ctx.beginPath();
+        ctx.arc(x + ((Math.floor(y/spacing)%2)? spacing/2:0), y, r, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
     ctx.restore();
   }
 
-  function jitterPolygon(points, amt) {
-    return points.map(p => [jitter(p[0], amt), jitter(p[1], amt)]);
-  }
-
-  function drawPolygon(points) {
+  function drawLighthouseBase() {
+    ctx.save();
+    ctx.translate(cx, cy);
+    // rocks
+    ctx.fillStyle = OVER;
     ctx.beginPath();
-    ctx.moveTo(points[0][0], points[0][1]);
-    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+    const rockR = Math.min(W, H) * 0.14;
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      const rr = rockR * (0.85 + 0.15 * Math.sin(i * 3.1));
+      const px = Math.cos(a) * rr, py = Math.sin(a) * rr;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
     ctx.closePath();
     ctx.fill();
-  }
 
-  function drawSea() {
-    ctx.fillStyle = PAL.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // sea disc
-    shadowedPath(() => {
-      ctx.beginPath();
-      ctx.arc(cx(), cy(), worldRadius() + 20, 0, Math.PI * 2);
-      ctx.fill();
-    }, '#3d405b');
-
-    shadowedPath(() => {
-      ctx.beginPath();
-      ctx.arc(cx(), cy(), worldRadius() + 10, 0, Math.PI * 2);
-      ctx.fill();
-    }, '#5a6485');
-  }
-
-  function drawRocks() {
-    const r = lighthouseRadius() * 1.35;
-    const spikes = 14;
-    const pts = [];
-    for (let i = 0; i < spikes; i++) {
-      const a = (i / spikes) * Math.PI * 2;
-      const rad = r * (0.85 + (i % 2 === 0 ? 0.25 : 0));
-      pts.push([cx() + Math.cos(a) * rad, cy() + Math.sin(a) * rad]);
-    }
-    shadowedPath(() => drawPolygon(jitterPolygon(pts, 2)), PAL.accent);
+    // tower
+    ctx.fillStyle = INK1;
+    const towerW = Math.min(W,H) * 0.09;
+    const towerH = Math.min(W,H) * 0.16;
+    ctx.fillRect(-towerW/2, -towerH/2, towerW, towerH);
+    ctx.fillStyle = INK2;
+    ctx.fillRect(-towerW/2+2, -towerH/2+2, towerW, towerH*0.35);
+    // top
+    ctx.fillStyle = OVER;
+    ctx.beginPath();
+    ctx.moveTo(-towerW*0.6, -towerH/2);
+    ctx.lineTo(towerW*0.6, -towerH/2);
+    ctx.lineTo(0, -towerH/2 - towerW*0.7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   function drawBeam() {
-    const beamWidth = 0.42;
-    const len = worldRadius() + 30;
     ctx.save();
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = '#f4e6b8';
+    ctx.translate(cx, cy);
+    ctx.rotate(beamAngle);
+    const grad = ctx.createLinearGradient(0, 0, beamLength, 0);
+    grad.addColorStop(0, 'rgba(255,72,176,0.55)');
+    grad.addColorStop(1, 'rgba(255,72,176,0.03)');
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(cx(), cy());
-    ctx.arc(cx(), cy(), len, beamAngle - beamWidth, beamAngle + beamWidth);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, beamLength, -beamWidth/2, beamWidth/2);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
-  }
-
-  function drawLighthouse() {
-    const r = lighthouseRadius();
-    // base tower - trapezoid built from jittered points
-    const baseW = r * 0.9;
-    const topW = r * 0.5;
-    const topY = cy() - r * 2.4;
-    const pts = [
-      [cx() - baseW, cy() + r * 0.4],
-      [cx() + baseW, cy() + r * 0.4],
-      [cx() + topW, topY],
-      [cx() - topW, topY]
-    ];
-    shadowedPath(() => drawPolygon(jitterPolygon(pts, 2)), PAL.layer);
-
-    // stripes
-    ctx.save();
-    ctx.fillStyle = PAL.bg;
-    for (let i = 0; i < 3; i++) {
-      const t0 = 0.25 + i * 0.22;
-      const y0 = cy() + r * 0.4 - (cy() + r*0.4 - topY) * t0;
-      ctx.fillRect(cx() - baseW * (1 - t0*0.4), y0, (baseW * (1-t0*0.4))*2, 8);
-    }
-    ctx.restore();
-
-    // lamp room
-    shadowedPath(() => {
-      ctx.beginPath();
-      ctx.arc(cx(), topY - 6, r * 0.55, 0, Math.PI * 2);
-      ctx.fill();
-    }, PAL.accent);
-    shadowedPath(() => {
-      ctx.beginPath();
-      ctx.arc(cx(), topY - 6, r * 0.35, 0, Math.PI * 2);
-      ctx.fill();
-    }, PAL.highlight);
-
-    // roof
-    const roofPts = [
-      [cx() - r * 0.6, topY - 6 - r*0.3],
-      [cx() + r * 0.6, topY - 6 - r*0.3],
-      [cx(), topY - 6 - r*1.1]
-    ];
-    shadowedPath(() => drawPolygon(jitterPolygon(roofPts, 1.5)), PAL.layer);
   }
 
   function drawBoat(boat) {
-    if (boat.wrecked) return;
-    const bx = cx() + Math.cos(boat.angle) * boat.dist;
-    const by = cy() + Math.sin(boat.angle) * boat.dist + Math.sin(boat.wobble) * 3;
-
     ctx.save();
-    ctx.translate(bx, by);
-    const rot = boat.angle + Math.PI/2;
-    ctx.rotate(rot * 0.15); // slight tilt, not full alignment
-
-    const hullPts = [
-      [-14, 4], [14, 4], [10, 10], [-10, 10]
-    ];
-    const fillColor = boat.saved ? PAL.highlight : PAL.layer;
-    shadowedPath(() => drawPolygon(jitterPolygon(hullPts, 1.5)), fillColor);
-
-    // sail
-    const sailPts = [
-      [0, 4], [0, -18], [10, 3]
-    ];
-    shadowedPath(() => drawPolygon(jitterPolygon(sailPts, 1)), PAL.accent);
-
-    ctx.restore();
-
-    // light meter ring if not saved
-    if (!boat.saved) {
-      const pct = Math.min(1, boat.lit / boat.needLight);
-      ctx.save();
-      ctx.strokeStyle = PAL.highlight;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(bx, by, 20, -Math.PI/2, -Math.PI/2 + pct * Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    } else {
-      ctx.save();
-      ctx.fillStyle = PAL.accent;
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚓', bx, by - 22);
-      ctx.restore();
-    }
-  }
-
-  function drawPlate(text, subtext, y) {
-    ctx.save();
-    const pw = Math.min(W * 0.86, 480);
-    const ph = subtext ? 120 : 90;
-    const px = cx() - pw / 2;
-    const py = y - ph / 2;
-    ctx.shadowColor = 'rgba(61,64,91,0.35)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = PAL.bg;
-    roundRect(px, py, pw, ph, 14);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.strokeStyle = PAL.accent;
-    ctx.lineWidth = 2;
-    roundRect(px, py, pw, ph, 14);
-    ctx.stroke();
-
-    ctx.fillStyle = PAL.accent;
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 24px sans-serif';
-    ctx.fillText(text, cx(), py + 40);
-    if (subtext) {
-      ctx.font = '16px sans-serif';
-      ctx.fillText(subtext, cx(), py + 72);
-    }
-    ctx.restore();
-  }
-
-  function roundRect(x, y, w, h, r) {
+    ctx.translate(boat.x, boat.y + Math.sin(boat.bob) * 2);
+    const ang = Math.atan2(cy - boat.y, cx - boat.x);
+    ctx.rotate(ang + Math.PI/2);
+    const s = Math.min(W,H) * 0.018;
+    const litFrac = Math.min(1, boat.lit / boat.needLight);
+    ctx.fillStyle = litFrac > 0.99 ? OVER : (litFrac > 0 ? INK2 : INK1);
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
+    ctx.moveTo(0, -s*1.4);
+    ctx.lineTo(s, s);
+    ctx.lineTo(-s, s);
     ctx.closePath();
+    ctx.fill();
+
+    // danger flash
+    if (boat.dangerTimer > 0) {
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(performance.now()/80);
+      ctx.strokeStyle = INK1;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, s*2.2, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    // light meter above boat
+    if (!boat.safe) {
+      const barW = s * 3;
+      ctx.save();
+      ctx.translate(boat.x - barW/2, boat.y - s*3);
+      ctx.fillStyle = '#00000022';
+      ctx.fillRect(0, 0, barW, 4);
+      ctx.fillStyle = INK2;
+      ctx.fillRect(0, 0, barW * Math.min(1, boat.lit/boat.needLight), 4);
+      ctx.restore();
+    }
+  }
+
+  function drawPlaying() {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+    drawHalftoneSea();
+    drawBeam();
+    drawLighthouseBase();
+
+    for (const boat of boats) {
+      if (boat.dead) continue;
+      drawBoat(boat);
+    }
+
+    // HUD
+    ctx.textAlign = 'left';
+    ctx.fillStyle = INK2;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.035) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('Phase ' + stage, 14, 30);
+    ctx.fillStyle = OVER;
+    ctx.fillText('Score ' + score, 14, 56);
+
+    if (stageStartMsgTimer > 0) {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = INK1;
+      ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.04) + 'px Arial Narrow, Arial, sans-serif';
+      ctx.fillText(stageStartMsg, W/2, H*0.15);
+    }
+
+    if (paused) {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = PAPER;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.06) + 'px Arial Narrow, Arial, sans-serif';
+      ctx.fillText('PAUSE', W/2, H/2);
+    }
+  }
+
+  function drawEnd(win) {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(0, 0, W, H);
+    drawHalftoneSea();
+    drawLighthouseBase();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = win ? INK2 : INK1;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.07) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText(win ? 'NUIT SAUVÉE !' : 'NAUFRAGE...', W/2, H*0.4);
+
+    ctx.fillStyle = OVER;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.04) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('Score final : ' + score, W/2, H*0.5);
+
+    ctx.fillStyle = INK1;
+    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.035) + 'px Arial Narrow, Arial, sans-serif';
+    ctx.fillText('Touchez pour recommencer', W/2, H*0.65);
   }
 
   function draw() {
-    drawSea();
-
-    if (state === 'title') {
-      drawLighthouse();
-      drawPlate('Le Phare des Naufrages', 'Touchez et glissez pour tourner le faisceau — sauvez les bateaux !', cy());
-      return;
-    }
-
-    drawRocks();
-    drawBeam();
-    drawLighthouse();
-    for (const boat of boats) drawBoat(boat);
-
-    // HUD text as canvas-drawn plate at top
-    ctx.save();
-    ctx.fillStyle = PAL.accent;
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(stageGoalText, 14, 26);
-    ctx.textAlign = 'right';
-    ctx.fillText('Score: ' + score, W - 14, 26);
-    ctx.restore();
-
-    if (graceTimer > 0 && state === 'playing') {
-      ctx.save();
-      ctx.fillStyle = PAL.accent;
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Préparez-vous...', cx(), 52);
-      ctx.restore();
-    }
-
-    if (state === 'stageclear') {
-      drawPlate('Nuit ' + stage + ' réussie !', 'Prochaine nuit à venir...', cy());
-    }
-    if (state === 'win') {
-      drawPlate('Toutes les nuits sont sauvées !', 'Touchez l\'écran pour recommencer', cy());
-    }
-    if (state === 'lose') {
-      drawPlate('Un bateau s\'est brisé sur les rochers...', 'Touchez l\'écran pour recommencer', cy());
-    }
-
-    if (paused && state === 'playing') {
-      drawPlate('Pause', '', cy());
-    }
+    if (screen === 'title') drawTitle();
+    else if (screen === 'playing') drawPlaying();
+    else if (screen === 'win') drawEnd(true);
+    else if (screen === 'lose') drawEnd(false);
+    drawGrain();
   }
 
-  // ---- Host messages ----
+  function loop(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    if (!paused) {
+      update(dt);
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function layout() {
+    resize();
+    cx = W / 2;
+    cy = H * 0.42;
+    beamLength = Math.max(W, H) * 0.75;
+  }
+
+  window.addEventListener('resize', layout);
+
   window.addEventListener('message', (event) => {
     const data = event.data;
     if (!data || data.source !== 'cartridge-host') return;
@@ -539,20 +522,12 @@ const CARTRIDGE = {
     if (data.type === 'reset') backToTitle();
   });
 
-  // ---- Main loop ----
-  function loop(now) {
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
-    lastTime = now;
-    update(dt);
-    draw();
-    if (!bootSent) {
-      CARTRIDGE.send('boot', { title: 'Le Phare des Naufrages', gameType: 'stage-clear', lang: 'fr' });
-      bootSent = true;
-    }
-    requestAnimationFrame(loop);
-  }
+  layout();
+  targetAngle = beamAngle = -Math.PI/2;
 
-  requestAnimationFrame(loop);
+  CARTRIDGE.send('boot', { title: 'Le Gardien du Phare', gameType: 'stage-clear', lang: 'fr' });
+
+  requestAnimationFrame((t) => { lastTime = t; requestAnimationFrame(loop); });
 })();
 </script>
 </body>

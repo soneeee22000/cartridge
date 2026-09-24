@@ -10,7 +10,7 @@
 | planner / builder model | claude-sonnet-5 / claude-sonnet-5 |
 | judge model | claude-haiku-4-5 |
 | price table version | 2026-09-24 |
-| scorer git sha | 1420c4c |
+| scorer git sha | 597ba97 |
 
 ## Per-band results
 
@@ -45,18 +45,18 @@ Label counts on game items. `null` means no cited finding survived validation; `
 | terse | goal-legibility | stated 1 |
 | terse | feedback-on-input | immediate 1 |
 | terse | fail-state-clarity | n/a 1 |
-| short-brief | prompt-coverage | covered 1 |
+| short-brief | prompt-coverage | null 1 |
 | short-brief | goal-legibility | stated 1 |
-| short-brief | feedback-on-input | immediate 1 |
+| short-brief | feedback-on-input | null 1 |
 | short-brief | fail-state-clarity | explained 1 |
-| full-brief | prompt-coverage | null 1 |
+| full-brief | prompt-coverage | covered 1 |
 | full-brief | goal-legibility | stated 1 |
 | full-brief | feedback-on-input | immediate 1 |
 | full-brief | fail-state-clarity | explained 1 |
-| edge | prompt-coverage | null 1 |
-| edge | goal-legibility | null 1 |
-| edge | feedback-on-input | null 1 |
-| edge | fail-state-clarity | null 1 |
+| edge | prompt-coverage | covered 1 |
+| edge | goal-legibility | stated 1 |
+| edge | feedback-on-input | immediate 1 |
+| edge | fail-state-clarity | explained 1 |
 
 E4 labelled set: accuracy 1.000, abstention rate 0.000 (measured on 40 authored bundles; the thresholds were set on the same bundles).
 
@@ -79,15 +79,15 @@ No failures.
 
 | tokens | input | output | cache read | cache write |
 | --- | --- | --- | --- | --- |
-| generator (claude-sonnet-5) | 121666 | 32009 | 0 | 0 |
-| judge (claude-haiku-4-5) | 29091 | 7915 | 0 | 0 |
-| of which repair passes | 27807 | 4393 | 0 | 0 |
+| generator (claude-sonnet-5) | 124984 | 35553 | 0 | 0 |
+| judge (claude-haiku-4-5) | 34312 | 2608 | 0 | 0 |
+| of which repair passes | 30250 | 5268 | 0 | 0 |
 
 Measured cache reads on repair passes: 0 tokens.
 
-Estimated cost: $0.63 (estimate from list prices; not an invoice).
+Estimated cost: $0.65 (estimate from list prices; not an invoice).
 
-Wall time: 259.5 s in total, 63.9 s median per item (from run.json).
+Wall time: 282.3 s in total, 68.8 s median per item (from run.json).
 
 ## Out of scope for this run
 

@@ -1,6 +1,6 @@
 {
   "format": "cartridge-cassette/1",
-  "key": "sha256:8cf6a18eade7eebe886d3e7f6191c561b2dc99affdf2f23f74953dd45c9951bf",
+  "key": "sha256:7e47e737ab7e841a1b703f68895285107dbf10466bc56f07f3ccf48aa933fc0e",
   "occurrence": 0,
   "role": "planner",
   "model": "claude-sonnet-5",
@@ -98,32 +98,10 @@
           "content": [
             {
               "type": "tool_use",
-              "id": "toolu_0139CJbm13M1qtCKoDvWS6KE",
+              "id": "toolu_01Q9FAAe6ZHWhYsA57TAQUhe",
               "name": "list_cards",
               "input": {
                 "kind": "type"
-              },
-              "caller": {
-                "type": "direct"
-              }
-            },
-            {
-              "type": "tool_use",
-              "id": "toolu_01HEvhLC6CKsL3xWNUix7aRS",
-              "name": "list_cards",
-              "input": {
-                "kind": "input"
-              },
-              "caller": {
-                "type": "direct"
-              }
-            },
-            {
-              "type": "tool_use",
-              "id": "toolu_01LkQ6NXFimX1NX9eUDQ8i97",
-              "name": "list_cards",
-              "input": {
-                "kind": "style"
               },
               "caller": {
                 "type": "direct"
@@ -136,18 +114,8 @@
           "content": [
             {
               "type": "tool_result",
-              "tool_use_id": "toolu_0139CJbm13M1qtCKoDvWS6KE",
+              "tool_use_id": "toolu_01Q9FAAe6ZHWhYsA57TAQUhe",
               "content": "{\"cards\":[{\"id\":\"arcade-run\",\"kind\":\"type\",\"title\":\"Arcade run\",\"summary\":\"A continuous run with one life where the player survives and collects.\"},{\"id\":\"puzzle-board\",\"kind\":\"type\",\"title\":\"Puzzle board\",\"summary\":\"A turn-based board with no clock pressure, won by solving it.\"},{\"id\":\"stage-clear\",\"kind\":\"type\",\"title\":\"Stage clear\",\"summary\":\"Discrete stages, each with one goal to meet before moving on.\"},{\"id\":\"toy-box\",\"kind\":\"type\",\"title\":\"Toy box\",\"summary\":\"Open play with a visible tally and a clear-the-table replay; nobody loses.\"}]}"
-            },
-            {
-              "type": "tool_result",
-              "tool_use_id": "toolu_01HEvhLC6CKsL3xWNUix7aRS",
-              "content": "{\"cards\":[{\"id\":\"drag-follow\",\"kind\":\"input\",\"title\":\"Drag follow\",\"summary\":\"A piece follows the finger or cursor while it is held down.\"},{\"id\":\"swipe-lanes\",\"kind\":\"input\",\"title\":\"Swipe lanes\",\"summary\":\"Short swipes move the player between a fixed number of lanes.\"},{\"id\":\"tap-anywhere\",\"kind\":\"input\",\"title\":\"Tap anywhere\",\"summary\":\"One action bound to a tap or click on any part of the screen.\"}]}"
-            },
-            {
-              "type": "tool_result",
-              "tool_use_id": "toolu_01LkQ6NXFimX1NX9eUDQ8i97",
-              "content": "{\"cards\":[{\"id\":\"chalkboard\",\"kind\":\"style\",\"title\":\"Chalkboard\",\"summary\":\"Dusty hand-drawn strokes on a dark slate.\"},{\"id\":\"paper-cut\",\"kind\":\"style\",\"title\":\"Paper cut\",\"summary\":\"Layered flat shapes with soft drop shadows, like cut card stock.\"},{\"id\":\"risograph\",\"kind\":\"style\",\"title\":\"Risograph\",\"summary\":\"Two-ink print look with visible grain and slightly misaligned layers.\"}]}"
             }
           ]
         },
@@ -156,7 +124,7 @@
           "content": [
             {
               "type": "tool_use",
-              "id": "toolu_01B8TeAeWXVWdfvVa4xi3srv",
+              "id": "toolu_01U6WEu6eueoZkCHg7oG95pE",
               "name": "get_card",
               "input": {
                 "id": "stage-clear"
@@ -167,10 +135,21 @@
             },
             {
               "type": "tool_use",
-              "id": "toolu_01Do63JWdm4E969F3tqAdecw",
+              "id": "toolu_018SjQVPfZftw5oxvehA7snS",
               "name": "get_card",
               "input": {
                 "id": "drag-follow"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_01WtgBBrUoLmGwnodE3v11VL",
+              "name": "get_card",
+              "input": {
+                "id": "swipe-lanes"
               },
               "caller": {
                 "type": "direct"
@@ -183,13 +162,18 @@
           "content": [
             {
               "type": "tool_result",
-              "tool_use_id": "toolu_01B8TeAeWXVWdfvVa4xi3srv",
+              "tool_use_id": "toolu_01U6WEu6eueoZkCHg7oG95pE",
               "content": "{\"id\":\"stage-clear\",\"body\":\"# Stage clear\\n\\nThe player meets a stated goal to clear each stage. Clearing the last stage wins; failing a stage loses.\\n\\n## Contract row\\n\\n| field                | value         |\\n| -------------------- | ------------- |\\n| score                | `optional`    |\\n| level                | `required`    |\\n| end                  | `required`    |\\n| end reasons          | `win, lose`   |\\n| reset                | `soft`        |\\n| idle death gate      | `min-seconds` |\\n| idle motion required | `yes`         |\\n\\n- Emit every event marked `required` above: a `level` on entering each stage and an `end` when the play-through finishes. <!-- rule:E1-15 -->\\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\\n- Use only `win` or `lose` as the `end` reason. <!-- rule:E1-17 -->\\n\\n## Stages\\n\\nNumber stages from 1 and step by one. Show the goal on screen when each stage opens (\\\"Light 5 lamps\\\"). Make stage 1 easy enough to clear on the first try.\\n\\n## Loop skeleton\\n\\n```js\\nlet stage = 0;\\nfunction enterStage(next) {\\n  stage = next;\\n  buildStage(stage);\\n  CARTRIDGE.send(\\\"level\\\", { index: stage });\\n}\\nfunction onGoalMet() {\\n  if (stage === STAGES.length) CARTRIDGE.send(\\\"end\\\", { reason: \\\"win\\\" });\\n  else enterStage(stage + 1);\\n}\\nfunction onStageFailed() {\\n  CARTRIDGE.send(\\\"end\\\", { reason: \\\"lose\\\" });\\n}\\n```\\n\\nGive the player a few seconds of grace at the start of each stage before any threat can finish it.\"}"
             },
             {
               "type": "tool_result",
-              "tool_use_id": "toolu_01Do63JWdm4E969F3tqAdecw",
+              "tool_use_id": "toolu_018SjQVPfZftw5oxvehA7snS",
               "content": "{\"id\":\"drag-follow\",\"body\":\"# Drag follow\\n\\nThe player presses on a piece and it trails the pointer until release. Good for steering, sorting and placing.\\n\\n- Register `pointerdown`, `pointermove` and `pointerup` on the canvas and capture the pointer on press. <!-- rule:E1-22 -->\\n- Convert client coordinates to canvas coordinates with `getBoundingClientRect()` and the device pixel ratio.\\n- Ease towards the target instead of snapping, so small jitters do not shake the piece.\\n\\n```js\\nlet held = null;\\ncanvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n  held = pieceAt(toCanvas(event));\\n  if (held) canvas.setPointerCapture(event.pointerId);\\n});\\ncanvas.addEventListener(\\\"pointermove\\\", (event) => {\\n  if (held) held.target = toCanvas(event);\\n});\\ncanvas.addEventListener(\\\"pointerup\\\", () => {\\n  held = null;\\n});\\n```\\n\\nDrop the piece on `pointercancel` as well, so a system gesture never leaves it stuck to the finger.\"}"
+            },
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_01WtgBBrUoLmGwnodE3v11VL",
+              "content": "{\"id\":\"swipe-lanes\",\"body\":\"# Swipe lanes\\n\\nThe play field has three or four lanes. A swipe left or right moves one lane; a tap does nothing, or performs a secondary action.\\n\\n- Register `pointerdown` and `pointerup`, measure the horizontal distance and compare it with a minimum swipe length. <!-- rule:E1-22 -->\\n- Choose the minimum swipe length as a fraction of the canvas width, not in fixed pixels.\\n- Clamp the lane index so the player never leaves the field.\\n\\n```js\\nconst SWIPE_FRACTION = 0.08;\\nlet pressX = 0;\\ncanvas.addEventListener(\\\"pointerdown\\\", (event) => {\\n  pressX = event.clientX;\\n});\\ncanvas.addEventListener(\\\"pointerup\\\", (event) => {\\n  const dx = event.clientX - pressX;\\n  if (Math.abs(dx) < canvas.clientWidth * SWIPE_FRACTION) return;\\n  lane = Math.max(0, Math.min(LANES - 1, lane + Math.sign(dx)));\\n});\\n```\\n\\nAlso accept the left and right arrow keys so the game can be tried on a desktop.\"}"
             }
           ]
         }
@@ -258,63 +242,61 @@
   "response": {
     "status": 200,
     "contentType": "text/event-stream",
-    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNk6X3d4vQvMmk3W1G2X\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":4134,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}      }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}     }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"title\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"Le\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Ph\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"are\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" des Na\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ufr\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ages\\\",\\\"sl\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ug\\\":\\\"le\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-phare-des-nauf\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rages\\\",\\\"l\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ang\\\":\\\"fr\\\",\\\"g\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ameType\\\":\\\"st\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"age-cl\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ear\\\",\\\"lo\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"op\\\":\\\"Gliss\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez le\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" doigt aut\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"our du phare pour tour\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ner le faisceau et é\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clair\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"er ch\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aque bateau ass\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez long\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"temps p\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"our q\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"u'il r\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"entre au\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" port. Une nuit est\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" gagnée quand t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ous les bate\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aux sont r\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"entr\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"és \"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"; un\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bateau q\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ui touche les\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rochers term\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ine la partie.\\\",\\\"input\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"drag-\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"follow\\\",\\\"style\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"pa\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"per-c\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ut\\\"}\"}       }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":4134,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":174,\"output_tokens_details\":{\"thinking_tokens\":0}}               }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"   }\n\n",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNm8tEWMvwQELzKRRsrv\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":4132,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}          }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}      }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"title\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"Le\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Gardien du\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Phare\\\",\\\"sl\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ug\\\":\\\"le\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-gardien-du-ph\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"are\\\",\\\"l\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ang\\\":\\\"fr\\\",\\\"game\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Type\\\":\\\"st\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"age-cl\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ear\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\",\\\"lo\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"op\\\":\\\"Gliss\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez le\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" doigt aut\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"our de\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" la tour pour t\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ourner le faisceau et\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" é\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clairer ch\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aque bateau ass\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ez long\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"temps pour q\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"u'il r\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"entre au\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" port. Fa\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ites\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" r\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"entrer tous les bate\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"aux p\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"our g\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"agner la nuit \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"; un bateau q\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ui touche les\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" rochers term\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ine la part\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ie.\\\",\\\"input\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"drag-foll\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ow\\\",\\\"style\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\":\\\"ris\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ograph\\\"}\"}       }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":4132,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":169,\"output_tokens_details\":{\"thinking_tokens\":0}} }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"           }\n\n",
     "gapsMs": [
       0,
       0,
       0,
       0,
-      397,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
+      448,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      51,
       36,
-      46,
+      40,
+      282,
+      282,
+      282,
+      282,
+      282,
+      282,
+      34,
+      45,
+      50,
+      40,
       46,
       47,
-      225,
-      225,
-      225,
-      225,
-      1,
-      47,
-      48,
-      43,
-      45,
-      45,
+      150,
+      150,
+      150,
+      30,
       46,
-      46,
-      82,
-      8,
-      45,
-      47,
-      45,
-      45,
-      46,
-      52,
-      39,
-      48,
-      45,
+      53,
+      37,
+      49,
       44,
-      45,
-      48,
-      43,
       44,
-      47,
       46,
+      48,
+      46,
+      42,
       45,
-      8,
-      0,
-      0
+      47,
+      49,
+      49,
+      49,
+      49
     ]
   },
   "usage": {
-    "input": 4134,
-    "output": 174,
+    "input": 4132,
+    "output": 169,
     "cacheRead": 0,
     "cacheWrite": 0
   },

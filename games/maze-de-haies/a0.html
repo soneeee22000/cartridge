@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Le Hérisson et le Labyrinthe</title>
+<title>Le Labyrinthe du Hérisson</title>
 <style>
   html, body {
     margin: 0;
@@ -13,18 +13,28 @@
     overflow: hidden;
     background: #f4ecd8;
     touch-action: none;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
   #game {
     display: block;
     width: 100vw;
     height: 100dvh;
-    touch-action: none;
+    background: #f4ecd8;
+  }
+  #hint {
+    position: fixed;
+    left: 0; right: 0; bottom: 8px;
+    text-align: center;
+    color: #3d405b;
+    font-size: 14px;
+    pointer-events: none;
+    user-select: none;
   }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
+<div id="hint"></div>
 <script>
 // ---- Bridge helper (verbatim) ----
 const CARTRIDGE = {
@@ -37,166 +47,280 @@ const CARTRIDGE = {
 };
 </script>
 <script>
-(function () {
+(function(){
+  "use strict";
+
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
-
-  let W = 0, H = 0, DPR = 1;
-
-  function resize() {
-    DPR = window.devicePixelRatio || 1;
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    draw();
-  }
-  window.addEventListener("resize", resize);
-
-  // ---- Seeded jitter for paper-cut style ----
-  function makeRng(seed) {
-    let s = seed >>> 0;
-    return function () {
-      s = (s * 1664525 + 1013904223) >>> 0;
-      return (s / 4294967296);
-    };
-  }
-  const rng = makeRng(9182);
-  const jitterCache = new Map();
-  function jitter(key, amount) {
-    if (jitterCache.has(key)) return jitterCache.get(key);
-    const v = (rng() - 0.5) * 2 * amount;
-    jitterCache.set(key, v);
-    return v;
-  }
+  const hintEl = document.getElementById("hint");
 
   const PALETTE = {
     bg: "#f4ecd8",
     layer: "#e07a5f",
     accent: "#3d405b",
-    highlight: "#81b29a",
+    highlight: "#81b29a"
   };
 
-  // ---- Maze definition ----
-  // 0 = wall (haie), 1 = path, 2 = apple, 3 = start, 4 = exit
-  const GRID = [
-    [1,1,1,0,1,1,1,1,1],
-    [0,0,1,0,1,0,0,0,1],
-    [1,1,1,0,1,0,1,1,1],
-    [1,0,0,0,1,0,1,0,0],
-    [1,1,1,1,1,0,1,1,1],
-    [0,0,0,1,0,0,0,0,1],
-    [1,1,0,1,1,1,1,0,1],
-    [1,0,0,1,0,0,1,0,1],
-    [1,1,1,1,0,1,1,1,4],
-  ];
-  const ROWS = GRID.length;
-  const COLS = GRID[0].length;
-  const START = { r: 0, c: 0 };
-  const APPLES_SRC = [
-    {r:0,c:4},{r:2,c:6},{r:4,c:0},{r:6,c:5},{r:8,c:4},{r:3,c:8},{r:7,c:6}
-  ];
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
 
-  let state = "title"; // title, playing, win, stuck
-  let paused = false;
-  let player = { r: START.r, c: START.c };
+  // ---- Seeded jitter for paper-cut look ----
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const rng = mulberry32(1337);
+  const jitterCache = new Map();
+  function jitterFor(key, n) {
+    if (jitterCache.has(key)) return jitterCache.get(key);
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+      arr.push((rng() - 0.5) * 3);
+    }
+    jitterCache.set(key, arr);
+    return arr;
+  }
+
+  function jitteredRoundRect(x, y, w, h, r, key) {
+    // returns path with jittered corners
+    const pts = [
+      [x + r, y], [x + w - r, y], [x + w, y], [x + w, y + r],
+      [x + w, y + h - r], [x + w, y + h], [x + w - r, y + h],
+      [x + r, y + h], [x, y + h], [x, y + h - r],
+      [x, y + r], [x, y]
+    ];
+    const j = jitterFor(key, pts.length * 2);
+    const p = new Path2D();
+    p.moveTo(x + r + j[0], y + j[1]);
+    p.lineTo(x + w - r + j[2], y + j[3]);
+    p.quadraticCurveTo(x + w + j[4], y + j[5], x + w + j[6], y + r + j[7]);
+    p.lineTo(x + w + j[8], y + h - r + j[9]);
+    p.quadraticCurveTo(x + w + j[10], y + h + j[11], x + w - r + j[12], y + h + j[13]);
+    p.lineTo(x + r + j[14], y + h + j[15]);
+    p.quadraticCurveTo(x + j[16], y + h + j[17], x + j[18], y + h - r + j[19]);
+    p.lineTo(x + j[20], y + r + j[21]);
+    p.quadraticCurveTo(x + j[22], y + j[23], x + r + j[0], y + j[1]);
+    p.closePath();
+    return p;
+  }
+
+  function drawPlate(x, y, w, h, r, fill, key, shadow) {
+    ctx.save();
+    if (shadow !== false) {
+      ctx.shadowColor = "rgba(61,64,91,0.35)";
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+    }
+    const path = jitteredRoundRect(x, y, w, h, r, key);
+    ctx.fillStyle = fill;
+    ctx.fill(path);
+    ctx.restore();
+  }
+
+  // ---- Game state ----
+  const GRID = 7; // 7x7 board
+  let cell = [];
+  let hedgehog = { x: 0, y: 0 };
+  let exitPos = { x: 0, y: 0 };
   let apples = [];
+  let hedges = new Set();
   let score = 0;
-  let moves = 0;
   let stepsLeft = 0;
-  const MAX_STEPS = 40;
-  let lastMoveDir = null;
+  let maxSteps = 0;
+  let moves = 0;
+  let level = 1;
 
-  function cellReachable(r, c) {
-    return r >= 0 && r < ROWS && c >= 0 && c < COLS && GRID[r][c] !== 0;
+  let state = "title"; // title, playing, ended
+  let paused = false;
+  let endReason = null;
+  let started = false;
+
+  function key(x, y) { return x + "," + y; }
+
+  function buildLevel(idx) {
+    hedges = new Set();
+    apples = [];
+    hedgehog = { x: 0, y: 0 };
+    exitPos = { x: GRID - 1, y: GRID - 1 };
+    score = 0;
+    moves = 0;
+    endReason = null;
+
+    const rng2 = mulberry32(1000 + idx * 77);
+    // place some hedges avoiding start and exit, ensure not fully blocking path via simple heuristic
+    const hedgeCount = 8 + idx * 2;
+    let placed = 0;
+    let attempts = 0;
+    while (placed < hedgeCount && attempts < 500) {
+      attempts++;
+      const hx = Math.floor(rng2() * GRID);
+      const hy = Math.floor(rng2() * GRID);
+      if ((hx === 0 && hy === 0) || (hx === exitPos.x && hy === exitPos.y)) continue;
+      const k = key(hx, hy);
+      if (hedges.has(k)) continue;
+      hedges.add(k);
+      placed++;
+    }
+    // ensure path exists via BFS; if not, remove random hedges until path found
+    function pathExists() {
+      const visited = new Set();
+      const queue = [[0,0]];
+      visited.add(key(0,0));
+      while (queue.length) {
+        const [cx, cy] = queue.shift();
+        if (cx === exitPos.x && cy === exitPos.y) return true;
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+        for (const [dx,dy] of dirs) {
+          const nx = cx+dx, ny = cy+dy;
+          if (nx<0||ny<0||nx>=GRID||ny>=GRID) continue;
+          const nk = key(nx,ny);
+          if (visited.has(nk) || hedges.has(nk)) continue;
+          visited.add(nk);
+          queue.push([nx,ny]);
+        }
+      }
+      return false;
+    }
+    let guard = 0;
+    while (!pathExists() && guard < 1000) {
+      guard++;
+      const arr = Array.from(hedges);
+      if (arr.length === 0) break;
+      const removeIdx = Math.floor(rng2() * arr.length);
+      hedges.delete(arr[removeIdx]);
+    }
+
+    // place apples on free cells reachable, not on start/exit/hedge
+    const appleCount = 4;
+    let ap = 0;
+    attempts = 0;
+    while (ap < appleCount && attempts < 500) {
+      attempts++;
+      const ax = Math.floor(rng2() * GRID);
+      const ay = Math.floor(rng2() * GRID);
+      if ((ax===0 && ay===0) || (ax===exitPos.x && ay===exitPos.y)) continue;
+      const k = key(ax,ay);
+      if (hedges.has(k)) continue;
+      if (apples.some(a => a.x===ax && a.y===ay)) continue;
+      apples.push({ x: ax, y: ay, collected: false });
+      ap++;
+    }
+
+    maxSteps = GRID * 2 + 6 + idx * 2;
+    stepsLeft = maxSteps;
   }
 
   function resetGameState() {
-    player = { r: START.r, c: START.c };
-    apples = APPLES_SRC.map(a => ({ ...a, taken: false }));
-    score = 0;
-    moves = 0;
-    stepsLeft = MAX_STEPS;
-    lastMoveDir = null;
+    level = 1;
+    buildLevel(level);
   }
 
   function backToTitle() {
     state = "title";
+    started = false;
     paused = false;
-    resetGameState();
     draw();
   }
 
-  resetGameState();
+  function startGame() {
+    state = "playing";
+    started = true;
+    resetGameState();
+    CARTRIDGE.send("start");
+    CARTRIDGE.send("level", { index: level });
+    CARTRIDGE.send("score", { value: score });
+    draw();
+  }
+
+  function isLegalMove(dx, dy) {
+    const nx = hedgehog.x + dx;
+    const ny = hedgehog.y + dy;
+    if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) return false;
+    if (hedges.has(key(nx, ny))) return false;
+    return true;
+  }
 
   function anyLegalMove() {
-    if (stepsLeft <= 0) return false;
-    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-    for (const [dr, dc] of dirs) {
-      const nr = player.r + dr, nc = player.c + dc;
-      if (cellReachable(nr, nc)) return true;
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dx,dy] of dirs) {
+      if (isLegalMove(dx,dy)) return true;
     }
     return false;
   }
 
-  function tryMove(dr, dc) {
+  function tryMove(dx, dy) {
     if (state !== "playing" || paused) return;
-    const nr = player.r + dr, nc = player.c + dc;
-    if (!cellReachable(nr, nc)) return;
-    player.r = nr;
-    player.c = nc;
-    moves += 1;
-    stepsLeft -= 1;
-    lastMoveDir = dc > 0 ? "right" : dc < 0 ? "left" : dr > 0 ? "down" : "up";
+    if (!isLegalMove(dx, dy)) return;
+    if (stepsLeft <= 0) return;
 
-    // apple pickup
+    hedgehog.x += dx;
+    hedgehog.y += dy;
+    stepsLeft -= 1;
+    moves += 1;
+
+    let scored = false;
     for (const a of apples) {
-      if (!a.taken && a.r === nr && a.c === nc) {
-        a.taken = true;
+      if (!a.collected && a.x === hedgehog.x && a.y === hedgehog.y) {
+        a.collected = true;
         score += 10;
-        CARTRIDGE.send("score", { value: score });
+        scored = true;
       }
     }
+    if (scored) {
+      CARTRIDGE.send("score", { value: score });
+    }
 
-    if (GRID[nr][nc] === 4) {
-      state = "win";
+    const wonLevel = (hedgehog.x === exitPos.x && hedgehog.y === exitPos.y);
+
+    if (wonLevel) {
+      score += 25;
+      CARTRIDGE.send("score", { value: score });
+      state = "ended";
+      endReason = "win";
       CARTRIDGE.send("end", { reason: "win", value: score });
-    } else if (!anyLegalMove()) {
-      state = "stuck";
+    } else if (stepsLeft <= 0 || !anyLegalMove()) {
+      state = "ended";
+      endReason = "stuck";
       CARTRIDGE.send("end", { reason: "stuck", value: score });
     }
+
     draw();
   }
 
-  // ---- Input: swipe lanes style (adapted to 4-direction grid) ----
+  // ---- Input: swipe lanes style (4-directional swipe) ----
+  const SWIPE_FRACTION = 0.08;
   let pressX = 0, pressY = 0;
   let pressActive = false;
+
   canvas.addEventListener("pointerdown", (event) => {
     pressX = event.clientX;
     pressY = event.clientY;
     pressActive = true;
     if (state === "title") {
       startGame();
-    } else if (state === "win" || state === "stuck") {
+    } else if (state === "ended") {
+      // soft reset: go back to title on tap
       backToTitle();
     }
   });
+
   canvas.addEventListener("pointerup", (event) => {
     if (!pressActive) return;
     pressActive = false;
     if (state !== "playing") return;
     const dx = event.clientX - pressX;
     const dy = event.clientY - pressY;
-    const SWIPE_FRACTION = 0.08;
-    const minLen = canvas.clientWidth * SWIPE_FRACTION;
-    if (Math.abs(dx) < minLen && Math.abs(dy) < minLen) return;
+    const minSwipe = canvas.clientWidth * SWIPE_FRACTION;
+    if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) return;
+
     if (Math.abs(dx) > Math.abs(dy)) {
-      tryMove(0, Math.sign(dx));
+      tryMove(Math.sign(dx), 0);
     } else {
-      tryMove(Math.sign(dy), 0);
+      tryMove(0, Math.sign(dy));
     }
   });
 
@@ -205,26 +329,18 @@ const CARTRIDGE = {
       if (event.key === "Enter" || event.key === " ") startGame();
       return;
     }
-    if (state === "win" || state === "stuck") {
+    if (state === "ended") {
       if (event.key === "Enter" || event.key === " ") backToTitle();
       return;
     }
     if (state !== "playing" || paused) return;
-    if (event.key === "ArrowLeft") tryMove(0, -1);
-    else if (event.key === "ArrowRight") tryMove(0, 1);
-    else if (event.key === "ArrowUp") tryMove(-1, 0);
-    else if (event.key === "ArrowDown") tryMove(1, 0);
+    if (event.key === "ArrowLeft") tryMove(-1, 0);
+    else if (event.key === "ArrowRight") tryMove(1, 0);
+    else if (event.key === "ArrowUp") tryMove(0, -1);
+    else if (event.key === "ArrowDown") tryMove(0, 1);
   });
 
-  function startGame() {
-    resetGameState();
-    state = "playing";
-    CARTRIDGE.send("start");
-    CARTRIDGE.send("level", { index: 1 });
-    draw();
-  }
-
-  // ---- Host bridge commands ----
+  // ---- Host bridge messages ----
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data || data.source !== "cartridge-host") return;
@@ -233,195 +349,65 @@ const CARTRIDGE = {
     if (data.type === "reset") backToTitle();
   });
 
-  // ---- Drawing helpers: paper-cut style ----
-  function roundedRectPath(x, y, w, h, r, seedKey) {
-    const pts = [
-      [x, y], [x + w, y], [x + w, y + h], [x, y + h]
-    ];
-    ctx.beginPath();
-    const jr = (i, axis) => jitter(seedKey + "_" + i + "_" + axis, 1.5);
-    ctx.moveTo(x + r + jr(0,'x'), y + jr(0,'y'));
-    ctx.lineTo(x + w - r + jr(1,'x'), y + jr(1,'y'));
-    ctx.quadraticCurveTo(x + w + jr(1,'qx'), y + jr(1,'qy'), x + w + jr(1,'qx2'), y + r + jr(1,'qy2'));
-    ctx.lineTo(x + w + jr(2,'x'), y + h - r + jr(2,'y'));
-    ctx.quadraticCurveTo(x + w + jr(2,'qx'), y + h + jr(2,'qy'), x + w - r + jr(2,'qx2'), y + h + jr(2,'qy2'));
-    ctx.lineTo(x + r + jr(3,'x'), y + h + jr(3,'y'));
-    ctx.quadraticCurveTo(x + jr(3,'qx'), y + h + jr(3,'qy'), x + jr(3,'qx2'), y + h - r + jr(3,'qy2'));
-    ctx.lineTo(x + jr(0,'x2'), y + r + jr(0,'y2'));
-    ctx.quadraticCurveTo(x + jr(0,'qx'), y + jr(0,'qy'), x + r + jr(0,'qx2'), y + jr(0,'qy2'));
-    ctx.closePath();
+  // ---- Rendering ----
+  function resize() {
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  window.addEventListener("resize", resize);
+
+  function boardMetrics() {
+    const margin = Math.min(W, H) * 0.06;
+    const topArea = Math.min(H * 0.14, 90);
+    const availW = W - margin * 2;
+    const availH = H - margin * 2 - topArea;
+    const size = Math.min(availW, availH);
+    const cellSize = size / GRID;
+    const bx = (W - size) / 2;
+    const by = topArea + (availH - size) / 2 + margin * 0.5;
+    return { bx, by, cellSize, size };
   }
 
-  function drawCardPlate(x, y, w, h, color, seedKey) {
+  function drawHedgehog(cx, cy, r) {
     ctx.save();
     ctx.shadowColor = "rgba(61,64,91,0.35)";
     ctx.shadowBlur = 6;
     ctx.shadowOffsetY = 3;
-    roundedRectPath(x, y, w, h, Math.min(w, h) * 0.15, seedKey);
-    ctx.fillStyle = color;
+    // body
+    ctx.fillStyle = PALETTE.accent;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r * 0.9, r * 0.7, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-  }
-
-  function drawTitleScreen() {
-    ctx.fillStyle = PALETTE.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    const plateW = Math.min(W * 0.85, 560);
-    const plateH = Math.min(H * 0.5, 320);
-    const px = (W - plateW) / 2;
-    const py = (H - plateH) / 2 - 20;
-    drawCardPlate(px, py, plateW, plateH, PALETTE.layer, "titleplate");
-
-    ctx.fillStyle = PALETTE.accent;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const titleSize = Math.max(20, Math.min(34, plateW * 0.075));
-    ctx.font = "bold " + titleSize + "px sans-serif";
-    wrapText("Le Hérisson et le Labyrinthe", W / 2, py + plateH * 0.32, plateW * 0.85, titleSize * 1.15);
-
-    ctx.font = Math.max(14, titleSize * 0.5) + "px sans-serif";
-    ctx.fillText("Glissez pour avancer, ramassez les pommes", W / 2, py + plateH * 0.68, plateW * 0.9);
-
-    // start button plate
-    const bw = Math.min(220, plateW * 0.6);
-    const bh = 56;
-    const bx = W / 2 - bw / 2;
-    const by = py + plateH + 30;
-    drawCardPlate(bx, by, bw, bh, PALETTE.highlight, "startbtn");
-    ctx.fillStyle = PALETTE.accent;
-    ctx.font = "bold 20px sans-serif";
-    ctx.fillText("Jouer", W / 2, by + bh / 2 + 1);
-
-    drawHedgehogIcon(W / 2, py - 45, 30);
-  }
-
-  function wrapText(text, cx, cy, maxWidth, lineHeight) {
-    const words = text.split(" ");
-    let lines = [];
-    let cur = "";
-    for (const w of words) {
-      const test = cur ? cur + " " + w : w;
-      if (ctx.measureText(test).width > maxWidth && cur) {
-        lines.push(cur);
-        cur = w;
-      } else {
-        cur = test;
-      }
-    }
-    if (cur) lines.push(cur);
-    const startY = cy - ((lines.length - 1) * lineHeight) / 2;
-    lines.forEach((line, i) => {
-      ctx.fillText(line, cx, startY + i * lineHeight);
-    });
-  }
-
-  function drawHedgehogIcon(cx, cy, size) {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.shadowColor = "rgba(61,64,91,0.3)";
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetY = 2;
-    // body
-    ctx.beginPath();
-    ctx.ellipse(0, 0, size, size * 0.75, 0, 0, Math.PI * 2);
-    ctx.fillStyle = PALETTE.accent;
-    ctx.fill();
     // spikes
     ctx.fillStyle = PALETTE.layer;
     for (let i = -3; i <= 3; i++) {
-      const ang = -Math.PI / 2 + i * 0.28;
-      const x1 = Math.cos(ang) * size * 0.5;
-      const y1 = Math.sin(ang) * size * 0.5;
-      const x2 = Math.cos(ang) * size * 1.3;
-      const y2 = Math.sin(ang) * size * 1.3 - size * 0.3;
+      const angle = (i / 6) * Math.PI * 0.9 - Math.PI * 0.05;
+      const sx = cx - Math.cos(angle) * r * 0.3;
+      const sy = cy - r * 0.5 + Math.sin(angle) * r * 0.2;
       ctx.beginPath();
-      ctx.moveTo(x1 - 4, y1);
-      ctx.lineTo(x2, y2);
-      ctx.lineTo(x1 + 4, y1);
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx - r * 0.18, sy - r * 0.5);
+      ctx.lineTo(sx + r * 0.18, sy - r * 0.5);
       ctx.closePath();
       ctx.fill();
     }
-    ctx.restore();
-  }
-
-  function drawMaze() {
+    // face
     ctx.fillStyle = PALETTE.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    const margin = 16;
-    const boardTop = 90;
-    const boardW = W - margin * 2;
-    const boardH = H - boardTop - margin;
-    const cellSize = Math.min(boardW / COLS, boardH / ROWS);
-    const gridW = cellSize * COLS;
-    const gridH = cellSize * ROWS;
-    const offX = margin + (boardW - gridW) / 2;
-    const offY = boardTop + (boardH - gridH) / 2;
-
-    // background plate for board
-    drawCardPlate(offX - 8, offY - 8, gridW + 16, gridH + 16, "#e9dcc0", "boardplate");
-
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const x = offX + c * cellSize;
-        const y = offY + r * cellSize;
-        const val = GRID[r][c];
-        const key = "cell_" + r + "_" + c;
-        if (val === 0) {
-          // hedge (wall)
-          ctx.save();
-          ctx.shadowColor = "rgba(61,64,91,0.25)";
-          ctx.shadowBlur = 4;
-          ctx.shadowOffsetY = 2;
-          roundedRectPath(x + 2, y + 2, cellSize - 4, cellSize - 4, cellSize * 0.2, key);
-          ctx.fillStyle = PALETTE.highlight;
-          ctx.fill();
-          ctx.restore();
-        } else {
-          // path tile - subtle
-          roundedRectPath(x + 3, y + 3, cellSize - 6, cellSize - 6, cellSize * 0.15, key + "_path");
-          ctx.fillStyle = "#f4ecd8";
-          ctx.fill();
-          if (val === 4) {
-            // exit marker
-            ctx.save();
-            ctx.fillStyle = PALETTE.accent;
-            ctx.beginPath();
-            ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.28, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = PALETTE.bg;
-            ctx.font = "bold " + Math.floor(cellSize * 0.32) + "px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("S", x + cellSize / 2, y + cellSize / 2 + 1);
-            ctx.restore();
-          }
-        }
-      }
-    }
-
-    // apples
-    for (const a of apples) {
-      if (a.taken) continue;
-      const x = offX + a.c * cellSize + cellSize / 2;
-      const y = offY + a.r * cellSize + cellSize / 2;
-      drawApple(x, y, cellSize * 0.22);
-    }
-
-    // player hedgehog
-    const px = offX + player.c * cellSize + cellSize / 2;
-    const py = offY + player.r * cellSize + cellSize / 2;
-    drawHedgehogIcon(px, py, cellSize * 0.28);
-
-    // HUD
-    drawHUD(offX, gridW);
-
-    if (state === "win" || state === "stuck") {
-      drawEndOverlay();
-    } else if (paused) {
-      drawPauseOverlay();
-    }
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.55, cy + r * 0.1, r * 0.28, r * 0.22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.accent;
+    ctx.beginPath();
+    ctx.arc(cx + r * 0.75, cy + r * 0.08, r * 0.05, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function drawApple(cx, cy, r) {
@@ -429,73 +415,190 @@ const CARTRIDGE = {
     ctx.shadowColor = "rgba(61,64,91,0.3)";
     ctx.shadowBlur = 4;
     ctx.shadowOffsetY = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = PALETTE.layer;
-    ctx.fill();
-    ctx.restore();
     ctx.fillStyle = PALETTE.highlight;
     ctx.beginPath();
-    ctx.ellipse(cx - r * 0.3, cy - r * 1.1, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
     ctx.fill();
-  }
-
-  function drawHUD(offX, gridW) {
-    const hudH = 60;
-    drawCardPlate(offX, 14, gridW, hudH, PALETTE.layer, "hudplate");
-    ctx.fillStyle = "#f4ecd8";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.font = "bold 18px sans-serif";
-    ctx.fillText("Score: " + score, offX + 18, 14 + hudH / 2);
-    ctx.textAlign = "right";
-    ctx.fillText("Pas restants: " + stepsLeft, offX + gridW - 18, 14 + hudH / 2);
-  }
-
-  function drawPauseOverlay() {
-    ctx.fillStyle = "rgba(61,64,91,0.5)";
-    ctx.fillRect(0, 0, W, H);
-    const pw = 260, ph = 90;
-    drawCardPlate(W / 2 - pw / 2, H / 2 - ph / 2, pw, ph, PALETTE.highlight, "pauseplate");
+    ctx.restore();
     ctx.fillStyle = PALETTE.accent;
-    ctx.font = "bold 24px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Pause", W / 2, H / 2);
+    ctx.fillRect(cx - r * 0.03, cy - r * 0.62, r * 0.06, r * 0.2);
   }
 
-  function drawEndOverlay() {
-    ctx.fillStyle = "rgba(61,64,91,0.55)";
-    ctx.fillRect(0, 0, W, H);
-    const pw = Math.min(W * 0.8, 420);
-    const ph = 220;
-    const px = W / 2 - pw / 2;
-    const py = H / 2 - ph / 2;
-    drawCardPlate(px, py, pw, ph, PALETTE.layer, "endplate");
-    ctx.fillStyle = "#f4ecd8";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = "bold 28px sans-serif";
-    const msg = state === "win" ? "Bravo, sorti !" : "Plus aucun pas...";
-    ctx.fillText(msg, W / 2, py + ph * 0.32);
-    ctx.font = "20px sans-serif";
-    ctx.fillText("Score final: " + score, W / 2, py + ph * 0.55);
-    ctx.font = "16px sans-serif";
-    ctx.fillText("Touchez pour recommencer", W / 2, py + ph * 0.78);
+  function drawHedge(x, y, cellSize, k) {
+    const px = x, py = y;
+    drawPlate(px + 2, py + 2, cellSize - 4, cellSize - 4, 8, PALETTE.layer, "hedge" + k, true);
+    ctx.save();
+    ctx.strokeStyle = PALETTE.accent;
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.35;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(px + cellSize * (0.3 + i * 0.2), py + cellSize * 0.4, cellSize * 0.18, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = PALETTE.bg;
+    ctx.fillRect(0, 0, W, H);
+
     if (state === "title") {
-      drawTitleScreen();
-    } else {
-      drawMaze();
+      drawTitle();
+      hintEl.textContent = "";
+      return;
     }
+
+    const { bx, by, cellSize, size } = boardMetrics();
+
+    // board backing plate
+    drawPlate(bx - 6, by - 6, size + 12, size + 12, 14, "#ffffff22", "boardplate", false);
+    drawPlate(bx - 4, by - 4, size + 8, size + 8, 12, PALETTE.bg, "boardbg", true);
+
+    // grid cells
+    for (let gy = 0; gy < GRID; gy++) {
+      for (let gx = 0; gx < GRID; gx++) {
+        const px = bx + gx * cellSize;
+        const py = by + gy * cellSize;
+        const k = key(gx, gy);
+        const isExit = (gx === exitPos.x && gy === exitPos.y);
+        if (hedges.has(k)) {
+          drawHedge(px, py, cellSize, k);
+        } else {
+          const shade = ((gx + gy) % 2 === 0) ? PALETTE.bg : "#ecdfc4";
+          drawPlate(px + 3, py + 3, cellSize - 6, cellSize - 6, 6, shade, "cell" + k, false);
+        }
+        if (isExit) {
+          ctx.save();
+          ctx.strokeStyle = PALETTE.highlight;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(px + 5, py + 5, cellSize - 10, cellSize - 10);
+          ctx.fillStyle = PALETTE.accent;
+          ctx.font = "bold " + Math.floor(cellSize * 0.28) + "px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("🚪", px + cellSize / 2, py + cellSize / 2);
+          ctx.restore();
+        }
+      }
+    }
+
+    // apples
+    for (const a of apples) {
+      if (a.collected) continue;
+      const cx = bx + a.x * cellSize + cellSize / 2;
+      const cy = by + a.y * cellSize + cellSize / 2;
+      drawApple(cx, cy, cellSize * 0.5);
+    }
+
+    // hedgehog
+    const hx = bx + hedgehog.x * cellSize + cellSize / 2;
+    const hy = by + hedgehog.y * cellSize + cellSize / 2;
+    drawHedgehog(hx, hy, cellSize * 0.42);
+
+    // HUD
+    drawHUD();
+
+    if (state === "ended") {
+      drawEndOverlay();
+    }
+
+    hintEl.textContent = state === "playing" ? "Glissez pour déplacer le hérisson" : "";
+  }
+
+  function drawHUD() {
+    const padding = 10;
+    const plateW = Math.min(W * 0.9, 420);
+    const plateH = 54;
+    const px = (W - plateW) / 2;
+    const py = 8;
+    drawPlate(px, py, plateW, plateH, 10, "#ffffff", "hud", true);
+    ctx.fillStyle = PALETTE.accent;
+    ctx.font = "bold 16px sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Niveau " + level, px + 14, py + plateH / 2);
+    ctx.textAlign = "center";
+    ctx.fillText("Score: " + score, px + plateW / 2, py + plateH / 2);
+    ctx.textAlign = "right";
+    ctx.fillText("Pas: " + stepsLeft, px + plateW - 14, py + plateH / 2);
+  }
+
+  function drawTitle() {
+    const plateW = Math.min(W * 0.85, 500);
+    const plateH = Math.min(H * 0.4, 260);
+    const px = (W - plateW) / 2;
+    const py = (H - plateH) / 2;
+    drawPlate(px, py, plateW, plateH, 20, "#ffffff", "titleplate", true);
+
+    ctx.fillStyle = PALETTE.accent;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold " + Math.floor(Math.min(plateW, plateH) * 0.11) + "px sans-serif";
+    wrapText("Le Labyrinthe du Hérisson", px + plateW / 2, py + plateH * 0.32, plateW * 0.85, Math.floor(plateW * 0.09));
+
+    drawHedgehog(px + plateW / 2, py + plateH * 0.62, Math.min(plateW, plateH) * 0.12);
+
+    ctx.font = "16px sans-serif";
+    ctx.fillStyle = PALETTE.accent;
+    ctx.fillText("Touchez ou appuyez sur Entrée pour jouer", px + plateW / 2, py + plateH * 0.88);
+  }
+
+  function drawEndOverlay() {
+    ctx.save();
+    ctx.fillStyle = "rgba(61,64,91,0.45)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    const plateW = Math.min(W * 0.8, 420);
+    const plateH = Math.min(H * 0.3, 200);
+    const px = (W - plateW) / 2;
+    const py = (H - plateH) / 2;
+    drawPlate(px, py, plateW, plateH, 18, "#ffffff", "endplate", true);
+
+    ctx.fillStyle = PALETTE.accent;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 24px sans-serif";
+    const msg = endReason === "win" ? "Bravo ! Sortie atteinte" : "Bloqué ! Plus de pas";
+    ctx.fillText(msg, px + plateW / 2, py + plateH * 0.35);
+
+    ctx.font = "18px sans-serif";
+    ctx.fillText("Score final: " + score, px + plateW / 2, py + plateH * 0.6);
+
+    ctx.font = "14px sans-serif";
+    ctx.fillText("Touchez pour revenir au titre", px + plateW / 2, py + plateH * 0.85);
+  }
+
+  function wrapText(text, x, y, maxWidth, lineHeight) {
+    const words = text.split(" ");
+    let line = "";
+    const lines = [];
+    for (const w of words) {
+      const test = line + w + " ";
+      if (ctx.measureText(test).width > maxWidth && line !== "") {
+        lines.push(line);
+        line = w + " ";
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((l, i) => {
+      ctx.fillText(l.trim(), x, startY + i * lineHeight);
+    });
   }
 
   // ---- Boot ----
-  resize();
-  draw();
-  CARTRIDGE.send("boot", { title: "Le Hérisson et le Labyrinthe", gameType: "puzzle-board", lang: "fr" });
+  function boot() {
+    resize();
+    draw();
+    CARTRIDGE.send("boot", { title: "Le Labyrinthe du Hérisson", gameType: "puzzle-board", lang: "fr" });
+  }
+
+  boot();
 })();
 </script>
 </body>

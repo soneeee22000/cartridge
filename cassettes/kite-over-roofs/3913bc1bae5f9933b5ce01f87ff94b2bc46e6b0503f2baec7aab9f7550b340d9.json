@@ -1,0 +1,466 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:3913bc1bae5f9933b5ce01f87ff94b2bc46e6b0503f2baec7aab9f7550b340d9",
+  "occurrence": 0,
+  "role": "judge",
+  "model": "claude-haiku-4-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-4-5",
+      "max_tokens": 4000,
+      "temperature": 0,
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "prompt-coverage": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "goal-legibility": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback-on-input": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fail-state-clarity": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "line": {
+                              "type": "integer"
+                            },
+                            "quote": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "line",
+                            "quote"
+                          ]
+                        }
+                      },
+                      "rationale": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "evidence",
+                      "rationale"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "prompt-coverage",
+              "goal-legibility",
+              "feedback-on-input",
+              "fail-state-clarity"
+            ]
+          }
+        }
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You review the source code of a small HTML game against the brief it was built from.\nAnswer each rubric question by reading the source. Do not run or imagine running the game.\n\nRubric:\n- prompt-coverage: Which nouns and verbs from the brief have a corresponding object, rule or action in the code? Labels: covered, partly, missed.\n- goal-legibility: Is there on-screen text or a drawn cue that states what the player is trying to do? Labels: stated, implied, absent.\n- feedback-on-input: Does a player input produce a visible change within the same handler or the next drawn frame? Labels: immediate, indirect, none.\n- fail-state-clarity: When play ends, does the game show why it ended and how to play again? Labels: explained, abrupt, missing.\n\nFor every dimension, give one label from that dimension's list and evidence:\neach evidence item is a line number from the numbered source and a short quote copied exactly\nfrom that line. Give a one-sentence rationale in words only: never state a percentage, a ratio,\na count out of a total, points, frames per second or milliseconds.\nAnswer with one entry per dimension. If you cannot point to a line for a dimension, set that\ndimension to null rather than guessing. Give at most three evidence items per dimension."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "Brief:\nA paper kite rides the wind over the rooftops. Tap to rise, avoid the chimneys and collect ribbons while the wind slowly speeds up.\n\nPlan:\n{\"gameType\":\"arcade-run\",\"input\":\"tap-anywhere\",\"lang\":\"en\",\"loop\":\"Tap to make your paper kite rise on the wind, dodge the chimneys, and collect ribbons as the breeze quickens. One crash into a chimney ends the flight.\",\"slug\":\"kite-above-the-rooftops\",\"style\":\"paper-cut\",\"title\":\"Kite Above the Rooftops\"}\n\nGame source (line-numbered):\n1| <!doctype html>\n2| <html lang=\"en\">\n3| <head>\n4| <meta charset=\"utf-8\">\n5| <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n6| <title>Kite Above the Rooftops</title>\n7| <style>\n8|   html, body {\n9|     margin: 0; padding: 0; width: 100%; height: 100%;\n10|     background: #f4ecd8;\n11|     overflow: hidden;\n12|     font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n13|   }\n14|   canvas {\n15|     display: block;\n16|     touch-action: none;\n17|   }\n18| </style>\n19| </head>\n20| <body>\n21| <canvas id=\"game\"></canvas>\n22| <script>\n23| // ---- Bridge helper (verbatim) ----\n24| const CARTRIDGE = {\n25|   send(type, payload = {}) {\n26|     window.parent.postMessage(\n27|       { source: \"cartridge\", v: 1, type, payload },\n28|       \"*\",\n29|     );\n30|   },\n31| };\n32| \n33| // ---- Setup ----\n34| const canvas = document.getElementById(\"game\");\n35| const ctx = canvas.getContext(\"2d\");\n36| canvas.style.touchAction = \"none\";\n37| \n38| let DPR = Math.max(1, window.devicePixelRatio || 1);\n39| let W = 0, H = 0;\n40| \n41| function resize() {\n42|   W = window.innerWidth;\n43|   H = window.innerHeight;\n44|   canvas.width = Math.floor(W * DPR);\n45|   canvas.height = Math.floor(H * DPR);\n46|   canvas.style.width = W + \"px\";\n47|   canvas.style.height = H + \"px\";\n48|   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n49| }\n50| window.addEventListener(\"resize\", resize);\n51| resize();\n52| \n53| // ---- Palette ----\n54| const COLORS = {\n55|   bg: \"#f4ecd8\",\n56|   layer: \"#e07a5f\",\n57|   accent: \"#3d405b\",\n58|   highlight: \"#81b29a\",\n59| };\n60| \n61| // ---- Seeded jitter helper ----\n62| function makeJitterSeed(n) {\n63|   const arr = [];\n64|   let s = n * 9301 + 49297;\n65|   for (let i = 0; i < 40; i++) {\n66|     s = (s * 9301 + 49297) % 233280;\n67|     arr.push((s / 233280) * 2 - 1);\n68|   }\n69|   return arr;\n70| }\n71| const jitterTable = makeJitterSeed(777);\n72| function jit(i, amt) {\n73|   return jitterTable[i % jitterTable.length] * amt;\n74| }\n75| \n76| // ---- Rounded rect path with jitter ----\n77| function jitterRoundRect(x, y, w, h, r, seedBase) {\n78|   ctx.beginPath();\n79|   const pts = [\n80|     [x + r, y],\n81|     [x + w - r, y],\n82|     [x + w, y + r],\n83|     [x + w, y + h - r],\n84|     [x + w - r, y + h],\n85|     [x + r, y + h],\n86|     [x, y + h - r],\n87|     [x, y + r],\n88|   ];\n89|   // simple jittered rounded rect approximation using arcs at corners\n90|   ctx.beginPath();\n91|   ctx.moveTo(x + r + jit(seedBase, 1.2), y + jit(seedBase + 1, 1.2));\n92|   ctx.lineTo(x + w - r + jit(seedBase + 2, 1.2), y + jit(seedBase + 3, 1.2));\n93|   ctx.quadraticCurveTo(x + w, y, x + w, y + r);\n94|   ctx.lineTo(x + w + jit(seedBase + 4, 1.2), y + h - r + jit(seedBase + 5, 1.2));\n95|   ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);\n96|   ctx.lineTo(x + r + jit(seedBase + 6, 1.2), y + h + jit(seedBase + 7, 1.2));\n97|   ctx.quadraticCurveTo(x, y + h, x, y + h - r);\n98|   ctx.lineTo(x + jit(seedBase + 8, 1.2), y + r + jit(seedBase + 9, 1.2));\n99|   ctx.quadraticCurveTo(x, y, x + r, y);\n100|   ctx.closePath();\n101| }\n102| \n103| function drawShadowLayer(drawFn) {\n104|   ctx.save();\n105|   ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n106|   ctx.shadowBlur = 6;\n107|   ctx.shadowOffsetY = 3;\n108|   drawFn();\n109|   ctx.restore();\n110| }\n111| \n112| // ---- Game state ----\n113| let last = 0;\n114| let running = false;\n115| let paused = false;\n116| let started = false; // has boot happened\n117| let score = 0;\n118| let ribbons = 0;\n119| let elapsed = 0;\n120| let speed = 140; // px/s base scroll speed\n121| let level = 1;\n122| \n123| const kite = {\n124|   x: 0,\n125|   y: 0,\n126|   vy: 0,\n127|   radius: 18,\n128|   angle: 0,\n129| };\n130| \n131| let chimneys = []; // {x, gapY, gapH, w, passed}\n132| let ribbonsList = []; // {x, y, r, taken}\n133| let clouds = [];\n134| \n135| const GRAVITY = 480;\n136| const LIFT = -320;\n137| const CHIMNEY_GAP_MIN = 170;\n138| const CHIMNEY_GAP_MAX = 230;\n139| const CHIMNEY_W = 70;\n140| let spawnTimer = 0;\n141| let spawnInterval = 1.7;\n142| \n143| function resetState() {\n144|   score = 0;\n145|   ribbons = 0;\n146|   elapsed = 0;\n147|   speed = 140;\n148|   level = 1;\n149|   kite.x = Math.max(90, W * 0.22);\n150|   kite.y = H * 0.4;\n151|   kite.vy = 0;\n152|   kite.angle = 0;\n153|   chimneys = [];\n154|   ribbonsList = [];\n155|   spawnTimer = 0;\n156|   spawnInterval = 1.7;\n157|   // fairness: clear opening lane, first hazard well ahead\n158|   spawnTimer = -2.0;\n159|   initClouds();\n160| }\n161| \n162| function initClouds() {\n163|   clouds = [];\n164|   for (let i = 0; i < 6; i++) {\n165|     clouds.push({\n166|       x: Math.random() * (W || 400),\n167|       y: 40 + Math.random() * ((H || 600) * 0.4),\n168|       r: 20 + Math.random() * 30,\n169|       speed: 10 + Math.random() * 15,\n170|     });\n171|   }\n172| }\n173| \n174| let booted = false;\n175| let gameOver = false;\n176| \n177| function backToTitle() {\n178|   running = false;\n179|   paused = false;\n180|   gameOver = false;\n181|   resetState();\n182| }\n183| \n184| resetState();\n185| \n186| // ---- Input ----\n187| canvas.addEventListener(\"pointerdown\", (event) => {\n188|   event.preventDefault();\n189|   if (paused) return;\n190|   if (!started) {\n191|     started = true;\n192|   }\n193|   if (!running) {\n194|     if (gameOver) {\n195|       resetState();\n196|       gameOver = false;\n197|     }\n198|     running = true;\n199|     CARTRIDGE.send(\"start\");\n200|     return;\n201|   }\n202|   act();\n203| });\n204| \n205| function act() {\n206|   kite.vy = LIFT;\n207| }\n208| \n209| // ---- Host messages ----\n210| window.addEventListener(\"message\", (event) => {\n211|   const data = event.data;\n212|   if (!data || data.source !== \"cartridge-host\") return;\n213|   if (data.type === \"pause\") paused = true;\n214|   if (data.type === \"resume\") paused = false;\n215|   if (data.type === \"reset\") backToTitle();\n216| });\n217| \n218| // ---- Spawning ----\n219| function spawnChimney() {\n220|   const gapH = CHIMNEY_GAP_MAX - Math.min(60, elapsed * 1.5) ;\n221|   const gap = Math.max(CHIMNEY_GAP_MIN, gapH);\n222|   const margin = 60;\n223|   const gapY = margin + Math.random() * (H - margin * 2 - gap);\n224|   chimneys.push({\n225|     x: W + CHIMNEY_W,\n226|     gapY: gapY,\n227|     gapH: gap,\n228|     w: CHIMNEY_W,\n229|     passed: false,\n230|     seed: Math.floor(Math.random() * 1000),\n231|   });\n232|   // maybe spawn a ribbon in the gap\n233|   if (Math.random() < 0.8) {\n234|     ribbonsList.push({\n235|       x: W + CHIMNEY_W + 40,\n236|       y: gapY + gap / 2,\n237|       r: 12,\n238|       taken: false,\n239|     });\n240|   }\n241| }\n242| \n243| // ---- Update ----\n244| function advance(dt) {\n245|   elapsed += dt;\n246|   // difficulty ramp\n247|   speed = 140 + Math.min(180, elapsed * 6);\n248|   spawnInterval = Math.max(1.0, 1.7 - elapsed * 0.01);\n249| \n250|   // level tracking (speed based, but we cannot emit 'level' per arcade-run - forbidden)\n251|   // NOTE: arcade-run forbids level events, so we do not send them.\n252| \n253|   kite.vy += GRAVITY * dt;\n254|   kite.y += kite.vy * dt;\n255|   kite.angle = Math.max(-0.5, Math.min(0.9, kite.vy / 500));\n256| \n257|   if (kite.y < kite.radius) {\n258|     kite.y = kite.radius;\n259|     kite.vy = 0;\n260|   }\n261|   if (kite.y > H - kite.radius) {\n262|     kite.y = H - kite.radius;\n263|     crash();\n264|     return;\n265|   }\n266| \n267|   spawnTimer += dt;\n268|   if (spawnTimer >= spawnInterval) {\n269|     spawnTimer = 0;\n270|     spawnChimney();\n271|   }\n272| \n273|   for (let c of chimneys) {\n274|     c.x -= speed * dt;\n275|     if (!c.passed && c.x + c.w < kite.x) {\n276|       c.passed = true;\n277|       score += 1;\n278|       CARTRIDGE.send(\"score\", { value: score });\n279|     }\n280|   }\n281|   chimneys = chimneys.filter((c) => c.x > -c.w - 10);\n282| \n283|   for (let r of ribbonsList) {\n284|     r.x -= speed * dt;\n285|   }\n286|   ribbonsList = ribbonsList.filter((r) => r.x > -30 && !r.taken);\n287| \n288|   for (let cl of clouds) {\n289|     cl.x -= cl.speed * dt;\n290|     if (cl.x < -60) {\n291|       cl.x = W + 60;\n292|       cl.y = 30 + Math.random() * (H * 0.4);\n293|     }\n294|   }\n295| }\n296| \n297| function collide() {\n298|   // chimneys\n299|   for (let c of chimneys) {\n300|     const kx = kite.x, ky = kite.y, kr = kite.radius * 0.75;\n301|     const withinX = kx + kr > c.x && kx - kr < c.x + c.w;\n302|     if (withinX) {\n303|       const topH = c.gapY;\n304|       const bottomY = c.gapY + c.gapH;\n305|       if (ky - kr < topH || ky + kr > bottomY) {\n306|         crash();\n307|         return;\n308|       }\n309|     }\n310|   }\n311|   // ribbons\n312|   for (let r of ribbonsList) {\n313|     if (r.taken) continue;\n314|     const dx = kite.x - r.x;\n315|     const dy = kite.y - r.y;\n316|     const dist = Math.sqrt(dx * dx + dy * dy);\n317|     if (dist < kite.radius + r.r) {\n318|       r.taken = true;\n319|       ribbons += 1;\n320|       score += 3;\n321|       CARTRIDGE.send(\"score\", { value: score });\n322|     }\n323|   }\n324| }\n325| \n326| function crash() {\n327|   if (!running) return;\n328|   running = false;\n329|   gameOver = true;\n330|   CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n331| }\n332| \n333| // ---- Drawing ----\n334| function drawBackground() {\n335|   ctx.fillStyle = COLORS.bg;\n336|   ctx.fillRect(0, 0, W, H);\n337| \n338|   // clouds - simple paper puffs, always moving for idle liveliness\n339|   for (let cl of clouds) {\n340|     drawShadowLayer(() => {\n341|       ctx.fillStyle = \"#ffffff\";\n342|       ctx.globalAlpha = 0.7;\n343|       ctx.beginPath();\n344|       ctx.ellipse(cl.x, cl.y, cl.r, cl.r * 0.6, 0, 0, Math.PI * 2);\n345|       ctx.fill();\n346|       ctx.globalAlpha = 1;\n347|     });\n348|   }\n349| \n350|   // ground strip of rooftops silhouette\n351|   drawShadowLayer(() => {\n352|     ctx.fillStyle = COLORS.accent;\n353|     ctx.globalAlpha = 0.15;\n354|     ctx.fillRect(0, H - 14, W, 14);\n355|     ctx.globalAlpha = 1;\n356|   });\n357| }\n358| \n359| function drawChimney(c) {\n360|   const topH = c.gapY;\n361|   const bottomY = c.gapY + c.gapH;\n362|   const bottomH = H - bottomY;\n363| \n364|   drawShadowLayer(() => {\n365|     ctx.fillStyle = COLORS.layer;\n366|     jitterRoundRect(c.x, 0, c.w, topH, 6, c.seed);\n367|     ctx.fill();\n368|   });\n369|   drawShadowLayer(() => {\n370|     ctx.fillStyle = COLORS.layer;\n371|     jitterRoundRect(c.x, bottomY, c.w, bottomH, 6, c.seed + 10);\n372|     ctx.fill();\n373|   });\n374| \n375|   // accent cap bands\n376|   ctx.fillStyle = COLORS.accent;\n377|   ctx.globalAlpha = 0.85;\n378|   ctx.fillRect(c.x - 2, Math.max(0, topH - 10), c.w + 4, 8);\n379|   ctx.fillRect(c.x - 2, bottomY + 2, c.w + 4, 8);\n380|   ctx.globalAlpha = 1;\n381| }\n382| \n383| function drawRibbon(r) {\n384|   drawShadowLayer(() => {\n385|     ctx.fillStyle = COLORS.highlight;\n386|     ctx.beginPath();\n387|     for (let i = 0; i < 8; i++) {\n388|       const ang = (i / 8) * Math.PI * 2;\n389|       const rad = r.r + jit(i + Math.floor(r.x), 1.5);\n390|       const px = r.x + Math.cos(ang) * rad;\n391|       const py = r.y + Math.sin(ang) * rad;\n392|       if (i === 0) ctx.moveTo(px, py);\n393|       else ctx.lineTo(px, py);\n394|     }\n395|     ctx.closePath();\n396|     ctx.fill();\n397|   });\n398|   // little tail\n399|   ctx.strokeStyle = COLORS.highlight;\n400|   ctx.lineWidth = 3;\n401|   ctx.beginPath();\n402|   ctx.moveTo(r.x - r.r, r.y);\n403|   ctx.lineTo(r.x - r.r - 14, r.y + 8);\n404|   ctx.stroke();\n405| }\n406| \n407| function drawKite() {\n408|   ctx.save();\n409|   ctx.translate(kite.x, kite.y);\n410|   ctx.rotate(kite.angle * 0.3);\n411| \n412|   // tail\n413|   ctx.strokeStyle = COLORS.accent;\n414|   ctx.lineWidth = 2;\n415|   ctx.beginPath();\n416|   ctx.moveTo(-kite.radius * 0.6, kite.radius * 0.3);\n417|   let px = -kite.radius * 0.6, py = kite.radius * 0.3;\n418|   for (let i = 1; i <= 4; i++) {\n419|     const nx = px - 10;\n420|     const ny = py + (i % 2 === 0 ? -6 : 6);\n421|     ctx.lineTo(nx, ny);\n422|     px = nx; py = ny;\n423|   }\n424|   ctx.stroke();\n425| \n426|   // kite body: diamond shape, paper-cut layered\n427|   drawShadowLayer(() => {\n428|     ctx.fillStyle = COLORS.layer;\n429|     ctx.beginPath();\n430|     const s = kite.radius * 1.4;\n431|     ctx.moveTo(0 + jit(1, 1), -s + jit(2, 1));\n432|     ctx.lineTo(s * 0.75 + jit(3, 1), 0 + jit(4, 1));\n433|     ctx.lineTo(0 + jit(5, 1), s + jit(6, 1));\n434|     ctx.lineTo(-s * 0.75 + jit(7, 1), 0 + jit(8, 1));\n435|     ctx.closePath();\n436|     ctx.fill();\n437|   });\n438| \n439|   // inner accent diamond\n440|   ctx.fillStyle = COLORS.accent;\n441|   ctx.globalAlpha = 0.5;\n442|   ctx.beginPath();\n443|   const s2 = kite.radius * 0.6;\n444|   ctx.moveTo(0, -s2);\n445|   ctx.lineTo(s2 * 0.75, 0);\n446|   ctx.lineTo(0, s2);\n447|   ctx.lineTo(-s2 * 0.75, 0);\n448|   ctx.closePath();\n449|   ctx.fill();\n450|   ctx.globalAlpha = 1;\n451| \n452|   ctx.restore();\n453| }\n454| \n455| function drawHUD() {\n456|   // score plate\n457|   drawShadowLayer(() => {\n458|     ctx.fillStyle = \"#ffffff\";\n459|     jitterRoundRect(14, 14, 130, 46, 10, 500);\n460|     ctx.fill();\n461|   });\n462|   ctx.fillStyle = COLORS.accent;\n463|   ctx.font = \"bold 22px sans-serif\";\n464|   ctx.textBaseline = \"middle\";\n465|   ctx.fillText(\"Score \" + score, 28, 37);\n466| }\n467| \n468| function drawTitleScreen() {\n469|   drawBackground();\n470|   drawKite();\n471| \n472|   drawShadowLayer(() => {\n473|     ctx.fillStyle = \"#ffffff\";\n474|     const w = Math.min(360, W - 40);\n475|     jitterRoundRect(W / 2 - w / 2, H / 2 - 90, w, 150, 14, 200);\n476|     ctx.fill();\n477|   });\n478| \n479|   ctx.fillStyle = COLORS.accent;\n480|   ctx.textAlign = \"center\";\n481|   ctx.font = \"bold 26px sans-serif\";\n482|   ctx.fillText(\"Kite Above the Rooftops\", W / 2, H / 2 - 40);\n483| \n484|   const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);\n485|   ctx.globalAlpha = pulse;\n486|   ctx.font = \"bold 20px sans-serif\";\n487|   ctx.fillStyle = COLORS.layer;\n488|   ctx.fillText(\"Tap to begin\", W / 2, H / 2 + 10);\n489|   ctx.globalAlpha = 1;\n490| \n491|   ctx.font = \"16px sans-serif\";\n492|   ctx.fillStyle = COLORS.accent;\n493|   ctx.fillText(\"Tap to rise, dodge chimneys, catch ribbons\", W / 2, H / 2 + 45);\n494|   ctx.textAlign = \"left\";\n495| }\n496| \n497| function drawGameOverScreen() {\n498|   drawShadowLayer(() => {\n499|     ctx.fillStyle = \"#ffffff\";\n500|     const w = Math.min(320, W - 40);\n501|     jitterRoundRect(W / 2 - w / 2, H / 2 - 80, w, 160, 14, 300);\n502|     ctx.fill();\n503|   });\n504|   ctx.fillStyle = COLORS.accent;\n505|   ctx.textAlign = \"center\";\n506|   ctx.font = \"bold 26px sans-serif\";\n507|   ctx.fillText(\"Crashed!\", W / 2, H / 2 - 30);\n508|   ctx.font = \"bold 20px sans-serif\";\n509|   ctx.fillText(\"Score: \" + score, W / 2, H / 2 + 6);\n510|   const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);\n511|   ctx.globalAlpha = pulse;\n512|   ctx.font = \"18px sans-serif\";\n513|   ctx.fillStyle = COLORS.layer;\n514|   ctx.fillText(\"Tap to fly again\", W / 2, H / 2 + 44);\n515|   ctx.globalAlpha = 1;\n516|   ctx.textAlign = \"left\";\n517| }\n518| \n519| function drawPauseOverlay() {\n520|   ctx.fillStyle = \"rgba(61,64,91,0.4)\";\n521|   ctx.fillRect(0, 0, W, H);\n522|   ctx.fillStyle = \"#ffffff\";\n523|   ctx.textAlign = \"center\";\n524|   ctx.font = \"bold 24px sans-serif\";\n525|   ctx.fillText(\"Paused\", W / 2, H / 2);\n526|   ctx.textAlign = \"left\";\n527| }\n528| \n529| function draw() {\n530|   drawBackground();\n531| \n532|   if (!started || (!running && !gameOver)) {\n533|     drawTitleScreen();\n534|   } else if (running) {\n535|     for (let c of chimneys) drawChimney(c);\n536|     for (let r of ribbonsList) if (!r.taken) drawRibbon(r);\n537|     drawKite();\n538|     drawHUD();\n539|   } else if (gameOver) {\n540|     for (let c of chimneys) drawChimney(c);\n541|     for (let r of ribbonsList) if (!r.taken) drawRibbon(r);\n542|     drawKite();\n543|     drawHUD();\n544|     drawGameOverScreen();\n545|   }\n546| \n547|   if (paused) {\n548|     drawPauseOverlay();\n549|   }\n550| }\n551| \n552| // ---- Main loop ----\n553| function frame(now) {\n554|   const dt = Math.min((now - last) / 1000, 0.05);\n555|   last = now;\n556| \n557|   if (running && !paused) {\n558|     advance(dt || 0.016);\n559|     collide();\n560|   } else if (!running && !gameOver) {\n561|     // idle clouds keep moving for liveliness\n562|     elapsed += dt || 0.016;\n563|     for (let cl of clouds) {\n564|       cl.x -= cl.speed * (dt || 0.016);\n565|       if (cl.x < -60) {\n566|         cl.x = W + 60;\n567|         cl.y = 30 + Math.random() * (H * 0.4);\n568|       }\n569|     }\n570|   } else if (gameOver && !paused) {\n571|     elapsed += dt || 0.016;\n572|   }\n573| \n574|   draw();\n575|   requestAnimationFrame(frame);\n576| }\n577| \n578| requestAnimationFrame((t) => {\n579|   last = t;\n580|   draw();\n581|   CARTRIDGE.send(\"boot\", { title: \"Kite Above the Rooftops\", gameType: \"arcade-run\", lang: \"en\" });\n582|   requestAnimationFrame(frame);\n583| });\n584| </script>\n585| </body>\n586| </html>\n587| "
+            }
+          ]
+        }
+      ],
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-haiku-4-5-20251001\",\"id\":\"msg_011CfNkuvfk5E9Vq4zAx8ZLn\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8828,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"},\"diagnostics\":null}           }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}   }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"prompt\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"coverage\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"label\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"covered\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": [\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\"line\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"123\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": \\\"const\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" k\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite = {\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"},\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 131\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"let\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" chi\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"mneys = [\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"];\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" //\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"x\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" g\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ap\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Y\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", gapH\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", w\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", passed\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}\\\"\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 132\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"let ribbon\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"sList = []; // {x,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" y\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", r\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", taken}\\\"}, {\\\"line\\\": \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"205\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" act\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"()\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n   \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"k\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite.\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"vy =\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LIFT\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 297\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function coll\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ide() \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"{\\\\n   //\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" chi\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"mneys\\\"}\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"],\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rat\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ionale\\\": \\\"The\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" code\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" implements\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" all\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" major\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" no\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uns from\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the brief\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\":\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" kite object\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" physics\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", chimneys as\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" obstacles\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", ribbons as collect\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibles, and wind\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as increasing\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" scroll\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" speed;\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ver\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bs include\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tap\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"to-rise\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"act\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" function\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"), dod\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ging (collision\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" detection), and collecting\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" (ribbon pickup\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" logic\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\").\\\"},\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"goal\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"leg\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibility\\\": {\\\"label\\\": \\\"stated\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 482\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".fill\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\\\\\\\"K\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite Above the Rooftops\\\\\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", W / 2, H /\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2 - 40\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\")\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 493\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Tap\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to rise\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dodge\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" chi\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"mneys,\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" catch\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ribbons\\\\\\\", W / 2\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H / 2 + \"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"45\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\\\"}, {\\\"line\\\": 488\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Tap\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to begin\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W / 2, H\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2 + 10\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\");\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"The title\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" screen explicitly\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" states the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game objective\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" on\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-screen text\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" instruct\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ing the\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" player to tap\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" to rise\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", dodge chimneys, and\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" catch ribbons.\\\"},\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"feedback\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-on\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-input\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"immediate\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 187\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"canvas\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".addEventListener\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"(\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\"po\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"interdown\\\\\\\", (event\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\") => {\\\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"}, {\\\"line\\\": 205\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"function\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" act() {\\\\n   kite\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".vy = LIFT;\\\"},\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" {\\\"line\\\": 254\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"k\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite.y\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" +=\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" k\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite.vy *\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dt\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}],\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" \\\"rationale\\\": \\\"A\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" tap\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" input\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediately\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" calls\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" act\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"() which\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sets k\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite.vy to\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" LIFT, and\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the next\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" frame\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" renders\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the kite at\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" its\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" new position,\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" providing\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" immediate visual feedback.\\\"}, \\\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"fail\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-state\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"clarity\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\": {\\\"label\\\": \\\"explained\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\", \\\"evidence\\\": [{\\\"line\\\":\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 507\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Crashed\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"!\\\\\\\", W / 2, H\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2 - 30)\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\";\\\"}, {\\\"line\\\": 509\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Score: \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\" + score, W / 2\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", H / 2 + \"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"6);\\\"}, {\\\"line\\\": \"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"514\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", \\\"quote\\\": \\\"ctx.fill\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Text(\\\\\\\"Tap to fly again\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\\\\\", W / 2, H\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" / 2 + 44);\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\\"}], \\\"rationale\\\": \\\"When\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the game\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ends, a\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" game\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"over screen\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" displays \\\\\\\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Crashed!\\\\\\\" to\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" explain\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" why\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" play\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" ended\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\", shows\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" final score, and instru\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"cts the player to tap to restart\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\\"}}\"}     }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":8828,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":713}              }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      236,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      7,
+      28,
+      24,
+      28,
+      148,
+      148,
+      148,
+      148,
+      148,
+      11,
+      29,
+      24,
+      26,
+      30,
+      23,
+      26,
+      74,
+      74,
+      5,
+      25,
+      27,
+      26,
+      28,
+      29,
+      31,
+      23,
+      30,
+      21,
+      24,
+      27,
+      31,
+      23,
+      25,
+      27,
+      25,
+      28,
+      25,
+      26,
+      38,
+      41,
+      27,
+      27,
+      26,
+      27,
+      26,
+      28,
+      27,
+      23,
+      27,
+      26,
+      27,
+      26,
+      26,
+      27,
+      25,
+      27,
+      27,
+      25,
+      26,
+      27,
+      27,
+      24,
+      31,
+      24,
+      27,
+      24,
+      30,
+      24,
+      26,
+      27,
+      34,
+      18,
+      25,
+      27,
+      26,
+      27,
+      26,
+      26,
+      26,
+      31,
+      22,
+      26,
+      27,
+      28,
+      24,
+      32,
+      23,
+      24,
+      26,
+      39,
+      17,
+      25,
+      25,
+      26,
+      27,
+      26,
+      27,
+      30,
+      23,
+      26,
+      26,
+      27,
+      27,
+      26,
+      25,
+      27,
+      26,
+      28,
+      26,
+      25,
+      26,
+      0,
+      26,
+      26,
+      27,
+      27,
+      25,
+      27,
+      29,
+      25,
+      26,
+      25,
+      26,
+      28,
+      25,
+      26,
+      27,
+      60,
+      0,
+      18,
+      27,
+      26,
+      26,
+      28,
+      27,
+      31,
+      20,
+      31,
+      22,
+      27,
+      26,
+      25,
+      48,
+      6,
+      25,
+      27,
+      26,
+      27,
+      26,
+      27,
+      32,
+      26,
+      25,
+      22,
+      29,
+      29,
+      21,
+      27,
+      26,
+      27,
+      25,
+      30,
+      23,
+      26,
+      32,
+      21,
+      58,
+      23,
+      27,
+      24,
+      41,
+      15,
+      32,
+      20,
+      37,
+      16,
+      22,
+      28,
+      25,
+      26,
+      27,
+      34,
+      19,
+      36,
+      19,
+      30,
+      23,
+      25,
+      25,
+      25,
+      29,
+      25,
+      25,
+      27,
+      27,
+      26,
+      30,
+      22,
+      26,
+      28,
+      25,
+      30,
+      23,
+      27,
+      27,
+      25,
+      27,
+      26,
+      26,
+      27,
+      25,
+      29,
+      24,
+      32,
+      155,
+      2,
+      2
+    ]
+  },
+  "usage": {
+    "input": 8828,
+    "output": 713,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

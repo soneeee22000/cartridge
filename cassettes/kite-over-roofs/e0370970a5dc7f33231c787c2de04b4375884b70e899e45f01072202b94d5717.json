@@ -1,0 +1,172 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:e0370970a5dc7f33231c787c2de04b4375884b70e899e45f01072202b94d5717",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Kite Above the Rooftops\",\n  \"slug\": \"kite-above-the-rooftops\",\n  \"lang\": \"en\",\n  \"gameType\": \"arcade-run\",\n  \"loop\": \"Tap to make your paper kite rise on the wind, dodge the chimneys, and collect ribbons as the breeze quickens. One crash into a chimney ends the flight.\",\n  \"input\": \"tap-anywhere\",\n  \"style\": \"paper-cut\"\n}\n```\n\n## Cards\n\n### Card `arcade-run`\n\n# Arcade run\n\nThe world scrolls on its own, the player dodges and gathers, and one mistake ends the run.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `required`    |\n| level                | `forbidden`   |\n| end                  | `required`    |\n| end reasons          | `lose`        |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above at least once: `score` as points change and `end` when the run is over. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden`. A run has no levels, so ramp difficulty with speed instead. <!-- rule:E1-16 -->\n- The only allowed `end` reason is `lose`. <!-- rule:E1-17 -->\n\n## Fairness\n\nA player who does nothing must survive for a few seconds after `start`. Spawn the first hazard well ahead of the player and keep the opening lane clear.\n\n## Loop skeleton\n\n```js\nlet last = 0,\n  running = false,\n  paused = false,\n  score = 0;\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 0.05);\n  last = now;\n  if (running && !paused) {\n    advance(dt);\n    collide();\n  }\n  draw();\n  requestAnimationFrame(frame);\n}\nfunction crash() {\n  running = false;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n```\n\nKeep something moving on screen while idle (clouds, a pulsing prompt) so the run never looks frozen.\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `paper-cut`\n\n# Paper cut\n\nEverything looks cut from coloured card and stacked in layers.\n\n## Palette\n\n| role       | colour    |\n| ---------- | --------- |\n| background | `#f4ecd8` |\n| layer      | `#e07a5f` |\n| accent     | `#3d405b` |\n| highlight  | `#81b29a` |\n\n## Primitives\n\n- Filled paths with slightly irregular edges: jitter each vertex by one or two pixels, seeded once so it does not flicker.\n- One soft shadow per layer: `shadowBlur` around 6 and a small downward offset.\n- Rounded rectangles and circles for pieces; stacked copies offset by a few pixels suggest depth.\n- Text in a heavy system sans-serif, drawn on a card-shaped plate.\n\n## Avoid\n\n- Gradients, glows and outlines thicker than two pixels.\n- Pure black; use the accent colour for the darkest tone.\n- Photographic textures or anything loaded from a file.\n\n### Card `tap-anywhere`\n\n# Tap anywhere\n\nThe whole screen is the button. Best for jumps, flaps and single choices.\n\n- Register pointer input on the canvas: `canvas.addEventListener(\"pointerdown\", onTap)`. <!-- rule:E1-22 -->\n- Call `event.preventDefault()` and set `touch-action: none` on the canvas so the page does not scroll or zoom.\n- The first tap after `boot` starts play and sends `start`; later taps perform the action.\n- Ignore taps while paused.\n\n```js\ncanvas.style.touchAction = \"none\";\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!running) {\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n```\n\nShow a short pulsing hint (\"Tap to begin\") until the first tap.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Here's my plan: build a paper-cut styled kite-flying arcade runner with tap-to-rise mechanics, scrolling chimneys, ribbons to collect, and full bridge/host integration."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_017BwFqQCz1xAUstZRURgDyu",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Kite Above the Rooftops</title>\n<style>\n  html, body {\n    margin: 0; padding: 0; width: 100%; height: 100%;\n    background: #f4ecd8;\n    overflow: hidden;\n    font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Arial, sans-serif;\n  }\n  canvas {\n    display: block;\n    touch-action: none;\n  }\n</style>\n</head>\n<body>\n<canvas id=\"game\"></canvas>\n<script>\n// ---- Bridge helper (verbatim) ----\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n\n// ---- Setup ----\nconst canvas = document.getElementById(\"game\");\nconst ctx = canvas.getContext(\"2d\");\ncanvas.style.touchAction = \"none\";\n\nlet DPR = Math.max(1, window.devicePixelRatio || 1);\nlet W = 0, H = 0;\n\nfunction resize() {\n  W = window.innerWidth;\n  H = window.innerHeight;\n  canvas.width = Math.floor(W * DPR);\n  canvas.height = Math.floor(H * DPR);\n  canvas.style.width = W + \"px\";\n  canvas.style.height = H + \"px\";\n  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n}\nwindow.addEventListener(\"resize\", resize);\nresize();\n\n// ---- Palette ----\nconst COLORS = {\n  bg: \"#f4ecd8\",\n  layer: \"#e07a5f\",\n  accent: \"#3d405b\",\n  highlight: \"#81b29a\",\n};\n\n// ---- Seeded jitter helper ----\nfunction makeJitterSeed(n) {\n  const arr = [];\n  let s = n * 9301 + 49297;\n  for (let i = 0; i < 40; i++) {\n    s = (s * 9301 + 49297) % 233280;\n    arr.push((s / 233280) * 2 - 1);\n  }\n  return arr;\n}\nconst jitterTable = makeJitterSeed(777);\nfunction jit(i, amt) {\n  return jitterTable[i % jitterTable.length] * amt;\n}\n\n// ---- Rounded rect path with jitter ----\nfunction jitterRoundRect(x, y, w, h, r, seedBase) {\n  ctx.beginPath();\n  const pts = [\n    [x + r, y],\n    [x + w - r, y],\n    [x + w, y + r],\n    [x + w, y + h - r],\n    [x + w - r, y + h],\n    [x + r, y + h],\n    [x, y + h - r],\n    [x, y + r],\n  ];\n  // simple jittered rounded rect approximation using arcs at corners\n  ctx.beginPath();\n  ctx.moveTo(x + r + jit(seedBase, 1.2), y + jit(seedBase + 1, 1.2));\n  ctx.lineTo(x + w - r + jit(seedBase + 2, 1.2), y + jit(seedBase + 3, 1.2));\n  ctx.quadraticCurveTo(x + w, y, x + w, y + r);\n  ctx.lineTo(x + w + jit(seedBase + 4, 1.2), y + h - r + jit(seedBase + 5, 1.2));\n  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);\n  ctx.lineTo(x + r + jit(seedBase + 6, 1.2), y + h + jit(seedBase + 7, 1.2));\n  ctx.quadraticCurveTo(x, y + h, x, y + h - r);\n  ctx.lineTo(x + jit(seedBase + 8, 1.2), y + r + jit(seedBase + 9, 1.2));\n  ctx.quadraticCurveTo(x, y, x + r, y);\n  ctx.closePath();\n}\n\nfunction drawShadowLayer(drawFn) {\n  ctx.save();\n  ctx.shadowColor = \"rgba(61,64,91,0.35)\";\n  ctx.shadowBlur = 6;\n  ctx.shadowOffsetY = 3;\n  drawFn();\n  ctx.restore();\n}\n\n// ---- Game state ----\nlet last = 0;\nlet running = false;\nlet paused = false;\nlet started = false; // has boot happened\nlet score = 0;\nlet ribbons = 0;\nlet elapsed = 0;\nlet speed = 140; // px/s base scroll speed\nlet level = 1;\n\nconst kite = {\n  x: 0,\n  y: 0,\n  vy: 0,\n  radius: 18,\n  angle: 0,\n};\n\nlet chimneys = []; // {x, gapY, gapH, w, passed}\nlet ribbonsList = []; // {x, y, r, taken}\nlet clouds = [];\n\nconst GRAVITY = 480;\nconst LIFT = -320;\nconst CHIMNEY_GAP_MIN = 170;\nconst CHIMNEY_GAP_MAX = 230;\nconst CHIMNEY_W = 70;\nlet spawnTimer = 0;\nlet spawnInterval = 1.7;\n\nfunction resetState() {\n  score = 0;\n  ribbons = 0;\n  elapsed = 0;\n  speed = 140;\n  level = 1;\n  kite.x = Math.max(90, W * 0.22);\n  kite.y = H * 0.4;\n  kite.vy = 0;\n  kite.angle = 0;\n  chimneys = [];\n  ribbonsList = [];\n  spawnTimer = 0;\n  spawnInterval = 1.7;\n  // fairness: clear opening lane, first hazard well ahead\n  spawnTimer = -2.0;\n  initClouds();\n}\n\nfunction initClouds() {\n  clouds = [];\n  for (let i = 0; i < 6; i++) {\n    clouds.push({\n      x: Math.random() * (W || 400),\n      y: 40 + Math.random() * ((H || 600) * 0.4),\n      r: 20 + Math.random() * 30,\n      speed: 10 + Math.random() * 15,\n    });\n  }\n}\n\nlet booted = false;\nlet gameOver = false;\n\nfunction backToTitle() {\n  running = false;\n  paused = false;\n  gameOver = false;\n  resetState();\n}\n\nresetState();\n\n// ---- Input ----\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  event.preventDefault();\n  if (paused) return;\n  if (!started) {\n    started = true;\n  }\n  if (!running) {\n    if (gameOver) {\n      resetState();\n      gameOver = false;\n    }\n    running = true;\n    CARTRIDGE.send(\"start\");\n    return;\n  }\n  act();\n});\n\nfunction act() {\n  kite.vy = LIFT;\n}\n\n// ---- Host messages ----\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n\n// ---- Spawning ----\nfunction spawnChimney() {\n  const gapH = CHIMNEY_GAP_MAX - Math.min(60, elapsed * 1.5) ;\n  const gap = Math.max(CHIMNEY_GAP_MIN, gapH);\n  const margin = 60;\n  const gapY = margin + Math.random() * (H - margin * 2 - gap);\n  chimneys.push({\n    x: W + CHIMNEY_W,\n    gapY: gapY,\n    gapH: gap,\n    w: CHIMNEY_W,\n    passed: false,\n    seed: Math.floor(Math.random() * 1000),\n  });\n  // maybe spawn a ribbon in the gap\n  if (Math.random() < 0.8) {\n    ribbonsList.push({\n      x: W + CHIMNEY_W + 40,\n      y: gapY + gap / 2,\n      r: 12,\n      taken: false,\n    });\n  }\n}\n\n// ---- Update ----\nfunction advance(dt) {\n  elapsed += dt;\n  // difficulty ramp\n  speed = 140 + Math.min(180, elapsed * 6);\n  spawnInterval = Math.max(1.0, 1.7 - elapsed * 0.01);\n\n  // level tracking (speed based, but we cannot emit 'level' per arcade-run - forbidden)\n  // NOTE: arcade-run forbids level events, so we do not send them.\n\n  kite.vy += GRAVITY * dt;\n  kite.y += kite.vy * dt;\n  kite.angle = Math.max(-0.5, Math.min(0.9, kite.vy / 500));\n\n  if (kite.y < kite.radius) {\n    kite.y = kite.radius;\n    kite.vy = 0;\n  }\n  if (kite.y > H - kite.radius) {\n    kite.y = H - kite.radius;\n    crash();\n    return;\n  }\n\n  spawnTimer += dt;\n  if (spawnTimer >= spawnInterval) {\n    spawnTimer = 0;\n    spawnChimney();\n  }\n\n  for (let c of chimneys) {\n    c.x -= speed * dt;\n    if (!c.passed && c.x + c.w < kite.x) {\n      c.passed = true;\n      score += 1;\n      CARTRIDGE.send(\"score\", { value: score });\n    }\n  }\n  chimneys = chimneys.filter((c) => c.x > -c.w - 10);\n\n  for (let r of ribbonsList) {\n    r.x -= speed * dt;\n  }\n  ribbonsList = ribbonsList.filter((r) => r.x > -30 && !r.taken);\n\n  for (let cl of clouds) {\n    cl.x -= cl.speed * dt;\n    if (cl.x < -60) {\n      cl.x = W + 60;\n      cl.y = 30 + Math.random() * (H * 0.4);\n    }\n  }\n}\n\nfunction collide() {\n  // chimneys\n  for (let c of chimneys) {\n    const kx = kite.x, ky = kite.y, kr = kite.radius * 0.75;\n    const withinX = kx + kr > c.x && kx - kr < c.x + c.w;\n    if (withinX) {\n      const topH = c.gapY;\n      const bottomY = c.gapY + c.gapH;\n      if (ky - kr < topH || ky + kr > bottomY) {\n        crash();\n        return;\n      }\n    }\n  }\n  // ribbons\n  for (let r of ribbonsList) {\n    if (r.taken) continue;\n    const dx = kite.x - r.x;\n    const dy = kite.y - r.y;\n    const dist = Math.sqrt(dx * dx + dy * dy);\n    if (dist < kite.radius + r.r) {\n      r.taken = true;\n      ribbons += 1;\n      score += 3;\n      CARTRIDGE.send(\"score\", { value: score });\n    }\n  }\n}\n\nfunction crash() {\n  if (!running) return;\n  running = false;\n  gameOver = true;\n  CARTRIDGE.send(\"end\", { reason: \"lose\", value: score });\n}\n\n// ---- Drawing ----\nfunction drawBackground() {\n  ctx.fillStyle = COLORS.bg;\n  ctx.fillRect(0, 0, W, H);\n\n  // clouds - simple paper puffs, always moving for idle liveliness\n  for (let cl of clouds) {\n    drawShadowLayer(() => {\n      ctx.fillStyle = \"#ffffff\";\n      ctx.globalAlpha = 0.7;\n      ctx.beginPath();\n      ctx.ellipse(cl.x, cl.y, cl.r, cl.r * 0.6, 0, 0, Math.PI * 2);\n      ctx.fill();\n      ctx.globalAlpha = 1;\n    });\n  }\n\n  // ground strip of rooftops silhouette\n  drawShadowLayer(() => {\n    ctx.fillStyle = COLORS.accent;\n    ctx.globalAlpha = 0.15;\n    ctx.fillRect(0, H - 14, W, 14);\n    ctx.globalAlpha = 1;\n  });\n}\n\nfunction drawChimney(c) {\n  const topH = c.gapY;\n  const bottomY = c.gapY + c.gapH;\n  const bottomH = H - bottomY;\n\n  drawShadowLayer(() => {\n    ctx.fillStyle = COLORS.layer;\n    jitterRoundRect(c.x, 0, c.w, topH, 6, c.seed);\n    ctx.fill();\n  });\n  drawShadowLayer(() => {\n    ctx.fillStyle = COLORS.layer;\n    jitterRoundRect(c.x, bottomY, c.w, bottomH, 6, c.seed + 10);\n    ctx.fill();\n  });\n\n  // accent cap bands\n  ctx.fillStyle = COLORS.accent;\n  ctx.globalAlpha = 0.85;\n  ctx.fillRect(c.x - 2, Math.max(0, topH - 10), c.w + 4, 8);\n  ctx.fillRect(c.x - 2, bottomY + 2, c.w + 4, 8);\n  ctx.globalAlpha = 1;\n}\n\nfunction drawRibbon(r) {\n  drawShadowLayer(() => {\n    ctx.fillStyle = COLORS.highlight;\n    ctx.beginPath();\n    for (let i = 0; i < 8; i++) {\n      const ang = (i / 8) * Math.PI * 2;\n      const rad = r.r + jit(i + Math.floor(r.x), 1.5);\n      const px = r.x + Math.cos(ang) * rad;\n      const py = r.y + Math.sin(ang) * rad;\n      if (i === 0) ctx.moveTo(px, py);\n      else ctx.lineTo(px, py);\n    }\n    ctx.closePath();\n    ctx.fill();\n  });\n  // little tail\n  ctx.strokeStyle = COLORS.highlight;\n  ctx.lineWidth = 3;\n  ctx.beginPath();\n  ctx.moveTo(r.x - r.r, r.y);\n  ctx.lineTo(r.x - r.r - 14, r.y + 8);\n  ctx.stroke();\n}\n\nfunction drawKite() {\n  ctx.save();\n  ctx.translate(kite.x, kite.y);\n  ctx.rotate(kite.angle * 0.3);\n\n  // tail\n  ctx.strokeStyle = COLORS.accent;\n  ctx.lineWidth = 2;\n  ctx.beginPath();\n  ctx.moveTo(-kite.radius * 0.6, kite.radius * 0.3);\n  let px = -kite.radius * 0.6, py = kite.radius * 0.3;\n  for (let i = 1; i <= 4; i++) {\n    const nx = px - 10;\n    const ny = py + (i % 2 === 0 ? -6 : 6);\n    ctx.lineTo(nx, ny);\n    px = nx; py = ny;\n  }\n  ctx.stroke();\n\n  // kite body: diamond shape, paper-cut layered\n  drawShadowLayer(() => {\n    ctx.fillStyle = COLORS.layer;\n    ctx.beginPath();\n    const s = kite.radius * 1.4;\n    ctx.moveTo(0 + jit(1, 1), -s + jit(2, 1));\n    ctx.lineTo(s * 0.75 + jit(3, 1), 0 + jit(4, 1));\n    ctx.lineTo(0 + jit(5, 1), s + jit(6, 1));\n    ctx.lineTo(-s * 0.75 + jit(7, 1), 0 + jit(8, 1));\n    ctx.closePath();\n    ctx.fill();\n  });\n\n  // inner accent diamond\n  ctx.fillStyle = COLORS.accent;\n  ctx.globalAlpha = 0.5;\n  ctx.beginPath();\n  const s2 = kite.radius * 0.6;\n  ctx.moveTo(0, -s2);\n  ctx.lineTo(s2 * 0.75, 0);\n  ctx.lineTo(0, s2);\n  ctx.lineTo(-s2 * 0.75, 0);\n  ctx.closePath();\n  ctx.fill();\n  ctx.globalAlpha = 1;\n\n  ctx.restore();\n}\n\nfunction drawHUD() {\n  // score plate\n  drawShadowLayer(() => {\n    ctx.fillStyle = \"#ffffff\";\n    jitterRoundRect(14, 14, 130, 46, 10, 500);\n    ctx.fill();\n  });\n  ctx.fillStyle = COLORS.accent;\n  ctx.font = \"bold 22px sans-serif\";\n  ctx.textBaseline = \"middle\";\n  ctx.fillText(\"Score \" + score, 28, 37);\n}\n\nfunction drawTitleScreen() {\n  drawBackground();\n  drawKite();\n\n  drawShadowLayer(() => {\n    ctx.fillStyle = \"#ffffff\";\n    const w = Math.min(360, W - 40);\n    jitterRoundRect(W / 2 - w / 2, H / 2 - 90, w, 150, 14, 200);\n    ctx.fill();\n  });\n\n  ctx.fillStyle = COLORS.accent;\n  ctx.textAlign = \"center\";\n  ctx.font = \"bold 26px sans-serif\";\n  ctx.fillText(\"Kite Above the Rooftops\", W / 2, H / 2 - 40);\n\n  const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);\n  ctx.globalAlpha = pulse;\n  ctx.font = \"bold 20px sans-serif\";\n  ctx.fillStyle = COLORS.layer;\n  ctx.fillText(\"Tap to begin\", W / 2, H / 2 + 10);\n  ctx.globalAlpha = 1;\n\n  ctx.font = \"16px sans-serif\";\n  ctx.fillStyle = COLORS.accent;\n  ctx.fillText(\"Tap to rise, dodge chimneys, catch ribbons\", W / 2, H / 2 + 45);\n  ctx.textAlign = \"left\";\n}\n\nfunction drawGameOverScreen() {\n  drawShadowLayer(() => {\n    ctx.fillStyle = \"#ffffff\";\n    const w = Math.min(320, W - 40);\n    jitterRoundRect(W / 2 - w / 2, H / 2 - 80, w, 160, 14, 300);\n    ctx.fill();\n  });\n  ctx.fillStyle = COLORS.accent;\n  ctx.textAlign = \"center\";\n  ctx.font = \"bold 26px sans-serif\";\n  ctx.fillText(\"Crashed!\", W / 2, H / 2 - 30);\n  ctx.font = \"bold 20px sans-serif\";\n  ctx.fillText(\"Score: \" + score, W / 2, H / 2 + 6);\n  const pulse = 0.6 + 0.4 * Math.sin(elapsed * 4);\n  ctx.globalAlpha = pulse;\n  ctx.font = \"18px sans-serif\";\n  ctx.fillStyle = COLORS.layer;\n  ctx.fillText(\"Tap to fly again\", W / 2, H / 2 + 44);\n  ctx.globalAlpha = 1;\n  ctx.textAlign = \"left\";\n}\n\nfunction drawPauseOverlay() {\n  ctx.fillStyle = \"rgba(61,64,91,0.4)\";\n  ctx.fillRect(0, 0, W, H);\n  ctx.fillStyle = \"#ffffff\";\n  ctx.textAlign = \"center\";\n  ctx.font = \"bold 24px sans-serif\";\n  ctx.fillText(\"Paused\", W / 2, H / 2);\n  ctx.textAlign = \"left\";\n}\n\nfunction draw() {\n  drawBackground();\n\n  if (!started || (!running && !gameOver)) {\n    drawTitleScreen();\n  } else if (running) {\n    for (let c of chimneys) drawChimney(c);\n    for (let r of ribbonsList) if (!r.taken) drawRibbon(r);\n    drawKite();\n    drawHUD();\n  } else if (gameOver) {\n    for (let c of chimneys) drawChimney(c);\n    for (let r of ribbonsList) if (!r.taken) drawRibbon(r);\n    drawKite();\n    drawHUD();\n    drawGameOverScreen();\n  }\n\n  if (paused) {\n    drawPauseOverlay();\n  }\n}\n\n// ---- Main loop ----\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 0.05);\n  last = now;\n\n  if (running && !paused) {\n    advance(dt || 0.016);\n    collide();\n  } else if (!running && !gameOver) {\n    // idle clouds keep moving for liveliness\n    elapsed += dt || 0.016;\n    for (let cl of clouds) {\n      cl.x -= cl.speed * (dt || 0.016);\n      if (cl.x < -60) {\n        cl.x = W + 60;\n        cl.y = 30 + Math.random() * (H * 0.4);\n      }\n    }\n  } else if (gameOver && !paused) {\n    elapsed += dt || 0.016;\n  }\n\n  draw();\n  requestAnimationFrame(frame);\n}\n\nrequestAnimationFrame((t) => {\n  last = t;\n  draw();\n  CARTRIDGE.send(\"boot\", { title: \"Kite Above the Rooftops\", gameType: \"arcade-run\", lang: \"en\" });\n  requestAnimationFrame(frame);\n});\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_017BwFqQCz1xAUstZRURgDyu",
+              "content": "{\"version\":\"a0\",\"bytes\":14014,\"sha256\":\"4ebca234c14e9b1c8b24d380af6453d44ea6c614e48fc2f4f08e27564f599df6\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNksoBEYeybhdAQDZ5eh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":11975,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}              }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete \\\"Kite Above the\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Rooftops\\\" game\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" as a single\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"-file\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" HTML page\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" with pa\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"per-c\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ut vis\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"uals, tap-to-\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"rise k\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ite mechanics, sc\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"r\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"olling chimneys, \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ribbon collection, and full\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge/\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"host\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" event\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" integration.\"}               }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0           }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":11975,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":82,\"output_tokens_details\":{\"thinking_tokens\":0}}       }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"      }\n\n",
+    "gapsMs": [
+      0,
+      0,
+      0,
+      0,
+      83,
+      310,
+      310,
+      310,
+      310,
+      310,
+      310,
+      310,
+      47,
+      44,
+      48,
+      45,
+      47,
+      48,
+      47,
+      43,
+      42,
+      37,
+      3,
+      3,
+      3
+    ]
+  },
+  "usage": {
+    "input": 11975,
+    "output": 82,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

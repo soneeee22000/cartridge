@@ -1,0 +1,167 @@
+{
+  "format": "cartridge-cassette/1",
+  "key": "sha256:91b70a35ae173b6e178157c09c2ab47b6c9b5d93bc8e00aeaa419a53c17f78e8",
+  "occurrence": 0,
+  "role": "builder",
+  "model": "claude-sonnet-5",
+  "request": {
+    "url": "/v1/messages",
+    "body": {
+      "model": "claude-sonnet-5",
+      "max_tokens": 48000,
+      "thinking": {
+        "type": "disabled"
+      },
+      "system": [
+        {
+          "type": "text",
+          "text": "You write one complete single-file HTML5 mini-game and store it with the `save_draft` tool.\n\nRules you cannot break:\n\n- The page is one HTML document: doctype, `<html lang>` matching the plan's language, a viewport meta tag, inline `<style>` and classic inline `<script>` only.\n- No network, no storage, no dialogs, no `eval`, no module scripts, no external URLs. Draw every visual in code.\n- Include the `CARTRIDGE` helper from the bridge card exactly as written, and send the bridge events the type card requires, in the order it describes.\n- Listen for host commands (`pause`, `resume`, `reset`) as the bridge card shows.\n\nHow to work:\n\n- The plan and the cards you need are in the message. Call `get_card` only if you need a card that is not included.\n- Write the whole page, then call `save_draft` once with the full HTML. Never send a partial page.\n- When the message lists failed rules, call `load_draft` first, fix every listed rule in that draft, keep what already works, and save the whole page again with `save_draft`.\n- After saving, reply with one short sentence. Do not paste the page into your reply; only the saved draft counts."
+        }
+      ],
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Plan\n\n```json\n{\n  \"title\": \"Le Gardien du Phare\",\n  \"slug\": \"le-gardien-du-phare\",\n  \"lang\": \"fr\",\n  \"gameType\": \"stage-clear\",\n  \"loop\": \"Glissez le doigt autour de la tour pour tourner le faisceau et éclairer chaque bateau assez longtemps pour qu'il rentre au port. Faites rentrer tous les bateaux pour gagner la nuit ; un bateau qui touche les rochers termine la partie.\",\n  \"input\": \"drag-follow\",\n  \"style\": \"risograph\"\n}\n```\n\n## Cards\n\n### Card `bridge`\n\n# Bridge\n\nGames talk to the host only through `postMessage`. Paste this helper verbatim before any game code:\n\n```js\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n```\n\nThe helper must be named `CARTRIDGE` and must stamp `source: \"cartridge\"` and `v: 1` on every message. <!-- rule:E1-10 -->\n\n## Game to host\n\n| event   | payload                              | when                                 |\n| ------- | ------------------------------------ | ------------------------------------ |\n| `boot`  | `{ title, gameType, lang }`          | once, after the first frame is drawn |\n| `start` | `{}`                                 | when play begins                     |\n| `score` | `{ value }`, an integer of 0 or more | whenever the score changes           |\n| `level` | `{ index }`, starting at 1, then +1  | on entering each level               |\n| `end`   | `{ reason, value? }`                 | once per play-through                |\n\n- Send `boot` with all three keys: `CARTRIDGE.send(\"boot\", { title, gameType, lang })`. <!-- rule:E1-11 -->\n- When `boot.lang` is written as a literal, it must equal the `lang` on `<html>`. <!-- rule:E1-12 -->\n- Emit `CARTRIDGE.send(\"start\")` when play begins. <!-- rule:E1-13 -->\n- Write `boot.gameType` as a string literal naming one of the four game types; it must match the planned type. <!-- rule:E1-14 -->\n- Pass `score.value` as a number, never a quoted string. <!-- rule:E1-18 -->\n- Give every `level` call an `index` key: `CARTRIDGE.send(\"level\", { index: stage })`. <!-- rule:E1-19 -->\n\n## Host to game\n\nCommands arrive as `{ source: \"cartridge-host\", type }` with `type` one of `pause`, `resume` or `reset`. Ignore anything with another `source`.\n\n- Listen with `window.addEventListener(\"message\", …)` and handle `pause` and `resume`: freeze and restart the loop without losing state. <!-- rule:E1-20 -->\n- Handle `reset` by returning to the pre-`start` screen without reloading the page. <!-- rule:E1-21 -->\n\n```js\nwindow.addEventListener(\"message\", (event) => {\n  const data = event.data;\n  if (!data || data.source !== \"cartridge-host\") return;\n  if (data.type === \"pause\") paused = true;\n  if (data.type === \"resume\") paused = false;\n  if (data.type === \"reset\") backToTitle();\n});\n```\n\n### Card `drag-follow`\n\n# Drag follow\n\nThe player presses on a piece and it trails the pointer until release. Good for steering, sorting and placing.\n\n- Register `pointerdown`, `pointermove` and `pointerup` on the canvas and capture the pointer on press. <!-- rule:E1-22 -->\n- Convert client coordinates to canvas coordinates with `getBoundingClientRect()` and the device pixel ratio.\n- Ease towards the target instead of snapping, so small jitters do not shake the piece.\n\n```js\nlet held = null;\ncanvas.addEventListener(\"pointerdown\", (event) => {\n  held = pieceAt(toCanvas(event));\n  if (held) canvas.setPointerCapture(event.pointerId);\n});\ncanvas.addEventListener(\"pointermove\", (event) => {\n  if (held) held.target = toCanvas(event);\n});\ncanvas.addEventListener(\"pointerup\", () => {\n  held = null;\n});\n```\n\nDrop the piece on `pointercancel` as well, so a system gesture never leaves it stuck to the finger.\n\n### Card `game-page`\n\n# Game page\n\nA cartridge is one self-contained HTML file. The host loads it into a sandboxed iframe with scripts allowed and no same-origin access.\n\n## Document\n\n- Start with a single `<!doctype html>` and wrap everything in one `<html>…</html>`. Never embed another `<iframe>`. <!-- rule:E1-01 -->\n- Put the UI language on the root element, for example `<html lang=\"fr\">`: a two- or three-letter primary subtag with an optional region. <!-- rule:E1-03 -->\n- Add `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">` in the head. <!-- rule:E1-04 -->\n\n## Self-contained\n\n- Load nothing from outside the file: no `http:`, `https:` or `//` URL in `src`, `href`, CSS `url()`, `@import` or `import()`. Inline `data:` URIs are fine. <!-- rule:E1-02 -->\n- Draw every sprite, tile and glyph in code (canvas paths or inline SVG). Use system fonts.\n\n## Forbidden APIs\n\n- Do not open a network connection: no `fetch(`, `XMLHttpRequest`, `WebSocket`, `EventSource` or `sendBeacon`. <!-- rule:E1-05 -->\n- Do not persist anything: `localStorage`, `sessionStorage`, `indexedDB` and `document.cookie` all throw inside the sandbox. <!-- rule:E1-06 -->\n- Do not build code at runtime: no `eval(`, no `new Function(`, and pass functions, not strings, to `setTimeout` and `setInterval`. <!-- rule:E1-07 -->\n- Avoid blocking dialogs (`alert(`, `confirm(`, `prompt(`); draw messages on the canvas instead. <!-- rule:E1-08 -->\n\n## Scripts\n\n- Use classic inline `<script>` blocks only, never `type=\"module\"`, and make sure each one parses on its own. <!-- rule:E1-09 -->\n- Keep one script for the bridge helper and one for the game, or merge them. Order matters: the helper must exist first.\n\n## Layout\n\n- Fill the viewport and react when it changes: listen for `resize`, read `innerWidth`/`innerHeight`, or size with `dvh`/`vw` units. <!-- rule:E1-23 -->\n- Scale the canvas by `devicePixelRatio` so lines stay crisp on phones.\n- Keep touch targets at least 44 CSS pixels on the short edge.\n\n### Card `risograph`\n\n# Risograph\n\nThe screen looks like a cheap two-colour print: flat ink, grain and a little misregistration.\n\n## Palette\n\n| role    | colour    |\n| ------- | --------- |\n| paper   | `#fbf7ee` |\n| ink one | `#ff48b0` |\n| ink two | `#0078bf` |\n| overlap | `#5b3a8c` |\n\n## Primitives\n\n- Flat fills in one ink per shape; where the two inks overlap, use the overlap colour.\n- Offset the second ink layer by one or two pixels to fake misregistration.\n- A grain pass: a pre-rendered noise tile drawn with `globalAlpha` around 0.08 over the whole frame.\n- Bold, condensed system type in one ink.\n\n## Avoid\n\n- More than the four colours above.\n- Smooth gradients; use halftone dots if a shade is needed.\n- Re-rendering the grain every frame; draw the tile once and reuse it.\n\n### Card `stage-clear`\n\n# Stage clear\n\nThe player meets a stated goal to clear each stage. Clearing the last stage wins; failing a stage loses.\n\n## Contract row\n\n| field                | value         |\n| -------------------- | ------------- |\n| score                | `optional`    |\n| level                | `required`    |\n| end                  | `required`    |\n| end reasons          | `win, lose`   |\n| reset                | `soft`        |\n| idle death gate      | `min-seconds` |\n| idle motion required | `yes`         |\n\n- Emit every event marked `required` above: a `level` on entering each stage and an `end` when the play-through finishes. <!-- rule:E1-15 -->\n- Never emit an event marked `forbidden` in the row above. <!-- rule:E1-16 -->\n- Use only `win` or `lose` as the `end` reason. <!-- rule:E1-17 -->\n\n## Stages\n\nNumber stages from 1 and step by one. Show the goal on screen when each stage opens (\"Light 5 lamps\"). Make stage 1 easy enough to clear on the first try.\n\n## Loop skeleton\n\n```js\nlet stage = 0;\nfunction enterStage(next) {\n  stage = next;\n  buildStage(stage);\n  CARTRIDGE.send(\"level\", { index: stage });\n}\nfunction onGoalMet() {\n  if (stage === STAGES.length) CARTRIDGE.send(\"end\", { reason: \"win\" });\n  else enterStage(stage + 1);\n}\nfunction onStageFailed() {\n  CARTRIDGE.send(\"end\", { reason: \"lose\" });\n}\n```\n\nGive the player a few seconds of grace at the start of each stage before any threat can finish it.\n\n## Task\n\nWrite the complete game page for this plan and save it with `save_draft`."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Building the lighthouse keeper game now."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_014FJSdxRp6es11JWUYxk1Gr",
+              "name": "save_draft",
+              "input": {
+                "html": "<!doctype html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Le Gardien du Phare</title>\n<style>\n  html, body {\n    margin: 0; padding: 0; width: 100%; height: 100%;\n    background: #fbf7ee; overflow: hidden;\n    touch-action: none;\n    font-family: 'Arial Narrow', Arial, sans-serif;\n  }\n  #wrap { position: fixed; inset: 0; }\n  canvas { display: block; width: 100%; height: 100%; touch-action: none; }\n</style>\n</head>\n<body>\n<div id=\"wrap\">\n<canvas id=\"game\"></canvas>\n</div>\n<script>\n// ---- Bridge helper (verbatim) ----\nconst CARTRIDGE = {\n  send(type, payload = {}) {\n    window.parent.postMessage(\n      { source: \"cartridge\", v: 1, type, payload },\n      \"*\",\n    );\n  },\n};\n</script>\n<script>\n(function(){\n  const canvas = document.getElementById('game');\n  const ctx = canvas.getContext('2d');\n\n  const PAPER = '#fbf7ee';\n  const INK1 = '#ff48b0';\n  const INK2 = '#0078bf';\n  const OVER = '#5b3a8c';\n\n  let DPR = Math.max(1, window.devicePixelRatio || 1);\n  let W = 0, H = 0;\n\n  function resize() {\n    DPR = Math.max(1, window.devicePixelRatio || 1);\n    W = window.innerWidth;\n    H = window.innerHeight;\n    canvas.width = Math.floor(W * DPR);\n    canvas.height = Math.floor(H * DPR);\n    canvas.style.width = W + 'px';\n    canvas.style.height = H + 'px';\n    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);\n    buildGrainTile();\n  }\n\n  // ---- Grain tile (pre-rendered noise) ----\n  let grainCanvas = document.createElement('canvas');\n  let grainCtx = grainCanvas.getContext('2d');\n  function buildGrainTile() {\n    const size = 128;\n    grainCanvas.width = size;\n    grainCanvas.height = size;\n    const imgData = grainCtx.createImageData(size, size);\n    for (let i = 0; i < imgData.data.length; i += 4) {\n      const v = Math.random() * 255;\n      imgData.data[i] = v;\n      imgData.data[i+1] = v;\n      imgData.data[i+2] = v;\n      imgData.data[i+3] = 255;\n    }\n    grainCtx.putImageData(imgData, 0, 0);\n  }\n  let grainPattern = null;\n\n  function drawGrain() {\n    if (!grainPattern) {\n      grainPattern = ctx.createPattern(grainCanvas, 'repeat');\n    }\n    ctx.save();\n    ctx.globalAlpha = 0.08;\n    ctx.fillStyle = grainPattern;\n    ctx.fillRect(0, 0, W, H);\n    ctx.restore();\n  }\n\n  // ---- Game state ----\n  let paused = false;\n  let screen = 'title'; // title, playing, stageclear, win, lose\n  let stage = 0;\n  let score = 0;\n  let started = false;\n\n  const STAGES = [\n    { boats: 2, speed: 0.10, needLight: 1.6, rockDelay: 5.0 },\n    { boats: 3, speed: 0.13, needLight: 1.8, rockDelay: 4.5 },\n    { boats: 4, speed: 0.16, needLight: 2.0, rockDelay: 4.0 },\n    { boats: 5, speed: 0.19, needLight: 2.2, rockDelay: 3.6 },\n    { boats: 6, speed: 0.22, needLight: 2.4, rockDelay: 3.2 }\n  ];\n\n  let cx = 0, cy = 0; // lighthouse center\n  let beamAngle = 0; // radians\n  let targetAngle = 0;\n  let beamWidth = 0.32; // radians half-angle-ish (full spread)\n  let beamLength = 0;\n\n  let boats = [];\n  let stageGoalTimer = 0; // grace period\n  let graceSeconds = 3;\n  let stageStartMsg = '';\n  let stageStartMsgTimer = 0;\n\n  let held = false;\n\n  function toCanvas(evt) {\n    const rect = canvas.getBoundingClientRect();\n    const x = (evt.clientX - rect.left);\n    const y = (evt.clientY - rect.top);\n    return { x, y };\n  }\n\n  function angleFromPoint(p) {\n    return Math.atan2(p.y - cy, p.x - cx);\n  }\n\n  canvas.addEventListener('pointerdown', (event) => {\n    if (screen !== 'playing') return;\n    held = true;\n    canvas.setPointerCapture(event.pointerId);\n    targetAngle = angleFromPoint(toCanvas(event));\n  });\n  canvas.addEventListener('pointermove', (event) => {\n    if (!held) return;\n    targetAngle = angleFromPoint(toCanvas(event));\n  });\n  canvas.addEventListener('pointerup', () => { held = false; });\n  canvas.addEventListener('pointercancel', () => { held = false; });\n\n  // click on title / end screens to advance\n  canvas.addEventListener('pointerdown', (event) => {\n    if (screen === 'title') {\n      beginPlay();\n    } else if (screen === 'win' || screen === 'lose') {\n      backToTitle();\n    }\n  }, true);\n\n  function shortestAngleDiff(a, b) {\n    let d = (b - a) % (Math.PI * 2);\n    if (d > Math.PI) d -= Math.PI * 2;\n    if (d < -Math.PI) d += Math.PI * 2;\n    return d;\n  }\n\n  function buildStage(n) {\n    const cfg = STAGES[n - 1];\n    boats = [];\n    for (let i = 0; i < cfg.boats; i++) {\n      spawnBoat(cfg, i);\n    }\n    stageGoalTimer = graceSeconds;\n    stageStartMsg = 'Phase ' + n + ' — Faites rentrer ' + cfg.boats + ' bateaux';\n    stageStartMsgTimer = 3.2;\n  }\n\n  function spawnBoat(cfg, idx) {\n    const angle = Math.random() * Math.PI * 2;\n    const dist = Math.max(W, H) * 0.62 + Math.random() * 40;\n    const x = cx + Math.cos(angle) * dist;\n    const y = cy + Math.sin(angle) * dist;\n    boats.push({\n      x, y,\n      angle: angle,\n      speed: cfg.speed * (0.85 + Math.random() * 0.3),\n      lit: 0,\n      needLight: cfg.needLight,\n      rockDelay: cfg.rockDelay,\n      dangerTimer: 0,\n      safe: false,\n      dead: false,\n      bob: Math.random() * Math.PI * 2\n    });\n  }\n\n  function enterStage(next) {\n    stage = next;\n    buildStage(stage);\n    CARTRIDGE.send('level', { index: stage });\n    screen = 'playing';\n  }\n\n  function onGoalMet() {\n    if (stage === STAGES.length) {\n      screen = 'win';\n      CARTRIDGE.send('end', { reason: 'win', value: score });\n    } else {\n      enterStage(stage + 1);\n    }\n  }\n\n  function onStageFailed() {\n    screen = 'lose';\n    CARTRIDGE.send('end', { reason: 'lose', value: score });\n  }\n\n  function beginPlay() {\n    if (!started) {\n      started = true;\n      CARTRIDGE.send('start');\n    }\n    score = 0;\n    CARTRIDGE.send('score', { value: score });\n    enterStage(1);\n  }\n\n  function backToTitle() {\n    screen = 'title';\n    boats = [];\n    stage = 0;\n    score = 0;\n  }\n\n  // ---- Update ----\n  let lastTime = performance.now();\n  function update(dt) {\n    if (screen !== 'playing') return;\n\n    // ease beam angle toward target\n    const diff = shortestAngleDiff(beamAngle, targetAngle);\n    beamAngle += diff * Math.min(1, dt * 6);\n\n    if (stageGoalTimer > 0) stageGoalTimer -= dt;\n    if (stageStartMsgTimer > 0) stageStartMsgTimer -= dt;\n\n    const rockRadius = Math.min(W, H) * 0.14;\n    const portRadius = Math.min(W, H) * 0.10;\n\n    let allSafe = true;\n    for (const boat of boats) {\n      if (boat.safe || boat.dead) continue;\n      allSafe = false;\n\n      // move boat toward lighthouse slowly (drifting toward rocks)\n      const dx = cx - boat.x, dy = cy - boat.y;\n      const dist = Math.sqrt(dx*dx + dy*dy);\n      const nx = dx / (dist || 1), ny = dy / (dist || 1);\n      boat.bob += dt * 2;\n\n      // Check if boat is lit by beam\n      const boatAngle = Math.atan2(boat.y - cy, boat.x - cx);\n      const adiff = Math.abs(shortestAngleDiff(beamAngle, boatAngle));\n      const isLit = adiff < beamWidth * 0.5 && dist < beamLength;\n\n      if (isLit) {\n        boat.lit += dt;\n      } else {\n        boat.lit = Math.max(0, boat.lit - dt * 0.5);\n      }\n\n      if (stageGoalTimer <= 0) {\n        if (!isLit) {\n          boat.dangerTimer += dt;\n        } else {\n          boat.dangerTimer = Math.max(0, boat.dangerTimer - dt * 1.5);\n        }\n      }\n\n      // drift toward rocks always (slowly), guided in when lit enough\n      let driftSpeed = boat.speed * 0.4;\n      if (boat.lit >= boat.needLight) {\n        driftSpeed = boat.speed * 1.4; // guided in fast once \"saved\"\n      }\n      boat.x += nx * driftSpeed * 60 * dt * 0.5;\n      boat.y += ny * driftSpeed * 60 * dt * 0.5;\n\n      if (boat.lit >= boat.needLight && dist < portRadius) {\n        boat.safe = true;\n        score += 10;\n        CARTRIDGE.send('score', { value: score });\n      }\n\n      if (dist < rockRadius && boat.lit < boat.needLight) {\n        boat.dead = true;\n        onStageFailed();\n        return;\n      }\n\n      if (stageGoalTimer <= 0 && boat.dangerTimer > boat.rockDelay) {\n        boat.dead = true;\n        onStageFailed();\n        return;\n      }\n    }\n\n    if (allSafe && boats.length > 0) {\n      onGoalMet();\n    }\n  }\n\n  // ---- Draw ----\n  function drawTitle() {\n    ctx.fillStyle = PAPER;\n    ctx.fillRect(0, 0, W, H);\n    drawHalftoneSea();\n    drawLighthouseBase();\n\n    ctx.fillStyle = INK1;\n    ctx.textAlign = 'center';\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.075) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('LE GARDIEN', W/2, H*0.28);\n    ctx.fillStyle = INK2;\n    ctx.fillText('DU PHARE', W/2 + 2, H*0.28 + Math.round(Math.min(W,H)*0.075) + 4);\n\n    ctx.fillStyle = OVER;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.03) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('Glissez pour tourner le faisceau', W/2, H*0.62);\n    ctx.fillText('et guidez les bateaux au port', W/2, H*0.62 + Math.round(Math.min(W,H)*0.045));\n\n    ctx.fillStyle = INK1;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.045) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('TOUCHEZ POUR COMMENCER', W/2, H*0.8);\n  }\n\n  function drawHalftoneSea() {\n    ctx.save();\n    ctx.fillStyle = INK2;\n    ctx.globalAlpha = 1;\n    const spacing = Math.max(14, Math.min(W,H)*0.03);\n    for (let y = H*0.5; y < H; y += spacing) {\n      for (let x = 0; x < W; x += spacing) {\n        const t = (y - H*0.5) / (H*0.5);\n        const r = spacing * 0.15 * (0.3 + t * 0.7);\n        ctx.beginPath();\n        ctx.arc(x + ((Math.floor(y/spacing)%2)? spacing/2:0), y, r, 0, Math.PI*2);\n        ctx.fill();\n      }\n    }\n    ctx.restore();\n  }\n\n  function drawLighthouseBase() {\n    ctx.save();\n    ctx.translate(cx, cy);\n    // rocks\n    ctx.fillStyle = OVER;\n    ctx.beginPath();\n    const rockR = Math.min(W, H) * 0.14;\n    for (let i = 0; i < 10; i++) {\n      const a = (i / 10) * Math.PI * 2;\n      const rr = rockR * (0.85 + 0.15 * Math.sin(i * 3.1));\n      const px = Math.cos(a) * rr, py = Math.sin(a) * rr;\n      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);\n    }\n    ctx.closePath();\n    ctx.fill();\n\n    // tower\n    ctx.fillStyle = INK1;\n    const towerW = Math.min(W,H) * 0.09;\n    const towerH = Math.min(W,H) * 0.16;\n    ctx.fillRect(-towerW/2, -towerH/2, towerW, towerH);\n    ctx.fillStyle = INK2;\n    ctx.fillRect(-towerW/2+2, -towerH/2+2, towerW, towerH*0.35);\n    // top\n    ctx.fillStyle = OVER;\n    ctx.beginPath();\n    ctx.moveTo(-towerW*0.6, -towerH/2);\n    ctx.lineTo(towerW*0.6, -towerH/2);\n    ctx.lineTo(0, -towerH/2 - towerW*0.7);\n    ctx.closePath();\n    ctx.fill();\n    ctx.restore();\n  }\n\n  function drawBeam() {\n    ctx.save();\n    ctx.translate(cx, cy);\n    ctx.rotate(beamAngle);\n    const grad = ctx.createLinearGradient(0, 0, beamLength, 0);\n    grad.addColorStop(0, 'rgba(255,72,176,0.55)');\n    grad.addColorStop(1, 'rgba(255,72,176,0.03)');\n    ctx.fillStyle = grad;\n    ctx.beginPath();\n    ctx.moveTo(0, 0);\n    ctx.arc(0, 0, beamLength, -beamWidth/2, beamWidth/2);\n    ctx.closePath();\n    ctx.fill();\n    ctx.restore();\n  }\n\n  function drawBoat(boat) {\n    ctx.save();\n    ctx.translate(boat.x, boat.y + Math.sin(boat.bob) * 2);\n    const ang = Math.atan2(cy - boat.y, cx - boat.x);\n    ctx.rotate(ang + Math.PI/2);\n    const s = Math.min(W,H) * 0.018;\n    const litFrac = Math.min(1, boat.lit / boat.needLight);\n    ctx.fillStyle = litFrac > 0.99 ? OVER : (litFrac > 0 ? INK2 : INK1);\n    ctx.beginPath();\n    ctx.moveTo(0, -s*1.4);\n    ctx.lineTo(s, s);\n    ctx.lineTo(-s, s);\n    ctx.closePath();\n    ctx.fill();\n\n    // danger flash\n    if (boat.dangerTimer > 0) {\n      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(performance.now()/80);\n      ctx.strokeStyle = INK1;\n      ctx.lineWidth = 2;\n      ctx.beginPath();\n      ctx.arc(0, 0, s*2.2, 0, Math.PI*2);\n      ctx.stroke();\n      ctx.globalAlpha = 1;\n    }\n    ctx.restore();\n\n    // light meter above boat\n    if (!boat.safe) {\n      const barW = s * 3;\n      ctx.save();\n      ctx.translate(boat.x - barW/2, boat.y - s*3);\n      ctx.fillStyle = '#00000022';\n      ctx.fillRect(0, 0, barW, 4);\n      ctx.fillStyle = INK2;\n      ctx.fillRect(0, 0, barW * Math.min(1, boat.lit/boat.needLight), 4);\n      ctx.restore();\n    }\n  }\n\n  function drawPlaying() {\n    ctx.fillStyle = PAPER;\n    ctx.fillRect(0, 0, W, H);\n    drawHalftoneSea();\n    drawBeam();\n    drawLighthouseBase();\n\n    for (const boat of boats) {\n      if (boat.dead) continue;\n      drawBoat(boat);\n    }\n\n    // HUD\n    ctx.textAlign = 'left';\n    ctx.fillStyle = INK2;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.035) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('Phase ' + stage, 14, 30);\n    ctx.fillStyle = OVER;\n    ctx.fillText('Score ' + score, 14, 56);\n\n    if (stageStartMsgTimer > 0) {\n      ctx.textAlign = 'center';\n      ctx.fillStyle = INK1;\n      ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.04) + 'px Arial Narrow, Arial, sans-serif';\n      ctx.fillText(stageStartMsg, W/2, H*0.15);\n    }\n\n    if (paused) {\n      ctx.fillStyle = 'rgba(0,0,0,0.35)';\n      ctx.fillRect(0,0,W,H);\n      ctx.fillStyle = PAPER;\n      ctx.textAlign = 'center';\n      ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.06) + 'px Arial Narrow, Arial, sans-serif';\n      ctx.fillText('PAUSE', W/2, H/2);\n    }\n  }\n\n  function drawEnd(win) {\n    ctx.fillStyle = PAPER;\n    ctx.fillRect(0, 0, W, H);\n    drawHalftoneSea();\n    drawLighthouseBase();\n\n    ctx.textAlign = 'center';\n    ctx.fillStyle = win ? INK2 : INK1;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.07) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText(win ? 'NUIT SAUVÉE !' : 'NAUFRAGE...', W/2, H*0.4);\n\n    ctx.fillStyle = OVER;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.04) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('Score final : ' + score, W/2, H*0.5);\n\n    ctx.fillStyle = INK1;\n    ctx.font = 'bold ' + Math.round(Math.min(W,H)*0.035) + 'px Arial Narrow, Arial, sans-serif';\n    ctx.fillText('Touchez pour recommencer', W/2, H*0.65);\n  }\n\n  function draw() {\n    if (screen === 'title') drawTitle();\n    else if (screen === 'playing') drawPlaying();\n    else if (screen === 'win') drawEnd(true);\n    else if (screen === 'lose') drawEnd(false);\n    drawGrain();\n  }\n\n  function loop(now) {\n    const dt = Math.min(0.05, (now - lastTime) / 1000);\n    lastTime = now;\n    if (!paused) {\n      update(dt);\n    }\n    draw();\n    requestAnimationFrame(loop);\n  }\n\n  function layout() {\n    resize();\n    cx = W / 2;\n    cy = H * 0.42;\n    beamLength = Math.max(W, H) * 0.75;\n  }\n\n  window.addEventListener('resize', layout);\n\n  window.addEventListener('message', (event) => {\n    const data = event.data;\n    if (!data || data.source !== 'cartridge-host') return;\n    if (data.type === 'pause') paused = true;\n    if (data.type === 'resume') paused = false;\n    if (data.type === 'reset') backToTitle();\n  });\n\n  layout();\n  targetAngle = beamAngle = -Math.PI/2;\n\n  CARTRIDGE.send('boot', { title: 'Le Gardien du Phare', gameType: 'stage-clear', lang: 'fr' });\n\n  requestAnimationFrame((t) => { lastTime = t; requestAnimationFrame(loop); });\n})();\n</script>\n</body>\n</html>\n"
+              },
+              "caller": {
+                "type": "direct"
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_014FJSdxRp6es11JWUYxk1Gr",
+              "content": "{\"version\":\"a0\",\"bytes\":15068,\"sha256\":\"b90c94d6385d3a676468b3c370bcc7dc565310959329509150b91b267d4bb154\"}"
+            }
+          ]
+        }
+      ],
+      "tools": [
+        {
+          "name": "get_card",
+          "description": "Read one knowledge card by id.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "arcade-run",
+                  "bridge",
+                  "chalkboard",
+                  "drag-follow",
+                  "game-page",
+                  "paper-cut",
+                  "puzzle-board",
+                  "risograph",
+                  "stage-clear",
+                  "swipe-lanes",
+                  "tap-anywhere",
+                  "toy-box"
+                ]
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "load_draft",
+          "description": "Load the newest saved draft of the game page, or null if none exists yet.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false,
+            "required": []
+          },
+          "eager_input_streaming": true
+        },
+        {
+          "name": "save_draft",
+          "description": "Save the complete game page (one HTML document). Saving again in the same attempt replaces it.",
+          "input_schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": {
+              "html": {
+                "type": "string",
+                "description": "constraints: minimum length 1"
+              }
+            },
+            "required": [
+              "html"
+            ],
+            "additionalProperties": false
+          },
+          "eager_input_streaming": true
+        }
+      ],
+      "tool_choice": {
+        "type": "auto"
+      },
+      "stream": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "text/event-stream",
+    "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-5\",\"id\":\"msg_011CfNmD78WAjbc52YV3wHHh\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":12127,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"diagnostics\":null}           }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}           }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Saved the compl\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ete l\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"igh\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"thouse-\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"keeper st\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"age-clear game with\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" dr\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ag-foll\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ow beam control, risograph\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" sty\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ling, and full\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" bridge event\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" w\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"iring.\"}       }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":12127,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":49,\"output_tokens_details\":{\"thinking_tokens\":0}}       }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"               }\n\n",
+    "gapsMs": [
+      0,
+      1,
+      1,
+      1,
+      225,
+      0,
+      0,
+      0,
+      0,
+      12,
+      48,
+      64,
+      34,
+      90,
+      5,
+      41,
+      77,
+      0,
+      0,
+      0
+    ]
+  },
+  "usage": {
+    "input": 12127,
+    "output": 49,
+    "cacheRead": 0,
+    "cacheWrite": 0
+  },
+  "priceTableVersion": "2026-09-24"
+}

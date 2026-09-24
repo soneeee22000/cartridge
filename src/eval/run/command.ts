@@ -78,7 +78,7 @@ function parseRunArgs(args: string[]) {
 function readRunOptions(args: string[]): RunOptions | string {
   const values = parseRunArgs(args);
   const tier = resolveTier(values.tier ?? "");
-  if (!tier) return "--tier must be one, sample, full, smoke1 or smoke";
+  if (!tier) return "--tier must be one, sample or full";
   const mode = ModelMode.safeParse(values.mode);
   if (!mode.success) return "--mode must be live, record, replay or mock";
   if (!LABEL_PATTERN.test(values.label))

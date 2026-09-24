@@ -29,7 +29,7 @@ const EXIT_USAGE = 2;
 const METRIC_DECIMALS = 4;
 const JSON_INDENT = 2;
 const USAGE = [
-  "usage: cli.ts run --tier <one|sample|full|smoke1|smoke> [--mode live|record|replay|mock] [--label <s>] [--json <path>] [--yes --max-usd <n>] [--skip-e2]",
+  "usage: cli.ts run --tier <one|sample|full> [--mode live|record|replay|mock] [--label <s>] [--json <path>] [--yes --max-usd <n>] [--skip-e2]",
   "       cli.ts score --games <dir> [--tier <t>] [--label <s>] [--json <path>] [--rerun-e2]",
   "       cli.ts score --file <game.html> [--spec <spec.json>]",
   "       cli.ts matrix [--json <matrix.json>] [--disable <detector-id>]...",

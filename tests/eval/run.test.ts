@@ -119,10 +119,10 @@ async function capture(argv: string[], deps: EvalDeps) {
 }
 
 describe("cli run (§12.2)", () => {
-  it("runs the smoke1 tier end to end in mock mode and persists every file per item", async () => {
+  it("runs the one tier end to end in mock mode and persists every file per item", async () => {
     const { deps, probed } = harness();
     const { code, out } = await capture(
-      ["run", "--tier", "smoke1", "--mode", "mock"],
+      ["run", "--tier", "one", "--mode", "mock"],
       deps,
     );
     expect(code).toBe(0);
@@ -328,10 +328,10 @@ describe("cli run (§12.2)", () => {
     expect(err).toContain("--tier");
   });
 
-  it("runs the smoke alias as the sample tier: the four sample items, in order", async () => {
+  it("runs the sample tier: the four sample items, in order", async () => {
     const { deps, probed } = harness();
     const { code, out } = await capture(
-      ["run", "--tier", "smoke", "--mode", "mock"],
+      ["run", "--tier", "sample", "--mode", "mock"],
       deps,
     );
     expect(code).toBe(0);

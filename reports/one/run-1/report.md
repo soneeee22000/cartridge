@@ -1,11 +1,11 @@
-# Eval report: sample / smoke
+# Eval report: one / run-1
 
 ## Run header
 
 | field | value |
 | --- | --- |
-| tier | sample |
-| label | smoke |
+| tier | one |
+| label | run-1 |
 | dataset version | v1 |
 | planner / builder model | claude-sonnet-5 / claude-sonnet-5 |
 | judge model | claude-haiku-4-5 |
@@ -18,11 +18,11 @@
 
 | band | n | games | contract-failed | refusals | harness failures |
 | --- | --- | --- | --- | --- | --- |
-| terse | 1 | 0 | 1 | 0 | 0 |
+| terse | 0 | 0 | 0 | 0 | 0 |
 | short-brief | 1 | 1 | 0 | 0 | 0 |
-| full-brief | 1 | 1 | 0 | 0 | 0 |
-| edge | 1 | 1 | 0 | 0 | 0 |
-| all | 4 | 3 | 1 | 0 | 0 |
+| full-brief | 0 | 0 | 0 | 0 | 0 |
+| edge | 0 | 0 | 0 | 0 | 0 |
+| all | 1 | 1 | 0 | 0 | 0 |
 
 ### Quality
 
@@ -32,8 +32,8 @@ Game items only. There is no cross-band mean. E4 is match/mismatch/abstain, and 
 | --- | --- | --- | --- | --- | --- | --- |
 | terse | - | - | 0/0 | - | 0/0/0 | - |
 | short-brief | 1.000 | 1.000 | 0/1 | idle-death 1 | 1/0/0 | 1.0 |
-| full-brief | 1.000 | 1.000 | 0/1 | boot-handshake 1, console-error 1 | 1/0/0 | 1.0 |
-| edge | 1.000 | 1.000 | 1/1 | - | 1/0/0 | 1.0 |
+| full-brief | - | - | 0/0 | - | 0/0/0 | - |
+| edge | - | - | 0/0 | - | 0/0/0 | - |
 
 ### E3 labels
 
@@ -45,18 +45,18 @@ Label counts on game items. `null` means no cited finding survived validation; `
 | terse | goal-legibility | - |
 | terse | feedback-on-input | - |
 | terse | fail-state-clarity | - |
-| short-brief | prompt-coverage | covered 1 |
+| short-brief | prompt-coverage | partly 1 |
 | short-brief | goal-legibility | stated 1 |
-| short-brief | feedback-on-input | null 1 |
-| short-brief | fail-state-clarity | null 1 |
-| full-brief | prompt-coverage | covered 1 |
-| full-brief | goal-legibility | stated 1 |
-| full-brief | feedback-on-input | immediate 1 |
-| full-brief | fail-state-clarity | explained 1 |
-| edge | prompt-coverage | covered 1 |
-| edge | goal-legibility | stated 1 |
-| edge | feedback-on-input | immediate 1 |
-| edge | fail-state-clarity | explained 1 |
+| short-brief | feedback-on-input | immediate 1 |
+| short-brief | fail-state-clarity | explained 1 |
+| full-brief | prompt-coverage | - |
+| full-brief | goal-legibility | - |
+| full-brief | feedback-on-input | - |
+| full-brief | fail-state-clarity | - |
+| edge | prompt-coverage | - |
+| edge | goal-legibility | - |
+| edge | feedback-on-input | - |
+| edge | fail-state-clarity | - |
 
 E4 labelled set: accuracy 1.000, abstention rate 0.000 (measured on 40 authored bundles; the thresholds were set on the same bundles).
 
@@ -64,32 +64,27 @@ E4 labelled set: accuracy 1.000, abstention rate 0.000 (measured on 40 authored 
 
 | build attempts | items |
 | --- | --- |
-| 1 | 3 |
-| 4 | 1 |
+| 1 | 1 |
 
-| rule that triggered a repair | times |
-| --- | --- |
-| E1-24 | 3 |
+No repair was triggered.
 
 ## Failures by attributed step
 
-| step | code | items |
-| --- | --- | --- |
-| generate | contract-unmet | 1 |
+No failures.
 
 ## Cost and latency
 
 | tokens | input | output | cache read | cache write |
 | --- | --- | --- | --- | --- |
-| generator (claude-sonnet-5) | 174764 | 41025 | 0 | 0 |
-| judge (claude-haiku-4-5) | 23989 | 2894 | 0 | 0 |
-| of which repair passes | 82132 | 13647 | 0 | 0 |
+| generator (claude-sonnet-5) | 20347 | 7565 | 0 | 0 |
+| judge (claude-haiku-4-5) | 7814 | 1198 | 0 | 0 |
+| of which repair passes | 0 | 0 | 0 | 0 |
 
 Measured cache reads on repair passes: 0 tokens.
 
-Estimated cost: $0.80 (estimate from list prices; not an invoice).
+Estimated cost: $0.13 (estimate from list prices; not an invoice).
 
-Wall time: 330.2 s in total, 64.7 s median per item (from run.json).
+Wall time: 64.2 s in total, 64.2 s median per item (from run.json).
 
 ## Out of scope for this run
 
@@ -103,8 +98,8 @@ Wall time: 330.2 s in total, 64.7 s median per item (from run.json).
 - E3 agreement with human raters
 - E4 accuracy beyond its 40 authored bundles
 - E2 detection rates on generated games (the thresholds encode this repo's own fixture-based definitions)
-- differences between bands (one item per band)
-- differences between game types (one item per type)
+- any band other than the single item's band
+- any game type other than the single item's type
 
 ## Noise floor
 

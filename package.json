@@ -19,10 +19,8 @@
     "eval:one": "node --env-file-if-exists=.env src/eval/cli.ts run --tier one",
     "eval:sample": "node --env-file-if-exists=.env src/eval/cli.ts run --tier sample",
     "eval:full": "node --env-file-if-exists=.env src/eval/cli.ts run --tier full",
-    "eval:smoke1": "node --env-file-if-exists=.env src/eval/cli.ts run --tier smoke1",
-    "eval:smoke": "node --env-file-if-exists=.env src/eval/cli.ts run --tier smoke",
     "eval:rescore": "node src/eval/cli.ts score --games games --json reports/committed/full.json",
-    "eval:score-only": "node src/eval/cli.ts score --games games",
+    "eval:score": "node src/eval/cli.ts score --games games",
     "eval:matrix": "node src/eval/cli.ts matrix --json reports/committed/matrix.json"
   },
   "dependencies": {

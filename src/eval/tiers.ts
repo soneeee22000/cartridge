@@ -6,14 +6,6 @@ import { priceUsage } from "./pricing.ts";
 export const TIERS = ["one", "sample", "full"] as const;
 export type Tier = (typeof TIERS)[number];
 
-/** The plan's smoke names map onto the spec's tiers (§11.2). */
-const TIER_ALIASES: Readonly<Record<string, Tier>> = {
-  one: "one",
-  sample: "sample",
-  full: "full",
-  smoke1: "one",
-  smoke: "sample",
-};
 
 /** The `one` tier: an EN short-brief item whose intended type is `arcade-run`. */
 export const ONE_ITEM_ID = "kite-over-roofs";
@@ -47,12 +39,12 @@ export const EST_ITEM_USAGE: Readonly<Record<string, Usage>> = {
 };
 
 /**
- * Resolves a tier name or alias.
- * @param name `one`, `sample`, `full`, `smoke1` or `smoke`
+ * Resolves a tier name.
+ * @param name `one`, `sample` or `full`
  * @returns the tier, or null when unknown
  */
 export function resolveTier(name: string): Tier | null {
-  return TIER_ALIASES[name] ?? null;
+  return TIERS.find((tier) => tier === name) ?? null;
 }
 
 function pick(dataset: Dataset, ids: readonly string[]): DatasetItem[] {

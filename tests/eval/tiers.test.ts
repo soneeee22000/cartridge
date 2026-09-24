@@ -85,11 +85,12 @@ describe("price table (§11.4)", () => {
 });
 
 describe("tiers (§11.2)", () => {
-  it("accepts the smoke aliases", () => {
-    expect(resolveTier("smoke1")).toBe("one");
-    expect(resolveTier("smoke")).toBe("sample");
+  it("resolves the three tier names and nothing else", () => {
+    expect(resolveTier("one")).toBe("one");
+    expect(resolveTier("sample")).toBe("sample");
     expect(resolveTier("full")).toBe("full");
     expect(resolveTier("everything")).toBeNull();
+    expect(resolveTier("One")).toBeNull();
   });
 
   it("one is a single EN short-brief arcade-run item", () => {

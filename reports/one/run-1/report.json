@@ -157,7 +157,7 @@
   "format": "cartridge-report/1",
   "header": {
     "datasetVersion": "v1",
-    "label": "smoke1",
+    "label": "run-1",
     "models": {
       "builder": "claude-sonnet-5",
       "judge": "claude-haiku-4-5",

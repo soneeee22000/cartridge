@@ -15,6 +15,7 @@ import {
   type FixtureRun,
   type MatrixFixture,
 } from "./matrix.ts";
+import type { EvalDeps } from "./run/deps.ts";
 
 /** Output sinks, injectable for tests. */
 export interface CliIo {
@@ -28,7 +29,9 @@ const EXIT_USAGE = 2;
 const METRIC_DECIMALS = 4;
 const JSON_INDENT = 2;
 const USAGE = [
-  "usage: cli.ts score --file <game.html> [--spec <spec.json>]",
+  "usage: cli.ts run --tier <one|sample|full|smoke1|smoke> [--mode live|record|replay|mock] [--label <s>] [--json <path>] [--yes --max-usd <n>] [--skip-e2]",
+  "       cli.ts score --games <dir> [--tier <t>] [--label <s>] [--json <path>] [--rerun-e2]",
+  "       cli.ts score --file <game.html> [--spec <spec.json>]",
   "       cli.ts matrix [--json <matrix.json>] [--disable <detector-id>]...",
   "",
 ].join("\n");
@@ -65,10 +68,11 @@ function scoreCommand(args: string[], io: CliIo): number {
 
 /** Injectable collaborators for the async commands. */
 export interface CliDeps {
-  readonly probe: (fixtures: readonly MatrixFixture[]) => Promise<FixtureRun[]>;
+  readonly probe?: (
+    fixtures: readonly MatrixFixture[],
+  ) => Promise<FixtureRun[]>;
+  readonly evalDeps?: EvalDeps;
 }
-
-const DEFAULT_DEPS: CliDeps = { probe: probeFixtures };
 
 function parseDisabled(values: readonly string[]): DetectorId[] | null {
   const parsed = values.map((value) => DetectorIdSchema.safeParse(value));
@@ -113,10 +117,13 @@ async function matrixCommand(
   const values = parseMatrixArgs(args);
   const disabled = parseDisabled(values.disable ?? []);
   if (!disabled) {
-    io.stderr(`unknown detector; expected one of: ${DETECTOR_IDS.join(", ")}\n`);
+    io.stderr(
+      `unknown detector; expected one of: ${DETECTOR_IDS.join(", ")}\n`,
+    );
     return EXIT_USAGE;
   }
-  const runs = await deps.probe(loadMatrixFixtures(REPO_ROOT));
+  const probe = deps.probe ?? probeFixtures;
+  const runs = await probe(loadMatrixFixtures(REPO_ROOT));
   const result = evaluateMatrix(runs, createRegistry(disabled));
   io.stdout(`${runs.map(metricsLine).join("\n")}\n`);
   if (values.json) writeReport(values.json, result.report);
@@ -127,7 +134,7 @@ async function matrixCommand(
 }
 
 /**
- * Runs any eval CLI command, including the async `matrix` (§9.2, §12).
+ * Runs any eval CLI command: `run`, `score --games` (rescore), `matrix` and `score --file` (§9.2, §12).
  * @param argv arguments after the script name
  * @param io output sinks
  * @param deps injectable collaborators (tests pass a cached probe)
@@ -136,11 +143,18 @@ async function matrixCommand(
 export async function main(
   argv: string[],
   io: CliIo,
-  deps: CliDeps = DEFAULT_DEPS,
+  deps: CliDeps = {},
 ): Promise<number> {
   const [command, ...rest] = argv;
   if (command === "matrix") return matrixCommand(rest, io, deps);
-  return runCli(argv, io);
+  const rescore = command === "score" && rest.includes("--games");
+  if (command !== "run" && !rescore) return runCli(argv, io);
+  const { runCommand, rescoreCommand } = await import("./run/command.ts");
+  const { defaultEvalDeps } = await import("./run/deps.ts");
+  const evalDeps = deps.evalDeps ?? defaultEvalDeps(process.env);
+  return rescore
+    ? rescoreCommand(rest, io, evalDeps)
+    : runCommand(rest, io, evalDeps);
 }
 
 /**

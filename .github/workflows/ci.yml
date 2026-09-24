@@ -47,3 +47,14 @@ jobs:
         run: node src/eval/cli.ts matrix --json "$RUNNER_TEMP/matrix.json"
       - name: Diff the matrix verdicts against the committed file
         run: diff -u reports/committed/matrix.json "$RUNNER_TEMP/matrix.json"
+      - name: Rescore committed games with no key and diff each committed tier report
+        run: |
+          for tier in sample full; do
+            committed="reports/committed/$tier.json"
+            if [ ! -f "$committed" ]; then
+              echo "no $committed yet; skipping"
+              continue
+            fi
+            node src/eval/cli.ts score --games games --tier "$tier" --json "$RUNNER_TEMP/$tier.json"
+            diff -u "$committed" "$RUNNER_TEMP/$tier.json"
+          done

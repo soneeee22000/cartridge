@@ -93,11 +93,13 @@ cartridge/
       e1/                       contract scorer: rules/*.ts, scan.ts (payload parser), score.ts (§2.3)
       e2/                       runtime probe: probe.ts, host.html, instrument.ts, metrics.ts, detectors.ts, thresholds.ts, bot.ts, types.ts (§8)
       e3/                       cited categorical judge: rubric.ts, validate.ts, judge.ts (§10.1)
-      e4/                       language match: detect.ts, extract-ui-strings.ts, words-en.ts, words-fr.ts, labelled.json (§10.2)
+      e4/                       language match: detect.ts, extract-ui-strings.ts, match.ts, labelled.ts, words-en.ts, words-fr.ts, labelled.json (§10.2)
       dataset/schema.ts  dataset/privacy-guard.ts (§11.1)
       tiers.ts                  one / sample / full (§11.2)
       pricing.ts                versioned price table (§11.4)
       report/{aggregate,markdown,json}.ts (§11.3)
+      report/types.ts           ItemRecord, outcome mapping and the cartridge-report/1 schema (S4)
+      run/{record,generate,evaluate,deps,command}.ts   run.json/e2.json I/O, one item through the driver, per-item E1-E4, injectable collaborators, `run` and `score --games` (S4)
       matrix.ts                 detection matrix check (§9.2)
       cli.ts                    `run`, `score`, `matrix` subcommands (§12)
     server/
@@ -787,6 +789,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
   - the rationale contains a numeric claim (`E3_NUMERIC_CLAIM` regex: a number followed by `%`, `/n`, "out of", "points", "fps" or "ms").
 - **Null, not zero:** a dimension with no surviving finding is `null` (not measured), never the worst label. `n/a` (does not apply to this type) is reported separately from `null`. An unparseable response makes every dimension `null` and records `judgeError`.
 - **Reports** show the label distribution and the null count per length band. They never convert labels to numbers and never average them.
+- _(S4 notes: a finding is also discarded when its label is not one of its dimension's labels (`unknown-label`), and when **any** of its evidence items fails a check. When several findings for one dimension survive, the first one wins. A judge call that fails becomes `judgeError`; a cassette miss is recorded as the fixed text `judge cassette missing`, with no path or key, so a rescore on another machine produces the same bytes. The judge has no tools, runs with `maxSteps: 1`, and sends no thinking option (Haiku 4.5 runs without thinking when none is set). Its instructions are built in `rubric.ts` from the dimension table and contain no digits.)_
 
 ### 10.2 E4: language match (`src/eval/e4/`)
 
@@ -796,6 +799,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
 - **Excluded from the evidence:** the slug, identifiers, CSS, numbers, and strings of ≤ 2 characters.
 - **Abstention floor:** E4 abstains when there are fewer than `E4_MIN_STRINGS = 4` distinct strings, fewer than `E4_MIN_LETTERS = 30` letters, or the margin is below `E4_MIN_MARGIN = 2`. These are starting values, set on the labelled set below.
 - **Output:** `{ verdict: "match" | "mismatch" | "abstain", promptLang, uiLang, htmlLang, evidence: string[] }`. The score is 1, 0 or `null` respectively, and an abstention is never counted as a pass.
+- _(S4 notes: extraction also takes **free-standing string literals that contain a space** (for example `const lines = ["Hit by a comet", "Tap to fly again"]`), because the §2.3 good fixtures draw panel text from arrays that the listed sinks miss; single-word literals count only at a sink. A known cost: an English error message in code counts as English evidence. "Identifiers" means camelCase, kebab/snake case or ALL-CAPS tokens; "CSS" means colours, lengths, `rgb()`/`hsl()` and font families; number tokens are removed from a string before the length check. The authored word lists gained a few common function words (EN `if my up down out off all again`, FR `à par je tu mon ma mes se si`); the plan step uses the same lists. On the labelled set the result is accuracy 1.000, abstention rate 0.000 and expected abstentions hit 1.000, measured on 40 authored bundles with the thresholds set on the same bundles. Starting thresholds were kept.)_
 - **Labelled set (`labelled.json`):** 40 authored UI-string bundles (16 EN, 16 FR, 8 deliberately hard: mixed-language, very short, or cognate-heavy), each labelled `en`, `fr` or `abstain-expected`. `e4.test.ts` computes accuracy and abstention rate on it, and the report prints both with the note "measured on 40 authored bundles; the thresholds were set on the same bundles". This is the only E4 accuracy figure the repo states.
 
 ---
@@ -850,6 +854,7 @@ Checks on the whole dataset:
 - **Cost guard:** before any paid call, the CLI prints an estimate (`items × EST_TOKENS_PER_ITEM`, priced with §11.4). After `sample` has run, `EST_TOKENS_PER_ITEM` is replaced by the measured `sample` mean, and that source is written next to the constant.
 - **`full` needs flags:** it refuses to start without `--yes` and `--max-usd <n>`. It aborts before the next item once the running estimate passes `--max-usd`.
 - **Seon approves `full`** after seeing the estimate (plan A3).
+- _(S4 notes: `ONE_ITEM_ID = "kite-over-roofs"`; `SAMPLE_ITEM_IDS = ["bubble-pop", "kite-over-roofs", "maze-de-haies", "phare-long"]` (one per band and per type, two EN and two FR). The plan's names are accepted as aliases: `smoke1` → `one`, `smoke` → `sample`. `EST_TOKENS_PER_ITEM` became `EST_ITEM_USAGE`, a per-model `Usage` guess (generator and judge), so the estimate prices each kind at its own rate; it is an unmeasured starting guess until `sample` has run. The run command stops before the next item once the priced **actual** usage so far passes `--max-usd`.)_
 
 ### 11.3 Report (`src/eval/report/`)
 
@@ -863,6 +868,8 @@ Checks on the whole dataset:
 | `harness-failure` | any error in our code, `cassette-miss`, `verifier-crashed`, `engine-crashed` or a timeout |
 
 Refusals and harness failures are counted separately and **never** mixed into quality means. Means use only `game` items.
+
+_(S4 notes on the mapping, `outcomeOf` in `report/types.ts`: `plan-invalid-spec` and `generate-no-artifact` are also `contract-failed`, since the model produced no usable plan or page. `model-error` (a provider error such as an overload), `stream-cut`, `lease-lost`, `timeout` and a row that never reached a terminal state are `harness-failure`: none of them says anything about the model's output. A crashed E2 probe leaves `e2` null ("not probed") and prints a warning; it does not change the outcome.)_
 
 **`report.md` sections, in order:**
 
@@ -888,8 +895,11 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 - **Deterministic serialisation:** keys are sorted recursively, numbers are rounded to fixed decimals (`REPORT_DECIMALS = 3`), items are sorted by id, and there is no timestamp in the body (the label comes from `--label`).
 - **What `--json` includes:** E1, E4 and aggregates are recomputed. E3 comes from cassettes in replay. E2 and wall times are **read** from the committed `e2.json` and `run.json` (unless `--rerun-e2`).
 - **CI check:** `npm run eval:rescore` over the committed `games/` must regenerate `reports/committed/<tier>.json` **byte for byte**, and CI checks this with `diff -u`.
+- _(S4 notes: the scorer's git sha is printed in `report.md` only. Putting it in `report.json` would make every later commit break the byte-for-byte diff. The CI step skips a tier whose committed report does not exist yet, so it goes live with the first committed paid run. A test runs `run --tier one --mode mock` and then `score --games`, and asserts the two `report.json` files are identical.)_
 
 ### 11.4 Price table (`src/eval/pricing.ts`)
+
+_(S4 note: input and output rates were compared on 2026-09-24 with the claude-api skill's model table (cached 2026-06-24) and agree; cache rates are from the research note. That table is not the official pricing page, so `PRICES_CHECKED_ON_OFFICIAL_PAGE` in `pricing.ts` stays `null`, and `run` refuses `record` and `live` modes until it holds the date of the official-page check.)_
 
 `PRICE_TABLE_VERSION = "2026-09-24"`. Prices are USD per million tokens: Sonnet 5 input 2.0, output 10.0, cache read 0.2, 5-minute cache write 2.5; Haiku 4.5 input 1.0, output 5.0, cache read 0.1, 5-minute cache write 1.25 (research `deploy-and-models.md` §2.2). Each `Usage` kind is priced at its own rate. **Before the first paid run (S4), the table is re-checked against the official Anthropic pricing page** and the check date is written next to the version string. Any price change means a new version string, and old reports keep the version they were priced with.
 
@@ -910,6 +920,9 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 | `eval:sample`      | `node --env-file-if-exists=.env src/eval/cli.ts run --tier sample`                               |
 | `eval:full`        | `node --env-file-if-exists=.env src/eval/cli.ts run --tier full` (plus `-- --yes --max-usd <n>`) |
 | `eval:rescore`     | `node src/eval/cli.ts score --games games --json reports/committed/full.json` ($0, no key)       |
+| `eval:smoke1`      | alias of `eval:one` (`run --tier smoke1`) (S4)                                                   |
+| `eval:smoke`       | alias of `eval:sample` (`run --tier smoke`) (S4)                                                 |
+| `eval:score-only`  | `node src/eval/cli.ts score --games games` (prints the report JSON; `-- --tier <t>` to narrow) (S4) |
 | `eval:matrix`      | `node src/eval/cli.ts matrix --json reports/committed/matrix.json`                               |
 | `record:demo`      | `node --env-file-if-exists=.env scripts/record-demo.ts`                                          |
 | `build:vercel`     | `node scripts/build-vercel.ts` (§13.3)                                                           |
@@ -921,6 +934,7 @@ Refusals and harness failures are counted separately and **never** mixed into qu
 - **Persistence:** after each item it writes `games/<runKey>/…`, `run.json` (usage, wall ms, outcome, attribution) and the E2 file, before moving to the next item.
 - **Timeouts:** each item has `ITEM_TIMEOUT_MS = 12 * 60_000`, an arbitrary starting cap; after the `sample` tier it is replaced by a multiple of the measured slowest item, with the source noted. A timeout is a harness failure, not a model failure.
 - **Exit codes:** 0 when the run completes, whatever the quality, and 1 on a harness failure in `one`/`sample` (the pre-flight gate before `full`).
+- _(S4 notes: `run` also takes `--skip-e2`, and `--mode mock` runs the whole pipeline at $0 with the dev server's mock models and no E3. Bad usage, an unchecked price table or a missing key in a paid mode exit 2. `score --games <dir>` takes `--tier` (default `full`), `--label`, `--json` and `--rerun-e2`, and exits 1 if an item of the tier has no `run.json`. Every collaborator (models, probe, clock, root, git) is injected through `EvalDeps` in `run/deps.ts`, and `cli.ts` imports the run modules lazily so `score --file` stays light.)_
 
 ### 12.3 Clean-room scan
 

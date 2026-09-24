@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - **e2:** the runtime probe: a sandboxed srcdoc host at 360 × 640, a single injected error forwarder that keeps standards mode, pure frame metrics (luma spread, distinct colours, motion ratio), six detectors in a registry, a seeded random-tap bot that is reported only, and the `e2.json` schema.
 - **fixtures:** four good controls (one per game type) and six known-bad tuning fixtures, each scoring E1 = 1.000 and built to trip one detector.
 - **matrix:** `npm run eval:matrix` checks the five §9.2 conditions, exits 1 when any detector is disabled or uncovered, and writes `reports/committed/matrix.json`; CI re-runs it and diffs the verdicts.
+- **fixtures:** six holdout fixtures, written after the thresholds were frozen, one per detector with a different defect mechanism; their verdicts are recorded in `matrix.json` as they are.
 - **scripts:** `check:clean-room` hashed-denylist scan and `build:vercel` Build Output API bundle with a placeholder `api/replay` handler.
 
 ### Chores

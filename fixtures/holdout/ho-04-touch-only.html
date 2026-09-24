@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Button Jar</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100dvh;
+        overflow: hidden;
+        background: #edede9;
+        font-family: sans-serif;
+      }
+      canvas {
+        display: block;
+        touch-action: none;
+      }
+      #clear {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        min-height: 44px;
+        min-width: 88px;
+        font-size: 16px;
+        border: 0;
+        border-radius: 8px;
+        background: #6b705c;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="garden"></canvas>
+    <button id="clear" type="button">Clear</button>
+    <script>
+      const CARTRIDGE = {
+        send(type, payload = {}) {
+          window.parent.postMessage(
+            { source: "cartridge", v: 1, type, payload },
+            "*",
+          );
+        },
+      };
+      const canvas = document.getElementById("garden");
+      const clearButton = document.getElementById("clear");
+      const ctx = canvas.getContext("2d");
+      const PEBBLE_RADIUS = 28;
+      const BOB_HEIGHT = 3;
+      const BOB_SPEED = 0.004;
+      const TINTS = ["#a5a58d", "#b7b7a4", "#cb997e", "#6b705c", "#ddbea9"];
+      const COLOURS = { sand: "#edede9", rake: "#d6ccc2", ink: "#3d405b" };
+      const pebbles = [];
+      let tally = 0,
+        paused = false;
+      function fit() {
+        canvas.width = innerWidth;
+        canvas.height = innerHeight;
+      }
+      function clearTable() {
+        pebbles.length = 0;
+        tally = 0;
+        CARTRIDGE.send("score", { value: 0 });
+      }
+      function place(event) {
+        const box = canvas.getBoundingClientRect();
+        pebbles.push({
+          x: event.clientX - box.left,
+          y: event.clientY - box.top,
+          tint: TINTS[tally % TINTS.length],
+          phase: tally,
+        });
+        tally += 1;
+        CARTRIDGE.send("score", { value: tally });
+      }
+      function draw(now) {
+        ctx.fillStyle = COLOURS.sand;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = COLOURS.rake;
+        ctx.lineWidth = 2;
+        for (let y = 40; y < canvas.height; y += 24) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+        for (const pebble of pebbles) {
+          const lift = paused
+            ? 0
+            : Math.sin(now * BOB_SPEED + pebble.phase) * BOB_HEIGHT;
+          ctx.fillStyle = pebble.tint;
+          ctx.beginPath();
+          ctx.arc(pebble.x, pebble.y + lift, PEBBLE_RADIUS, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = COLOURS.ink;
+        ctx.font = "18px sans-serif";
+        ctx.fillText("Pebbles: " + tally, 12, 32);
+        ctx.fillText("Tap the sand to place a pebble", 12, canvas.height - 20);
+      }
+      function frame(now) {
+        draw(now);
+        requestAnimationFrame(frame);
+      }
+      clearButton.addEventListener("click", clearTable);
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || data.source !== "cartridge-host") return;
+        if (data.type === "pause") paused = true;
+        if (data.type === "resume") paused = false;
+        if (data.type === "reset") clearTable();
+      });
+      canvas.addEventListener("touchstart", (event) => place(event.touches[0]));
+      addEventListener("resize", fit);
+      fit();
+      draw(0);
+      CARTRIDGE.send("boot", {
+        title: "Button Jar",
+        gameType: "toy-box",
+        lang: "en",
+      });
+      CARTRIDGE.send("start");
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

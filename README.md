@@ -17,7 +17,7 @@ Slice S1 is in place:
 
 Slice S2 added the workflow graph, model layer, run store and SSE relay (`src/engine/`, `src/models/`, `src/server/`).
 
-Slice S3 adds the E2 runtime probe (`src/eval/e2/`, Playwright Chromium), hand-authored fixtures (`fixtures/`) and the detection matrix (`src/eval/matrix.ts`). The thresholds are calibrated on this repo's own fixtures; `docs/research/e2-calibration.md` lists every measurement.
+Slice S3 adds the E2 runtime probe (`src/eval/e2/`, Playwright Chromium), hand-authored fixtures (`fixtures/`) and the detection matrix (`src/eval/matrix.ts`). The six detectors are demonstrated on 10 hand-authored fixtures (thresholds tuned on the same set); `docs/research/e2-calibration.md` lists every measurement. On 6 holdout fixtures written after the thresholds were frozen, each with a different defect mechanism, all 6 tripped their target detector, and one (`ho-02-stuck-veil`) also tripped `tap-unresponsive`, an allowed co-fire. The verdicts are in `reports/committed/matrix.json`. This shows each detector can catch the defect it was written for; it does not measure how often generated games have these defects.
 
 The dataset, judge, reports and replay demo arrive in later slices.
 

@@ -20,6 +20,13 @@ describe("tuning fixtures (§9.1)", () => {
     );
   });
 
+  it("has six holdout fixtures, one per detector (§9.3)", () => {
+    const holdout = fixtures.filter((fixture) => fixture.kind === "holdout");
+    expect(holdout.map((fixture) => fixture.expectedDetector).sort()).toEqual(
+      [...DETECTOR_IDS].sort(),
+    );
+  });
+
   it("has one good control per game type", () => {
     const good = fixtures.filter((fixture) => fixture.kind === "good");
     expect(good.map((fixture) => fixture.gameType).sort()).toEqual(

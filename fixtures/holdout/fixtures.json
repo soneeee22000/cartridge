@@ -1,0 +1,45 @@
+[
+  {
+    "id": "ho-01-untitled-boot",
+    "file": "ho-01-untitled-boot.html",
+    "gameType": "puzzle-board",
+    "expectedDetector": "boot-handshake",
+    "allowedCoFires": []
+  },
+  {
+    "id": "ho-02-stuck-veil",
+    "file": "ho-02-stuck-veil.html",
+    "gameType": "puzzle-board",
+    "expectedDetector": "blank-frame",
+    "allowedCoFires": ["tap-unresponsive"],
+    "coFireReason": "an opaque veil over the whole page also hides every change a tap makes"
+  },
+  {
+    "id": "ho-03-frozen-clock",
+    "file": "ho-03-frozen-clock.html",
+    "gameType": "stage-clear",
+    "expectedDetector": "idle-static",
+    "allowedCoFires": []
+  },
+  {
+    "id": "ho-04-touch-only",
+    "file": "ho-04-touch-only.html",
+    "gameType": "toy-box",
+    "expectedDetector": "tap-unresponsive",
+    "allowedCoFires": []
+  },
+  {
+    "id": "ho-05-short-fuse",
+    "file": "ho-05-short-fuse.html",
+    "gameType": "stage-clear",
+    "expectedDetector": "idle-death",
+    "allowedCoFires": []
+  },
+  {
+    "id": "ho-06-lost-promise",
+    "file": "ho-06-lost-promise.html",
+    "gameType": "arcade-run",
+    "expectedDetector": "console-error",
+    "allowedCoFires": []
+  }
+]

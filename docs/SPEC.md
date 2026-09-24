@@ -759,6 +759,7 @@ The matrix writes `reports/committed/matrix.json` (verdicts only, sorted keys), 
 
 - **One per detector:** `fixtures/holdout/` holds six more hand-authored known-bad games, one per detector, each with a defect that differs in mechanism from its tuning counterpart (for example, a `boot` payload with a wrong key instead of a `boot` that never fires). Each still scores E1 = 1.000.
 - **Order of work:** holdout fixtures are written **after** the thresholds are frozen and committed, and the commit that adds them does not touch `thresholds.ts`. A test asserts that `thresholds.ts` equals the values in `e2-calibration.md`, and the calibration note lists only tuning fixtures.
+- _(S3 result, recorded as measured: all six holdout fixtures tripped their target detector; `ho-02-stuck-veil` also tripped `tap-unresponsive`, allowed because an opaque veil hides every tap change. The holdout commit does not touch `thresholds.ts`.)_
 - **Reported, not tuned away:** holdout verdicts are recorded in `matrix.json` under `holdout` and printed in the README as they are, including misses. A holdout miss does not fail `eval:matrix` (which would invite retuning); a change to any holdout verdict does fail the CI diff. Changing a threshold after the holdout exists requires a new holdout fixture per affected detector, and the calibration note says so.
 
 ---

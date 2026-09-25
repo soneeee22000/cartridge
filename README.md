@@ -11,7 +11,7 @@ An agentic generator for single-file HTML5 mini-games, built as an explicit work
 
 ![A replay of the real engine: the workflow graph lights up through plan, generate, verify, one repair pass and finalize, then the finished game plays in a sandboxed frame](docs/media/replay-run.gif)
 
-**Project page: Live demo (replayed model calls)** (source in `site/`). The page runs the real engine on every visit. Pick one of the 20 recorded prompts and the server runs the workflow graph, the E1 verifier, the repair loop and the run lifecycle for that request, and streams every event to the page. **Only the model calls are replayed**, from cassettes recorded once with a real key. No key is deployed, so the demo costs nothing in API spend and cannot be scripted into a bill; each function instance also caps concurrent replays. The GIF above was captured at instant pace; on the page a visitor picks fast-forward (the default) or the recorded pace.
+**[Project page: Live demo (replayed model calls)](https://cartridge-engine.vercel.app)** (source in `site/`). The page runs the real engine on every visit. Pick one of the 20 recorded prompts and the server runs the workflow graph, the E1 verifier, the repair loop and the run lifecycle for that request, and streams every event to the page. **Only the model calls are replayed**, from cassettes recorded once with a real key. No key is deployed, so the demo costs nothing in API spend and cannot be scripted into a bill; each function instance also caps concurrent replays. The GIF above was captured at instant pace; on the page a visitor picks fast-forward (the default) or the recorded pace.
 
 ## Why this exists
 

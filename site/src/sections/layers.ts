@@ -64,7 +64,7 @@ function controlsMarkup(): string {
   return `<div class="step-controls" role="group" aria-label="Layer steps" data-step-group>
     <div class="stepper">
       <button type="button" class="button" data-offset="-1" aria-label="Previous layer">${icon("chevron-left")}</button>
-      <p class="stepper__status" data-step-status>${stepStatus("collapsed")}</p>
+      <p class="stepper__status" data-step-status aria-live="polite">${stepStatus("collapsed")}</p>
       <button type="button" class="button" data-offset="1" aria-label="Next layer">${icon("chevron-right")}</button>
     </div>
     <div class="step-extra">${gotoButton("collapsed", "Collapse")}${gotoButton("overview", "Show all")}</div>
@@ -83,7 +83,7 @@ function detailMarkup(values: CopyValues): string {
     (layer) =>
       `<li><button type="button" class="button" data-goto="${layer.step}"><span>${layer.step} ${richText(fill(layer.heading, values))}</span></button></li>`,
   ).join("");
-  return `<div class="layer-detail" role="region" aria-live="polite" aria-label="Layer details">
+  return `<div class="layer-detail" role="region" aria-label="Layer details">
     <div class="layer-panel" data-panel="collapsed"><h3>The stack</h3><p>${INTRO}</p><p class="caveat">A request flows up: request, workflow graph, tools and cards, verifiers, eval harness.</p></div>
     ${layerPanels}
     <div class="layer-panel" data-panel="overview" hidden><h3>All ${String(LAYERS.length)} layers</h3><ol class="layer-panel__overview">${overview}</ol></div>

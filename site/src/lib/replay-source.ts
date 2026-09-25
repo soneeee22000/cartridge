@@ -17,20 +17,52 @@ function seqOf(event: MessageEvent<string>): number {
   return Number.isInteger(seq) ? seq : 0;
 }
 
-/** Report a connection error as a reconnect while the browser retries, or a failure once it gives up. */
+/** Consecutive errors with no message in between before the page stops retrying (arbitrary). */
+export const MAX_SILENT_ERRORS = 3;
+
+/** What one connection has seen so far. */
+export interface ConnectionTally {
+  readonly closed: boolean;
+  readonly received: number;
+  readonly silentErrors: number;
+}
+
+/** How to treat a connection error: keep retrying, or stop and say why. */
+export type ErrorOutcome = "retry" | "refused" | "unreachable" | "lost";
+
+/**
+ * Decide what a connection error means. The browser retries on its own, so the page only stops
+ * it after `MAX_SILENT_ERRORS` errors in a row with no message between them.
+ * @param tally whether the source is closed, messages received, and errors since the last message
+ */
+export function errorOutcome(tally: ConnectionTally): ErrorOutcome {
+  if (tally.closed) return "refused";
+  if (tally.silentErrors < MAX_SILENT_ERRORS) return "retry";
+  return tally.received === 0 ? "unreachable" : "lost";
+}
+
+const FAILURE_TEXT: Readonly<Record<Exclude<ErrorOutcome, "retry">, string>> =
+  {
+    refused:
+      "The server refused or closed the replay stream. Try again, or pick another prompt.",
+    unreachable:
+      "Could not reach the replay server. Check your connection and try again.",
+    lost: "The connection kept dropping, so the replay was stopped. Try again.",
+  };
+
+/** Report a connection error as a reconnect while retrying is worth it, or a failure. */
 function onError(
   source: EventSource,
+  tally: ConnectionTally,
   dispatch: (action: ReplayAction) => void,
 ): void {
-  if (source.readyState === EventSource.CLOSED) {
-    dispatch({
-      type: "failed",
-      message:
-        "The server refused or closed the replay stream. Try again, or pick another prompt.",
-    });
+  const outcome = errorOutcome(tally);
+  if (outcome === "retry") {
+    dispatch({ type: "connection-lost" });
     return;
   }
-  dispatch({ type: "connection-lost" });
+  source.close();
+  dispatch({ type: "failed", message: FAILURE_TEXT[outcome] });
 }
 
 /**
@@ -48,18 +80,29 @@ export function openReplay(
   dispatch: (action: ReplayAction) => void,
 ): Disconnect {
   const source = new EventSource(replayUrl(promptId, pace));
+  let received = 0;
+  let silentErrors = 0;
+  const heard = (): void => {
+    received += 1;
+    silentErrors = 0;
+  };
   source.addEventListener("progress", (event: MessageEvent<string>) => {
+    heard();
     dispatch({ type: "progress", seq: seqOf(event), data: event.data });
   });
   source.addEventListener("terminal", (event: MessageEvent<string>) => {
+    heard();
     source.close();
     dispatch({ type: "terminal", seq: seqOf(event), data: event.data });
   });
   source.addEventListener("reconnect", () => {
+    heard();
     dispatch({ type: "reconnect" });
   });
   source.addEventListener("error", () => {
-    onError(source, dispatch);
+    silentErrors += 1;
+    const closed = source.readyState === EventSource.CLOSED;
+    onError(source, { closed, received, silentErrors }, dispatch);
   });
   return () => {
     source.close();

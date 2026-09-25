@@ -9,6 +9,12 @@ const MS_PER_SECOND = 1000;
 
 /** The status line for a replay state. */
 export function statusText(state: ReplayState): string {
+  const score = terminalScore(state);
+  if (state.phase === "complete" && score !== null) {
+    const attempts = state.verdicts.length;
+    const noun = attempts === 1 ? "build attempt" : "build attempts";
+    return `Run complete: E1 ${score} after ${String(attempts)} ${noun}. The game is below.`;
+  }
   const base = PHASE_TEXT[state.phase];
   return state.error === null ? base : `${base} ${state.error}`;
 }

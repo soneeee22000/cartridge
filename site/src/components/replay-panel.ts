@@ -18,6 +18,9 @@ import {
 import { workflowGraphMarkup } from "./workflow-graph";
 
 /** The icon and tone for each committed detector verdict. */
+/** How close to the bottom the log must be for new lines to keep it scrolled down (arbitrary). */
+const LOG_FOLLOW_SLACK_PX = 24;
+
 const VERDICT_MARKS: Readonly<
   Record<ShownVerdict, { icon: IconName; tone: string }>
 > = {
@@ -119,7 +122,7 @@ export function replayShellMarkup(
         <ol class="run__verdicts" data-verdicts aria-label="E1 verdicts per build attempt"></ol>
       </div>
     </div>
-    <details class="run__log-box" open><summary>Event log</summary><ol class="event-log" data-log aria-label="Events received from /api/replay"></ol></details>
+    <details class="run__log-box" open><summary>Event log</summary><ol class="event-log" data-log tabindex="0" aria-label="Events received from /api/replay"></ol></details>
     <div class="run__result">
       <figure class="game-frame" data-frame><div class="game-frame__empty" data-frame-empty>The game appears here when the run completes.</div><figcaption class="game-frame__caption muted">The game runs in a sandboxed iframe with scripts allowed and no same-origin access.</figcaption></figure>
       <aside class="e2-panel" data-e2 aria-label="Committed E2 result"></aside>
@@ -135,7 +138,9 @@ function logLine(entry: LogEntry): string {
 /** Draw everything that depends only on the replay state. */
 export function renderReplayState(root: HTMLElement, state: ReplayState): void {
   root.dataset.phase = state.phase;
-  query(root, "[data-status]", HTMLElement).textContent = statusText(state);
+  const status = query(root, "[data-status]", HTMLElement);
+  const text = statusText(state);
+  if (status.textContent !== text) status.textContent = text;
   query(root, "[data-graph]", HTMLElement).innerHTML =
     workflowGraphMarkup(state);
   query(root, "[data-score]", HTMLElement).textContent =
@@ -152,8 +157,10 @@ export function renderReplayState(root: HTMLElement, state: ReplayState): void {
     )
     .join("");
   const log = query(root, "[data-log]", HTMLElement);
+  const following =
+    log.scrollHeight - log.scrollTop - log.clientHeight <= LOG_FOLLOW_SLACK_PX;
   log.innerHTML = state.log.map(logLine).join("");
-  log.scrollTop = log.scrollHeight;
+  if (following) log.scrollTop = log.scrollHeight;
 }
 
 /** Show the prompt text, pace note and committed E2 result for the selected item. */

@@ -77,7 +77,10 @@ function tick(panel: Panel): void {
 /** Enable the buttons for the current phase and keep the elapsed counter ticking while running. */
 function syncControls(panel: Panel): void {
   const running = isRunning(panel.current);
-  query(panel.root, "[data-stop]", HTMLButtonElement).disabled = !running;
+  const stopButton = query(panel.root, "[data-stop]", HTMLButtonElement);
+  if (!running && document.activeElement === stopButton)
+    query(panel.root, "[data-run]", HTMLButtonElement).focus();
+  stopButton.disabled = !running;
   query(panel.root, "[data-run-label]", HTMLElement).textContent = running
     ? "Restart the replay"
     : "Run the replay";
@@ -111,7 +114,6 @@ function disconnect(panel: Panel): void {
   panel.disconnect = null;
 }
 
-/** Start a replay, closing any previous one first. */
 /** The speed picked in the form, fast-forward unless recorded pace is checked. */
 function pickedPace(panel: Panel): ReplayPace {
   const checked = panel.root.querySelector<HTMLInputElement>(
@@ -120,6 +122,7 @@ function pickedPace(panel: Panel): ReplayPace {
   return checked?.value === "recorded" ? "recorded" : "fast";
 }
 
+/** Start a replay, closing any previous one first. */
 function run(panel: Panel, promptId: string, pace: ReplayPace): void {
   disconnect(panel);
   panel.received = [];

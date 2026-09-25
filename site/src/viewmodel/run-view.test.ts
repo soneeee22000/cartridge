@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { reportItem } from "../data/report";
+import bubblePop from "../data/transcripts/bubble-pop.sse?raw";
 import { INITIAL_REPLAY_STATE, reduceReplay } from "./replay-state";
+import { parseSseTranscript } from "./sse";
 import {
   elapsedSeconds,
   frameTitle,
@@ -42,6 +44,25 @@ describe("run view helpers", () => {
     );
     expect(statusText(INITIAL_REPLAY_STATE)).toBe(
       "Pick a prompt and start the replay.",
+    );
+  });
+
+  it("announces the score and build attempts when a run completes", () => {
+    const done = parseSseTranscript(bubblePop).reduce(
+      (state, message) =>
+        reduceReplay(
+          state,
+          message.event === "terminal"
+            ? { type: "terminal", seq: message.id ?? 0, data: message.data }
+            : { type: "progress", seq: message.id ?? 0, data: message.data },
+        ),
+      reduceReplay(INITIAL_REPLAY_STATE, {
+        type: "start",
+        promptId: "bubble-pop",
+      }),
+    );
+    expect(statusText(done)).toBe(
+      "Run complete: E1 1.000 after 2 build attempts. The game is below.",
     );
   });
 

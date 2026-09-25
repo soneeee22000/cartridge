@@ -33,7 +33,7 @@ export const ADRS: readonly {
   },
   {
     id: "ADR-0003",
-    title: "Cassette replay for a keyless live demo",
+    title: "Cassette replay for a keyless demo with replayed model calls",
     path: "docs/adr/0003-cassette-replay-demo.md",
   },
 ];

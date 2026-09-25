@@ -42,7 +42,8 @@ The evaluator has two gating tiers and two reported-only signals (SPEC §2.3, §
 
 ## Consequences
 
-- E2 cannot run on Vercel functions. The live demo shows committed E2 results and says so.
+- E2 gates in the eval harness, not inside the generation graph. The engine's own verify phase is E1, so a game that passes E1 and fails E2 is still finalized by the engine and then reported as an E2 fail. In the full run that was 9 of 20 games. Moving a runtime probe into the graph would need a browser in the generation path; that is left out on purpose.
+- E2 cannot run on Vercel functions. The demo page shows committed E2 results and says so.
 - E2 metrics depend on timing, so CI diffs only the matrix **verdicts**. Fixtures are designed to sit far from thresholds, and the thresholds are frozen with the calibration measurements next to them (`docs/research/e2-calibration.md`).
 - E2 thresholds are tuned on this repo's own fixtures, so they encode our definition of "blank" and "moving". The report states this under "Out of scope for this run", and no result from any other system is cited.
 - `longestPlaySeconds` is a weak signal, because a random-tap bot is not a player. It is reported so trends are visible, and it never gates.

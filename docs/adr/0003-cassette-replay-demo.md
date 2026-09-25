@@ -1,6 +1,6 @@
-# ADR-0003: Cassette replay for a keyless live demo
+# ADR-0003: Cassette replay for a keyless demo with replayed model calls
 
-- Status: Accepted
+- Status: Accepted, implemented 2026-09-25 (`api/replay.ts`, `api/prompts.ts`, `src/server/replay.ts`)
 - Date: 2026-09-24
 
 ## Context
@@ -27,9 +27,9 @@ Record the model calls once, locally, with a real key. Replay them in the deploy
   - the run lifecycle and the SSE relay.
 - **Determinism.** Prompts contain no volatile values (run ids, timestamps; `assertNoVolatile` enforces this), and tool results contain no run ids. So the replayed requests hash to the recorded keys, and two replays emit identical event sequences.
 - **One invocation per replay.** `GET /api/replay` creates the run in memory, drives it and relays it within a single invocation. A reconnect with `Last-Event-ID` re-runs the replay quickly and emits only the missing events.
-- **The public surface cannot go live.** The `api/` handlers hard-code `mode: "replay"`, and an import-graph test fails if `api/**` can reach the live or record model constructors, `@libsql/client` or `playwright`.
+- **The public surface cannot go live.** The `api/` handlers build their models with `replayModel` (`src/models/replay.ts`), which reads no key and has no upstream, never with the general `createModel`. An import-graph test (`tests/api/import-graph.test.ts`) fails if `api/**` can reach `src/models/port.ts`, the dev server, `@libsql/client`, `playwright` or the E2 probe.
 - **Bundled, not traced.** The functions are bundled with esbuild into the Build Output API format, with cards, prompts, cassettes and the dataset copied beside them, so the demo does not depend on Vercel's file tracing (SPEC §13.3).
-- **Honest label.** The page and the README use the label "Live demo (replayed model calls)", to be confirmed at deploy time, and state which parts are recorded. E2 results on the page are committed results, and the page says so.
+- **Honest label.** The page and the README use the label "Live demo (replayed model calls)" and state which parts are recorded. E2 results on the page are committed results, and the page says so.
 
 The same cassettes serve CI. The eval report, including E3 judge outputs, is regenerated from committed cassettes and games with no key, and diffed byte for byte.
 
@@ -44,7 +44,7 @@ The same cassettes serve CI. The eval report, including E3 judge outputs, is reg
 
 - The demo can only run prompts that were recorded. The prompt list comes from the cassette sets, and a free-text box would be misleading, so there isn't one.
 - Any change to prompts, card text, tool schemas or the model id changes request hashes and invalidates cassettes. Re-recording costs money, and CI catches staleness as `cassette-miss`.
-- Replayed timing is the recorded timing (capped per gap) or accelerated. It is labelled as such.
+- Replayed timing is chosen by the visitor: `?pace=recorded` keeps each recorded gap, capped at `REPLAY_MAX_GAP_MS`, and `?pace=fast` (the default) divides every capped gap by `FAST_FORWARD_FACTOR`. The events and the game are identical at either pace, and the page says which one is running.
 - The provider's settings accept a custom `fetch` (checked in the installed types), so the fetch layer is the design. A hand-rolled `LanguageModelV3` cassette that replays stream parts remains the documented fallback; it is more coupled to the SDK but has the same file keys.
 - After the `terminal` event the client closes the `EventSource`, and the server answers 204 to a reconnect at or past the terminal id, so a finished replay is never re-run in a loop.
 

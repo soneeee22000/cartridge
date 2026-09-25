@@ -1060,7 +1060,7 @@ Scope: `api/prompts.ts`, `api/replay.ts`, `scripts/record-demo.ts`, the real han
 
 Acceptance:
 
-- **Import-graph test:** `api/**` never imports `live`/`record` model construction, `@libsql/client` or `playwright`. The replay handler hard-codes `mode: "replay"`.
+- **Import-graph test:** `api/**` never imports `live`/`record` model construction (`src/models/port.ts`), `@libsql/client` or `playwright`. The replay handler builds replay-only models with `replayModel` (`src/models/replay.ts`), which read no key and have no upstream.
 - **Local replay:** `GET /api/replay?promptId=<id>` on the dev server streams `plan … verify.verdict (fail) … repair.start … verify.verdict (ok) … terminal(complete)` for the repair prompt.
 - **Deterministic replay:** two replays give identical event sequences. A reconnect with `Last-Event-ID` resumes without duplicates, and one at or past the terminal id gets 204.
 - **Disconnect:** aborting the request stops the run and the relay (test with an `AbortController`).

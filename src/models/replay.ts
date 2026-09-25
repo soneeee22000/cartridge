@@ -4,6 +4,7 @@ import { anthropicModel } from "./anthropic.ts";
 import { cassetteFetch, type CassettePace } from "./cassette.ts";
 import { MODEL_IDS, REPLAY_PLACEHOLDER_KEY, type ModelRole } from "./ids.ts";
 
+/** The cassette directory to replay from, and how to pace it. */
 export interface ReplayModelOptions {
   readonly cassetteDir: string;
   readonly pace?: CassettePace | undefined;

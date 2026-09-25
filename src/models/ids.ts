@@ -1,3 +1,4 @@
+/** The roles a model plays: planner and builder generate, judge runs E3. */
 export const MODEL_ROLES = ["planner", "builder", "judge"] as const;
 export type ModelRole = (typeof MODEL_ROLES)[number];
 

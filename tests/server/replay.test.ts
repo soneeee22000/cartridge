@@ -142,6 +142,74 @@ describe("GET /api/replay", () => {
     REPLAY_TIMEOUT_MS,
   );
 
+  it(
+    "replays a reconnect instantly, whatever pace the visitor picked",
+    async () => {
+      let waited = 0;
+      const paced = createReplayHandler({
+        root: REPO_ROOT,
+        relay: FAST_RELAY,
+        sleep: (ms) => {
+          waited += ms;
+          return Promise.resolve();
+        },
+      });
+      const response = await paced(
+        new Request(
+          "https://cartridge.test/api/replay?promptId=tile-sort&pace=recorded",
+          { headers: { "last-event-id": "3" } },
+        ),
+      );
+      await response.text();
+      expect(waited).toBe(0);
+    },
+    REPLAY_TIMEOUT_MS,
+  );
+
+  it(
+    "answers 204 to a reconnect at or past the terminal id of a finished replay",
+    async () => {
+      const once = createReplayHandler({
+        root: REPO_ROOT,
+        pace: "instant",
+        relay: FAST_RELAY,
+      });
+      const first = await once(
+        new Request("https://cartridge.test/api/replay?promptId=tile-sort"),
+      );
+      const terminalId = Number(parseSse(await first.text()).at(-1)?.id);
+      const late = await once(
+        new Request("https://cartridge.test/api/replay?promptId=tile-sort", {
+          headers: { "last-event-id": String(terminalId) },
+        }),
+      );
+      expect(late.status).toBe(204);
+    },
+    REPLAY_TIMEOUT_MS,
+  );
+
+  it("answers 429 once the instance is running its maximum of replays", async () => {
+    const hold = new AbortController();
+    const busy = createReplayHandler({
+      root: REPO_ROOT,
+      maxConcurrent: 1,
+      relay: FAST_RELAY,
+      sleep: () => new Promise<void>(() => undefined),
+    });
+    const first = await busy(
+      new Request("https://cartridge.test/api/replay?promptId=tile-sort", {
+        signal: hold.signal,
+      }),
+    );
+    expect(first.status).toBe(200);
+    const second = await busy(
+      new Request("https://cartridge.test/api/replay?promptId=bubble-pop"),
+    );
+    expect(second.status).toBe(429);
+    hold.abort();
+    await first.body?.cancel();
+  });
+
   it("rejects methods other than GET", async () => {
     const response = await handler(
       new Request("https://cartridge.test/api/replay?promptId=bubble-pop", {

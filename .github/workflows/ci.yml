@@ -59,6 +59,38 @@ jobs:
             diff -u "$committed" "$RUNNER_TEMP/$tier.json"
           done
 
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            site/package-lock.json
+      - name: Install the engine (the site imports its handlers and reports)
+        run: npm ci
+      - name: Install the site
+        run: npm ci
+        working-directory: site
+      - name: Typecheck the site
+        run: npm run typecheck
+        working-directory: site
+      - name: Test the site (data copies, engine constants, media contract)
+        run: npm test
+        working-directory: site
+      - name: Diff the site's report copies against the committed reports
+        run: |
+          for name in full sample matrix; do
+            diff -u "reports/committed/$name.json" "site/src/data/$name.json"
+          done
+      - name: Build the page and the Build Output bundle together
+        run: |
+          npm run build --prefix site
+          npm run build:vercel -- --require-site
+
   secrets:
     runs-on: ubuntu-latest
     steps:

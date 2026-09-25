@@ -150,7 +150,10 @@ npm run eval:full -- --yes --max-usd 10
 ```sh
 cd site && npm ci && cd ..
 npm run build:vercel
+vercel deploy --prebuilt --prod
 ```
+
+Git-triggered Vercel builds are off (`vercel.json`): Vercel's own build would detect `api/*.ts` and replace the bundled functions with traced ones, dropping the streaming and duration settings. Deploys go through the prebuilt output only.
 
 ## Project structure
 

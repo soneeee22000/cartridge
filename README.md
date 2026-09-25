@@ -11,7 +11,7 @@ An agentic generator for single-file HTML5 mini-games, built as an explicit work
 
 ![A replay of the real engine: the workflow graph lights up through plan, generate, verify, one repair pass and finalize, then the finished game plays in a sandboxed frame](docs/media/replay-run.gif)
 
-The project page (source in `site/`) runs the real engine on every visit. Pick one of the 20 recorded prompts and the server runs the workflow graph, the E1 verifier, the repair loop and the run lifecycle for that request, and streams every event to the page. **Only the model calls are replayed**, from cassettes recorded once with a real key. No key is deployed, so the demo costs nothing and cannot be scripted into a bill. The GIF above was captured at instant pace; on the page a visitor picks fast-forward (the default) or the recorded pace.
+**Project page: Live demo (replayed model calls)** (source in `site/`). The page runs the real engine on every visit. Pick one of the 20 recorded prompts and the server runs the workflow graph, the E1 verifier, the repair loop and the run lifecycle for that request, and streams every event to the page. **Only the model calls are replayed**, from cassettes recorded once with a real key. No key is deployed, so the demo costs nothing in API spend and cannot be scripted into a bill; each function instance also caps concurrent replays. The GIF above was captured at instant pace; on the page a visitor picks fast-forward (the default) or the recorded pace.
 
 ## Why this exists
 
@@ -53,7 +53,7 @@ flowchart LR
     cass -. "replay, no key" .-> model
 ```
 
-The model is used in exactly two places, `plan` and the generate phase. Everything else is deterministic code with unit tests, and every path through the graph (clean pass, repair then pass, repairs exhausted, budget exhausted, truncated output, refusal, cut stream) is covered with a scripted mock model.
+The model is used in exactly two places, `plan` and the generate phase. Everything else is deterministic code with unit tests, and the paths through the graph (clean pass, repair then pass, repairs exhausted, budget exhausted, truncated output, refusal) are covered with a scripted mock model. A cut stream is covered in the driver tests with hand-fed event streams.
 
 ## Results
 
@@ -83,7 +83,8 @@ CI fails if any detector is disabled or left uncovered by a fixture. The matrix 
 `GET /api/replay?promptId=<id>` creates the run in memory, drives it through the real graph and relays it as server-sent events in the same invocation ([ADR-0003](docs/adr/0003-cassette-replay-demo.md)).
 
 - **Recording at the fetch layer.** Cassettes hold the provider's raw streamed bytes and inter-chunk gaps, keyed by the SHA-256 of the canonical request body. Prompts contain no volatile values, so a replay hashes to the recorded keys. A test replays all 20 prompts through the HTTP handler and checks each finished game against the committed one, byte for byte.
-- **The public surface cannot go live.** The `api/` functions build replay-only models that read no key and have no upstream. An import-graph test fails the build if `api/**` can reach the live or record model paths, `@libsql/client` or Playwright.
+- **The public surface cannot go live.** The `api/` functions build models only through `replayModel`, which hard-codes replay mode, reads no key and has no upstream. An import-graph test fails the build if `api/**` can reach the general model factory (`src/models/port.ts`), `@libsql/client` or Playwright.
+- **Reconnects and load.** A reconnect replays at instant pace and receives only the events it missed; a reconnect past a finished replay gets 204. Each instance runs at most eight replays at once and answers 429 beyond that.
 - **E2 is not run on the server.** The page shows each game's committed E2 result and says so.
 
 `GET /api/prompts` lists the replayable prompts, repaired ones first.
@@ -171,11 +172,13 @@ docs/                SPEC, ADRs, research notes, media
 
 ## Limitations
 
+- **The engine gates on E1 only.** E2 runs in the eval harness after a game is finalized, so the 9 games that failed E2 were still produced by the engine.
+- **Four items were seen during development.** The four sample-tier items (`bubble-pop`, `kite-over-roofs`, `maze-de-haies`, `phare-long`) were run five times while the engine was being fixed, and the E1-24 fix hint and the judge schema were changed in response. For those four, the full run is not a held-out set.
 - **One run.** Every result is a single generation per prompt. It shows what happened once; it is not a rate, and there is no variance estimate.
 - **I wrote the prompts.** The 20 prompts are my own, not user traffic, and I chose the bands.
 - **E2 thresholds are my definitions.** They were tuned on this repo's fixtures. Some fails reflect the gate, not a broken game: in `kite-over-roofs` an idle kite falls by design, and `idle-death` flags it.
-- **Ten E2 results were re-probed after generation.** Chromium failed to launch for 10 games during the full run, so their E2 was run afterwards with `--missing-e2` on the same committed files.
-- **E3 is not validated.** The judge is categorical and must cite `file:line` evidence, but it has not been compared with human raters. It never gates.
+- **Ten E2 results were re-probed after generation.** Chromium failed to launch for 10 games during the full run, so their E2 was run afterwards with `--missing-e2` on the same committed files: `kite-over-roofs`, `lighthouse-floors`, `maze-de-haies`, `online-chess`, `orchard-rounds`, `phare-long`, `potager-grille`, `reflexion-chrono`, `tile-sort` and `tramway-niveaux`.
+- **E3 is not validated.** The judge is categorical and must cite `file:line` evidence, but it has not been compared with human raters. In the full run, 16 of its 80 labels were discarded because the cited text was not in the file. It never gates.
 - **E4 was checked on 40 bundles I wrote.** Its thresholds were set on the same bundles.
 - **No live generation on the public page.** Only recorded prompts can be replayed, and any change to prompts, cards or tool schemas invalidates the cassettes.
 - **Cost is an estimate** from list prices, not an invoice.

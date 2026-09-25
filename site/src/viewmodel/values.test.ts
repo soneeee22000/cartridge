@@ -27,6 +27,10 @@ describe("copy values", () => {
     expect(values).toMatchObject({ runtimeFails: 9, e2Passed: 11 });
   });
 
+  it("counts the E3 labels and the ones discarded for a missing citation", () => {
+    expect(values).toMatchObject({ e3Labels: 80, e3Discarded: 16 });
+  });
+
   it("fills every placeholder in the section copy", () => {
     const templates = [
       ...LAYERS.flatMap((layer) => [

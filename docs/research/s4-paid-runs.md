@@ -33,3 +33,14 @@ All five `kite-over-roofs` recordings reported a first idle `end` between 0.93 a
 ## Replay
 
 With `ANTHROPIC_API_KEY` unset, `run --tier sample --mode replay` over the committed cassettes reproduced every model-derived field exactly: spec, game sha256, usage, build attempts, repair rules, E1, E3 and E4. The E2 detector verdicts were also unchanged. Wall time and the Playwright pixel metrics differ, because they are measured again. `score --games games --tier sample` with no key regenerates `reports/committed/sample.json` byte for byte.
+
+## Addendum (2026-09-25): the full run replaced these recordings
+
+The full tier was recorded on 2026-09-24 after these runs. It re-generated the four sample items, so the committed games, cassettes and `e2.json` files for `bubble-pop`, `kite-over-roofs`, `maze-de-haies` and `phare-long` now come from the full run, and `reports/committed/sample.json` was regenerated from them (commit `9516911`). The figures above describe runs 1-5 as they happened, not the committed files:
+
+- `kite-over-roofs`: the committed `e2.json` now records a first idle `end` at 1.086 s, not 3.358 s. That is a sixth recording with the same `idle-death` fail.
+- The 30,250-token repair figure belongs to run 5. The full run's repair passes used 26,932-37,589 uncached input tokens each (`repairUsage` in `reports/committed/full.json`).
+
+These four items were run five times during development, and the E1-24 fix hint and the judge schema were changed in response, so the full run is not a held-out set for them.
+
+During the full run Chromium failed to launch partway through, and ten E2 probes crashed. They were re-run keyless with `--missing-e2` against the same committed games: `kite-over-roofs`, `lighthouse-floors`, `maze-de-haies`, `online-chess`, `orchard-rounds`, `phare-long`, `potager-grille`, `reflexion-chrono`, `tile-sort` and `tramway-niveaux`. Their `e2.json` files were written 15-25 minutes after their games.

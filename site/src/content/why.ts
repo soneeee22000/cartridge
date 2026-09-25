@@ -17,7 +17,7 @@ export const WHY_BLOCKS: readonly WhyBlock[] = [
     heading: "Still broken at runtime",
     paragraphs: [
       "{runtimeFails} of those {items} games failed at least one E2 detector when they were loaded in headless Chromium. {e2Passed} of {items} passed every detector that applied to them.",
-      "That gap is why the evaluator has two gating tiers: the free static tier on every repair pass, then the browser probe on what survives.",
+      "The engine gates only on the free static tier, on every repair pass, so it finalized all of them. The browser probe runs afterwards in the eval harness, and that is where these games were caught. The gap is why the evaluator has two tiers.",
     ],
   },
 ];

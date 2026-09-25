@@ -35,6 +35,14 @@ export function copyValues(report: Report): CopyValues {
     bandStep: PERCENT / perBand,
     score: formatScore(minScore),
     runtimeFails: facts.staticPerfectRuntimeFail,
+    e3Labels: report.items.reduce(
+      (sum, item) => sum + Object.keys(item.e3.dimensions).length,
+      0,
+    ),
+    e3Discarded: report.items.reduce(
+      (sum, item) => sum + item.e3.discarded.length,
+      0,
+    ),
     e2Passed: facts.e2Passed,
     cards: Object.values(CARD_KINDS).flat().length,
     maxRepairs: ENGINE_CONSTANTS.MAX_REPAIRS,

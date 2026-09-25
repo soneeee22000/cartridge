@@ -3,7 +3,7 @@ export const REPLAY_CHIP = "Live demo (replayed model calls)";
 
 /** The banner above the replay. */
 export const REPLAY_BANNER =
-  "Model calls are replayed from recorded cassettes; the orchestrator, verifiers and state machine run live on this request.";
+  "Model calls are replayed from recorded cassettes; the orchestrator, the E1 verifier and the state machine run live on this request.";
 
 /** The label beside the committed E2 result. */
 export const E2_OFFLINE_LABEL =

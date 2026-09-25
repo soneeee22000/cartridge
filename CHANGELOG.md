@@ -32,9 +32,11 @@ All notable changes to this project are documented here. The format follows [Kee
 - **e1:** the E1-24 message names the functions the reset branch calls, so a repair can wire the right one.
 - **e3:** the judge has one nullable slot per dimension, so a repeating answer cannot reach the output cap; a failed judge call is counted as `judge-error`.
 - **eval:** the tier cost estimate is re-derived from the regenerated sample report.
+- **api:** a reconnect replays at instant pace, a reconnect past a finished replay gets 204, and each instance caps concurrent replays with 429.
+- **site:** the page says the engine gates on E1 only, discloses the four development items, names the ten re-probed games and the discarded E3 labels, fails clearly when the replay server can't be reached, and fixes focus after Stop, live-region noise and the event log's scrolling.
 
 ### Chores
 
-- Recorded the `one`, `sample` and `full` tiers (the full tier: 20 items, $3.15 estimated) and committed every game, cassette and report.
+- Recorded the `one`, `sample` and `full` tiers (the full tier: 20 items, $3.15 estimated) and committed every game, cassette and report, except the first `one` run's game and cassettes, which the first `sample` run overwrote before either was committed (see `docs/research/s4-paid-runs.md`).
 - CI: `eval-replay` job (matrix and report diffs) and a gitleaks history scan.
 - Scaffold: Node 24, ESM, TypeScript strict, ESLint (typescript-eslint strict, type-checked), Vitest with coverage thresholds, CI `checks` job.

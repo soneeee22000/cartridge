@@ -29,6 +29,10 @@ export interface ReportItem {
   readonly e1Score: number | null;
   readonly repairRules: readonly string[];
   readonly e2: ItemE2 | null;
+  readonly e3: {
+    readonly dimensions: Readonly<Record<string, string | null>>;
+    readonly discarded: readonly { readonly dimension: string }[];
+  };
   readonly e4: { readonly verdict: string } | null;
   readonly wallMs: number | null;
 }

@@ -25,8 +25,8 @@ None of these shows up in the source. A score of 1.000 from a static scorer says
 
 The evaluator has two gating tiers and two reported-only signals (SPEC §2.3, §8, §10):
 
-- **E1, the contract scorer (gate, tier 1).** Pure functions, each rule with a severity and a `card:line` citation computed from an anchor in the card. It runs inside the engine as the build-cycle's verify phase and again in the eval harness.
-- **E2, the runtime probe (gate, tier 2).** Playwright Chromium, with the game in the same sandboxed iframe the demo uses. It has six detectors: boot handshake, blank frame, idle stillness, tap unresponsiveness, idle death (an `end` sooner than `IDLE_DEATH_MIN_SECONDS` after `start` for real-time types, with the value set from this repo's fixture calibration), and console errors. `longestPlaySeconds`, from a seeded random-tap bot, is **reported only**.
+- **E1, the contract scorer (tier 1; the engine's in-graph gate).** Pure functions, each rule with a severity and a `card:line` citation computed from an anchor in the card. It runs inside the engine as the build-cycle's verify phase and again in the eval harness.
+- **E2, the runtime probe (tier 2; a gate in the eval harness, not in the generation graph).** Playwright Chromium, with the game in the same sandboxed iframe the demo uses. It has six detectors: boot handshake, blank frame, idle stillness, tap unresponsiveness, idle death (an `end` sooner than `IDLE_DEATH_MIN_SECONDS` after `start` for real-time types, with the value set from this repo's fixture calibration), and console errors. `longestPlaySeconds`, from a seeded random-tap bot, is **reported only**.
 - **E3, a cited categorical judge (reported only).** Every finding needs `file:line` evidence that is checked against the file. Numeric claims are discarded. A dimension with no valid finding is `null`, not the worst score.
 - **E4, language match (reported only).** The prompt language against the language of the game's UI strings. It abstains below an evidence floor.
 
@@ -34,7 +34,7 @@ The evaluator has two gating tiers and two reported-only signals (SPEC §2.3, §
 
 ## Reasons
 
-1. **Cheap first, expensive second.** E1 runs on every repair pass for free, so the engine never pays for a browser run on a game that is already broken in its source.
+1. **Cheap first, expensive second.** E1 runs on every repair pass for free, so no browser run is ever spent on a game that is already broken in its source.
 2. **Two tiers catch different defect classes.** The fixtures make the gap concrete: every known-bad fixture passes E1 in full and is still broken. The holdout set is the only check that the detectors generalise beyond the games they were tuned on, and it is small, so claims stay at "demonstrated on N hand-authored fixtures".
 3. **A detector nobody exercises is a detector nobody trusts.** Tying each detector to a fixture, and failing CI when the pairing breaks, stops silent regressions. For example, a threshold "tuned" until it never fires would be caught.
 4. **Model judgement is kept away from gating.** E3 is useful colour but can be steered and varies from run to run. It never decides pass or fail, and it cannot report a number it did not cite.

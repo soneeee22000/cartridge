@@ -34,7 +34,7 @@ export const LIFECYCLE_RULES: readonly string[] = [
 /** How the SSE relay behaves (SPEC §6). */
 export const RELAY_RULES: readonly string[] = [
   "Every progress event is stored with a sequence number and sent as `id: <seq>`. A client that reconnects with `Last-Event-ID` gets only the events after it.",
-  "The `terminal` event is built from the run row, never from the workflow stream. After it the server answers 204 to any reconnect, which stops `EventSource` from looping.",
+  "The `terminal` event is built from the run row, never from the workflow stream. The page closes its `EventSource` when the terminal event arrives. On the replay endpoint a reconnect is replayed at instant pace, and once an instance has seen that item finish, a reconnect at or past its terminal id gets 204.",
   "The relay polls the store every {poll} ms, sends a comment heartbeat every {heartbeatRelay} s, and asks the client to reconnect before {budget} s, inside the function's {maxDuration} s limit.",
 ];
 
@@ -42,5 +42,5 @@ export const RELAY_RULES: readonly string[] = [
 export const CASSETTE_RULES: readonly string[] = [
   "Recording sits at the HTTP fetch layer of the Anthropic provider. A cassette is keyed by the sha256 of the canonical request body and stores the raw streamed response bytes and their timing, never headers.",
   "In replay a missing recording throws `cassette-miss`; it never falls through to the network. Prompts carry no run ids or timestamps, so replayed requests hash to the recorded keys.",
-  "The public handlers hard-code replay mode, and an import-graph test fails if anything under `api/` can reach the live or record model paths, the database client or Playwright.",
+  "The public handlers build their models only through a replay-only constructor that reads no key and has no upstream. An import-graph test fails if anything under `api/` can reach the general model factory, the database client or Playwright.",
 ];
